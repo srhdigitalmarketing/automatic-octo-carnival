@@ -3,13 +3,13 @@
         <div>
             <span class="dashboard-eyebrow">AUDIENCE OVERVIEW</span>
             <h2 id="latest-statistics-title">Audience latest statistic</h2>
-            <p>Estimasi pengunjung unik browser selama 30 hari terakhir.</p>
+            <p>Pengunjung unik browser selama 30 hari terakhir.</p>
         </div>
         <span class="dashboard-period-chip"><i class="fa fa-calendar"></i> 30 hari</span>
     </header>
     <div class="dashboard-visitor-total">
         <strong><?= $visitorStats['tracking_ready'] ? number_format($visitorStats['total']) : '&mdash;' ?></strong>
-        <span>estimasi pengunjung unik</span>
+        <span>pengunjung unik</span>
     </div>
     <div id="visitor_statistics_chart" class="dashboard-visitor-chart" aria-label="Grafik pengunjung 30 hari terakhir"></div>
     <?php if (! $visitorStats['tracking_ready']): ?>
@@ -22,7 +22,7 @@
         <div>
             <span class="dashboard-eyebrow">DEVICES</span>
             <h2 id="platform-title">By platform</h2>
-            <p>Estimasi unik per perangkat selama 30 hari; kategori dapat tumpang tindih.</p>
+            <p>Pengunjung unik per perangkat selama 30 hari; kategori dapat tumpang tindih.</p>
         </div>
         <span class="dashboard-period-chip"><i class="fa fa-mobile"></i> Platform</span>
     </header>

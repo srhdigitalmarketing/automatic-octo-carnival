@@ -1,6 +1,6 @@
 <div class="x_panel dashboard-daily-analytics-panel">
     <div class="x_title mb-0">
-        <h2>Daily Player Analytics <small>Ringkasan Redis · sinkronisasi setiap 5 menit</small></h2>
+        <h2>Daily Player Analytics <small>Ringkasan Redis Â· sinkronisasi setiap 5 menit</small></h2>
         <ul class="nav navbar-right panel_toolbox">
             <li><span class="dashboard-period-chip"><i class="fa fa-calendar"></i> 7 hari</span></li>
         </ul>
@@ -14,7 +14,7 @@
                     <th><i class="fa fa-calendar"></i> Date</th>
                     <th class="text-right"><i class="fa fa-eye"></i> Impressions</th>
                     <th class="text-right"><i class="fa fa-play-circle"></i> Play clicks</th>
-                    <th class="text-right"><i class="fa fa-users"></i> Unique visitors (estimasi)</th>
+                    <th class="text-right"><i class="fa fa-users"></i> Unique visitors</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -30,7 +30,7 @@
             </table>
         </div>
         <?php if (! $dailyPlayerAnalytics['tracking_ready']): ?>
-            <p class="dashboard-chart-notice dashboard-daily-analytics-notice"><i class="fa fa-info-circle"></i> Jalankan migrasi analytics dan jadwalkan analytics:sync melalui Cron.</p>
+            <p class="dashboard-chart-notice dashboard-daily-analytics-notice"><i class="fa fa-info-circle"></i> Jalankan migrasi database dan jadwalkan analytics:prune melalui Cron.</p>
         <?php endif; ?>
     </div>
 </div>

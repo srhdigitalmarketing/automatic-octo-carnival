@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\PopupAdSelector;
-use App\Libraries\RedisAnalytics;
+use App\Libraries\MysqlAnalytics;
 
 class Traffic extends BaseController
 {
@@ -37,14 +37,14 @@ class Traffic extends BaseController
         }
 
         try {
-            (new RedisAnalytics())->record(
+            (new MysqlAnalytics())->record(
                 $visitorKey,
-                RedisAnalytics::platform((string) $this->request->getUserAgent()),
+                MysqlAnalytics::platform((string) $this->request->getUserAgent()),
                 $this->request->getPost('record_impression') === '1',
                 $this->request->getPost('event') === 'play'
             );
         } catch (\Throwable $exception) {
-            log_message('error', 'Redis analytics request failed: {message}', [
+            log_message('error', 'MySQL analytics request failed: {message}', [
                 'message' => $exception->getMessage(),
             ]);
 
