@@ -25,14 +25,16 @@ git pull origin main
 /www/server/php/82/bin/php spark streams:health-check --limit 100
 ```
 
-6. Di **aaPanel → Cron → Shell Script**, jadwalkan setiap 5 menit. Ganti direktori contoh dengan folder proyek Anda; folder tersebut harus berisi `spark`. Gunakan user yang dapat membaca konfigurasi aplikasi dan menulis ke `writable`.
+6. Di **aaPanel → Cron → Shell Script**, ubah task pemeriksaan yang sudah ada menjadi **Weekly / seminggu sekali**, misalnya **Senin pukul 03:00 WIB**. Pastikan zona waktu server sesuai WIB; jangan membuat task tambahan sementara task lama 5 menit masih aktif. Ganti direktori contoh dengan folder proyek Anda; folder tersebut harus berisi `spark`. Gunakan user yang dapat membaca konfigurasi aplikasi dan menulis ke `writable`.
 
 ```sh
 cd /www/wwwroot/DOMAIN_ANDA || exit 1
 flock -n writable/upnshare-health.lock /www/server/php/82/bin/php spark streams:health-check --limit 100
 ```
 
-`flock` mencegah batch bertumpuk. Pemeriksaan memakai batch 1–500 link dan berputar, termasuk link yang sebelumnya terhapus agar bisa pulih. Sebagian kapasitas diberikan ke laporan kegagalan player. Perintah memeriksa seluruh host stream, memakai API untuk hostname UPNShare/VidHide yang dikonfigurasi dan mekanisme sebelumnya untuk host lain. Satu batch tidak berarti seluruh database sudah diperiksa. Sesuaikan interval/limit dengan jumlah link dan batas API akun. Pantau log cron untuk Check failed/HTTP 429; kurangi frekuensi bila terkena pembatasan.
+Jadwal mingguan dijalankan oleh aaPanel, bukan diatur oleh kode PHP atau `git pull`. Simpan perubahan jadwal pada task cron yang sudah ada.
+
+`flock` mencegah batch bertumpuk. Pemeriksaan memakai batch 1–500 link dan berputar, termasuk link yang sebelumnya terhapus agar bisa pulih. Sebagian kapasitas diberikan ke laporan kegagalan player. Perintah memeriksa seluruh host stream, memakai API untuk hostname UPNShare/VidHide yang dikonfigurasi dan mekanisme sebelumnya untuk host lain. Dengan `--limit 100`, jadwal mingguan memeriksa maksimal 100 link per minggu, bukan seluruh database. Satu batch tidak berarti seluruh database sudah diperiksa. Sesuaikan interval/limit dengan jumlah link dan batas API akun. Pantau log cron untuk Check failed/HTTP 429; kurangi frekuensi bila terkena pembatasan.
 
 Waktu rotasi cron terpisah dari waktu akses pengunjung, sehingga video populer tetap mendapat giliran. Tidak ada panggilan API provider pada request pengunjung; player memakai status terakhir. Perubahan pada provider terlihat setelah giliran cron berikutnya.
 
@@ -74,3 +76,5 @@ HTTP 200 hanya membuktikan halaman web merespons. Contoh `https://ustreamplay.on
 Pada Edit Video → Stream Links, gunakan **Cek file via API** untuk memeriksa URL tersimpan saat itu tanpa menunggu giliran cron. Simpan dahulu jika URL baru diubah. Jika hostname tidak memiliki konfigurasi API aktif, muncul penjelasan untuk memperbaiki Embed hostnames. Cache tombol maksimal 15 detik. Cron tetap diperlukan untuk pemeriksaan seluruh koleksi.
 
 UPNShare `Check failed (HTTP 404)` juga dikeluarkan dari playback tanpa diberi label Deleted. Resolver mencoba host berikutnya, termasuk link tanpa API dan dengan prioritas lebih rendah. Cron atau Cek file via API tetap dapat memulihkan link ketika API kembali menyatakan tersedia. Hasil 404 lama perlu diperiksa ulang setelah pembaruan agar penandaan ini tersimpan.
+
+Dengan jadwal mingguan, perubahan status file bisa baru terdeteksi hingga sekitar satu minggu kemudian untuk link yang masuk batch; antrean lebih besar memerlukan beberapa minggu. Gunakan Cek file via API untuk pemeriksaan manual segera.
