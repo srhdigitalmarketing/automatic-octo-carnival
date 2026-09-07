@@ -51,7 +51,10 @@ class CloudflareR2Storage
 
     public function uploadBanner(File $file): string
     {
-        $mime = $file->getMimeType();
+        // Temporary downloads have no extension, and fileinfo may be unavailable.
+        // Detect the actual image format instead of trusting filenames or HTTP headers.
+        $imageInfo = @getimagesize($file->getPathname());
+        $mime = $imageInfo !== false ? ($imageInfo['mime'] ?? '') : '';
         $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
         if (! isset($extensions[$mime])) {
             throw new RuntimeException('Only JPG, PNG, and WebP images can be uploaded.');
