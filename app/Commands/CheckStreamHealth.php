@@ -25,15 +25,17 @@ class CheckStreamHealth extends BaseCommand
             return;
         }
 
+        $checkOrder = $links->supportsProviderStatus() ? 'health_job_checked_at' : 'last_checked_at';
         $limit = (int) (CLI::getOption('limit') ?: 100);
         $limit = max(1, min(500, $limit));
         // Work through visitor-reported playback failures first so links that
         // recover can leave the review queue without manual intervention.
         $batch = (new LinkModel())->where('type', 'stream')
             ->where('reports_not_working >', 0)
+            ->groupStart()->where($checkOrder, null)->orWhere($checkOrder . ' <', date('Y-m-d H:i:s', time() - 300))->groupEnd()
             ->orderBy('reports_not_working', 'DESC')
-            ->orderBy('last_checked_at', 'ASC')
-            ->limit($limit)
+            ->orderBy($checkOrder, 'ASC')
+            ->limit((int) max(1, floor($limit / 2)))
             ->findAll();
 
         $remaining = $limit - count($batch);
@@ -49,7 +51,7 @@ class CheckStreamHealth extends BaseCommand
             }
 
             $batch = array_merge($batch, $rotating
-                ->orderBy('last_checked_at', 'ASC')
+                ->orderBy($checkOrder, 'ASC')
                 ->limit($remaining)
                 ->findAll());
         }
@@ -58,6 +60,7 @@ class CheckStreamHealth extends BaseCommand
         $healthy = 0;
         $unavailable = 0;
         $autoClearedReports = 0;
+        $providerCounts = [];
 
         foreach ($batch as $link) {
             if ($resolver->check($link)) {
@@ -66,8 +69,14 @@ class CheckStreamHealth extends BaseCommand
             } else {
                 $unavailable++;
             }
+            if ($links->supportsProviderStatus()) {
+                $links->protect(false)->update($link->id, ['health_job_checked_at'=>date('Y-m-d H:i:s')]);
+                $links->protect(true);
+            }
+            if (!empty($link->provider_status)) { $key = $link->provider_status; $providerCounts[$key] = ($providerCounts[$key] ?? 0) + 1; }
         }
 
+        if ($providerCounts) { CLI::write('UPNShare: ' . json_encode($providerCounts)); }
         CLI::write(
             'Checked ' . count($batch) . ' stream link(s): ' . $healthy . ' available, ' . $unavailable . ' unavailable, '
             . $autoClearedReports . ' not-working report(s) auto-cleared.',

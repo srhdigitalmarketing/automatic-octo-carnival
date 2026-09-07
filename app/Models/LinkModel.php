@@ -14,6 +14,15 @@ class LinkModel extends Model
     protected $table = 'links';
     /** @var bool|null Cached database capability check for pre-migration installs. */
     private $streamHealthFieldsAvailable = null;
+    private $providerStatusAvailable = null;
+    public function supportsProviderStatus(): bool
+    {
+        if ($this->providerStatusAvailable === null) {
+            $this->providerStatusAvailable = count(array_intersect(['provider_status', 'provider_message', 'provider_checked_at', 'health_job_checked_at'], $this->db->getFieldNames('links'))) === 4;
+        }
+        return $this->providerStatusAvailable;
+    }
+
     protected $allowedFields = [
         'movie_id', 'api_id', 'link', 'resolution', 'quality', 'size_val', 'size_lbl', 'type',
         'host_priority', 'failure_count', 'last_checked_at', 'last_success_at', 'last_failure_at',

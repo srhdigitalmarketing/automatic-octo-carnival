@@ -93,7 +93,7 @@ class TableData extends BaseController
         $servers = [];
         $links = db_connect()->table('links')
             ->select($healthAvailable
-                ? 'movie_id, link, is_broken, last_checked_at, last_success_at, last_error'
+                ? 'movie_id, link, is_broken, last_checked_at, last_success_at, last_error' . ((new LinkModel())->supportsProviderStatus() ? ', provider_status' : '')
                 : 'movie_id, link')
             ->whereIn('movie_id', $movieIds)
             ->where('type', 'stream')
@@ -113,10 +113,11 @@ class TableData extends BaseController
             $displayName = $displayName !== '' ? $displayName : $host;
             $status = $this->streamLinkStatus($link, $healthAvailable);
 
-            if (! isset($servers[$movieId][$displayName])) {
-                $servers[$movieId][$displayName] = ['name' => $displayName, 'status' => $status];
-            } elseif ($this->statusWeight($status) > $this->statusWeight($servers[$movieId][$displayName]['status'])) {
-                $servers[$movieId][$displayName]['status'] = $status;
+            $displayKey = $displayName . ':' . $status;
+            if (! isset($servers[$movieId][$displayKey])) {
+                $servers[$movieId][$displayKey] = ['name' => $displayName, 'status' => $status];
+            } elseif ($this->statusWeight($status) > $this->statusWeight($servers[$movieId][$displayKey]['status'])) {
+                $servers[$movieId][$displayKey]['status'] = $status;
             }
         }
 
@@ -137,13 +138,17 @@ class TableData extends BaseController
         $labels = array_map(static function (array $server): string {
             $status = $server['status'];
             $meta = [
+                'deleted' => ['class'=>'is-broken','icon'=>'fa-times-circle','label'=>'Deleted'],
+                'error' => ['class'=>'is-broken','icon'=>'fa-times-circle','label'=>'Error'],
+                'processing' => ['class'=>'is-unchecked','icon'=>'fa-clock-o','label'=>'Processing'],
+                'unknown' => ['class'=>'is-unchecked','icon'=>'fa-clock-o','label'=>'Check failed'],
                 'healthy' => ['class' => 'is-healthy', 'icon' => 'fa-check-circle', 'label' => 'Available'],
                 'broken' => ['class' => 'is-broken', 'icon' => 'fa-times-circle', 'label' => 'Unavailable'],
                 'unchecked' => ['class' => 'is-unchecked', 'icon' => 'fa-clock-o', 'label' => 'Not checked'],
             ][$status] ?? ['class' => 'is-unchecked', 'icon' => 'fa-clock-o', 'label' => 'Not checked'];
 
             return '<span class="video-server-label ' . $meta['class'] . '" title="' . esc($meta['label']) . '">'
-                . '<i class="fa ' . $meta['icon'] . '"></i> ' . esc($server['name']) . '</span>';
+                . '<i class="fa ' . $meta['icon'] . '"></i> ' . esc($server['name']) . (in_array($status, ['deleted','error','processing','unknown'], true) ? ' — ' . esc($meta['label']) : '') . '</span>';
         }, $servers);
 
         return '<div class="video-server-list">' . implode('', $labels) . '</div>';
@@ -152,6 +157,7 @@ class TableData extends BaseController
     /** @param array<string, mixed> $link */
     private function streamLinkStatus(array $link, bool $healthAvailable): string
     {
+        if (in_array($link['provider_status'] ?? '', ['deleted','error','processing','unknown'], true)) { return $link['provider_status']; }
         if (! $healthAvailable || empty($link['last_checked_at'])) {
             return 'unchecked';
         }

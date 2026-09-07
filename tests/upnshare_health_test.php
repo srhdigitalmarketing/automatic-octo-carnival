@@ -1,0 +1,70 @@
+<?php
+// No live API calls or database connection: actual framework entities with mocked persistence/transport.
+define('FCPATH', dirname(__DIR__) . '/public/');
+require dirname(__DIR__) . '/app/Config/Paths.php';
+$paths = new Config\Paths();
+require dirname(__DIR__) . '/system/bootstrap.php';
+error_reporting(E_ALL & ~E_DEPRECATED);
+function check($ok, $message) { if (!$ok) { throw new RuntimeException($message); } }
+$config = new Config\UpnShare(); $config->apiToken = 'test-only-token';
+$calls = [];
+function client(array $responses): App\Libraries\UpnShareClient {
+    global $config, $calls; $calls = [];
+    return new App\Libraries\UpnShareClient($config, static function ($path) use (&$responses) {
+        $GLOBALS['calls'][] = $path;
+        if (!$responses) { throw new RuntimeException('Unexpected API call: ' . $path); }
+        return array_shift($responses);
+    });
+}
+foreach (['ready'=>'available','deleted'=>'deleted','failed'=>'error','processing'=>'processing','new-provider-state'=>'unknown'] as $input=>$expected) {
+    $result = client([['http'=>200,'body'=>['id'=>'abc123','status'=>$input]]])->videoStatus('abc123');
+    check($result['status'] === $expected, 'Status mapping: ' . $input);
+    check($calls === ['/video/manage/abc123'], 'Only documented detail path');
+}
+$c = client([['http'=>404,'body'=>['message'=>'Not found']], ['http'=>200,'body'=>['data'=>[]]], ['http'=>404,'body'=>['message'=>'Not found']]]);
+check($c->videoStatus('abc123')['status'] === 'deleted', 'Verified missing file');
+check($c->videoStatus('def456')['status'] === 'deleted', 'Inventory validation reused within batch');
+check(count($calls) === 3 && $calls[1] === '/video/manage?page=1&perPage=1', 'One inventory verification');
+foreach ([0,400,401,403,429,500,502] as $code) {
+    check(client([['http'=>$code,'body'=>['message'=>'Not found']]])->videoStatus('abc123')['status'] === 'unknown', 'HTTP failure never deleted: ' . $code);
+}
+foreach ([null, '<html>Not found</html>', ['error'=>'Not found']] as $body) {
+    check(client([['http'=>404,'body'=>$body]])->videoStatus('abc123')['status'] === 'unknown', 'Proxy/malformed 404 is inconclusive');
+}
+check(client([['http'=>404,'body'=>['message'=>'Not found']], ['http'=>401,'body'=>null]])->videoStatus('abc123')['status'] === 'unknown', 'Unverified account cannot mark deleted');
+check(client([['http'=>200,'body'=>['id'=>'other','status'=>'ready']]])->videoStatus('abc123')['status'] === 'unknown', 'Reject wrong video response');
+check(client([])->videoStatus('../abc')['status'] === 'unknown' && $calls === [], 'Reject invalid ID before request');
+check(App\Libraries\UpnShareHealth::matchesHost('https://embed.example/e/abc123', 'embed.example, upnshare.com'), 'Exact embed host mapping');
+check(!App\Libraries\UpnShareHealth::matchesHost('https://embed.example.evil.test/e/abc123', 'embed.example'), 'Reject suffix host mismatch');
+check(App\Libraries\UpnShareHealth::videoId('https://embed.example/#abc123') === 'abc123', 'Fragment video ID');
+check(App\Libraries\UpnShareHealth::videoId('https://embed.example/e/abc123?x=1') === 'abc123', 'Path video ID');
+class MemoryLinks extends App\Models\LinkModel {
+    public $saved = [];
+    public function __construct() {}
+    public function supportsProviderStatus(): bool { return true; }
+    public function update($id = null, $data = null): bool { $this->saved = $data; return true; }
+}
+$links = new MemoryLinks(); $health = new App\Libraries\UpnShareHealth($links);
+$persist = new ReflectionMethod($health, 'persist'); $persist->setAccessible(true);
+$link = new App\Entities\Link(['id'=>1,'provider_status'=>null]);
+$persist->invoke($health, $link, ['status'=>'deleted','message'=>'File missing']);
+check((int)$links->saved['is_broken'] === 1 && $link->provider_status === 'deleted', 'Deleted blocked immediately');
+$persist->invoke($health, $link, ['status'=>'unknown','message'=>'HTTP 429']);
+check($link->provider_status === 'deleted' && (int)$links->saved['is_broken'] === 1, 'Failed check cannot resurrect deleted');
+$persist->invoke($health, $link, ['status'=>'available','message'=>'Ready']);
+check($link->provider_status === 'available' && (int)$links->saved['is_broken'] === 0 && $links->saved['last_error'] === null, 'Available restores link');
+$persist->invoke($health, $link, ['status'=>'unknown','message'=>'HTTP 401']);
+check($link->provider_status === 'unknown' && !isset($links->saved['is_broken']), 'Unknown does not mark playable link deleted');
+// Exercise actual table badge rendering without a controller/database constructor.
+$controller = (new ReflectionClass(App\Controllers\Admin\Ajax\TableData::class))->newInstanceWithoutConstructor();
+$statusMethod = new ReflectionMethod($controller, 'streamLinkStatus'); $statusMethod->setAccessible(true);
+$labelsMethod = new ReflectionMethod($controller, 'videoServerLabels'); $labelsMethod->setAccessible(true);
+check($statusMethod->invoke($controller, ['provider_status'=>'deleted','is_broken'=>1], true) === 'deleted', 'Provider badge overrides generic broken');
+$html = $labelsMethod->invoke($controller, [['name'=>'UPN <test>','status'=>'deleted']]);
+check(strpos($html, 'Deleted') !== false && strpos($html, '<test>') === false, 'Visible, escaped Deleted badge');
+// Actual admin validation: blank token is retained on edit by controller; malformed inputs rejected.
+$admin = (new ReflectionClass(App\Controllers\Admin\ThirdPartyApis::class))->newInstanceWithoutConstructor();
+$validate = new ReflectionMethod($admin, 'providerErrors'); $validate->setAccessible(true);
+check($validate->invoke($admin, ['provider'=>'upnshare','api_token'=>'token','embed_domains'=>'embed.example']) === [], 'Valid account settings');
+check(count($validate->invoke($admin, ['provider'=>'upnshare','api_token'=>'','embed_domains'=>'https://embed.example/e/id'])) === 2, 'Reject blank token and URL instead of hostname');
+echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

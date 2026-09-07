@@ -1,4 +1,5 @@
 <?php
+if ($tpAPI->provider === 'upnshare') { echo view('admin/third_party_apis/x_panels/upnshare_form', ['tpAPI'=>$tpAPI]); return; }
 $isExisting = ! empty($tpAPI->id);
 ?>
 

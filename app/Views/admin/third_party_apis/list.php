@@ -5,10 +5,11 @@
 
 <div class="host-api-overview">
     <section>
-        <span class="host-api-guide__eyebrow">R2 STORAGE</span>
-        <h4>Cloudflare R2 storage</h4>
-        <p>Manage the credentials used exclusively for banner image uploads.</p>
+        <span class="host-api-guide__eyebrow">API & R2 STORAGE</span>
+        <h4>API & R2 storage</h4>
+        <p>Manage banner storage and UPNShare video health checks.</p>
         <a href="<?= admin_url('/third-party-apis/new') ?>" class="btn btn-primary"><i class="fa fa-plus"></i> Add R2 storage</a>
+    <a href="<?= admin_url('/third-party-apis/new?provider=upnshare') ?>" class="btn btn-primary">Add UPNShare</a>
     </section>
     <section class="host-api-overview__docs">
         <h5>Storage provider</h5>
@@ -34,10 +35,10 @@
             <tr>
                 <td>
                     <strong><?= esc($api->name) ?></strong>
-                    <small>Banner uploads are stored in R2</small>
+                    <small><?= $api->provider === 'upnshare' ? 'Video availability checks' : 'Banner uploads are stored in R2' ?></small>
                 </td>
-                <td><span class="host-api-provider-badge">Cloudflare R2</span></td>
-                <td><span class="host-api-scope"><i class="fa fa-cloud-upload"></i> Banner storage</span></td>
+                <td><span class="host-api-provider-badge"><?= $api->provider === 'upnshare' ? 'UPNShare' : 'Cloudflare R2' ?></span></td>
+                <td><span class="host-api-scope"><i class="fa fa-cloud-upload"></i> <?= $api->provider === 'upnshare' ? 'Read video status' : 'Banner storage' ?></span></td>
                 <td><?= format_date_time($api->created_at) ?></td>
                 <td>
                     <span class="host-api-status-badge <?= $api->status == 'active' ? 'is-active' : 'is-paused' ?>">
@@ -55,7 +56,7 @@
             </tbody>
         </table>
         <?php if (empty($apis)): ?>
-            <div class="host-api-empty"><i class="fa fa-cloud-upload"></i><strong>No R2 storage configured</strong><span>Add Cloudflare R2 credentials to store banner uploads in the cloud.</span></div>
+            <div class="host-api-empty"><i class="fa fa-cloud-upload"></i><strong>No API access configured</strong><span>Add Cloudflare R2 credentials to store banner uploads in the cloud.</span></div>
         <?php endif; ?>
     </div>
 </div>

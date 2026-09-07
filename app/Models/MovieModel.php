@@ -332,7 +332,7 @@ class MovieModel extends Model
             $url = $link['url'] ?? '';
             $resolution = $link['resolution'] ?? null;
             $quality = $link['quality'] ?? null;
-            $api_id = $link['api_id'] ?? null;
+            $api_id = !empty($link['api_id']) ? (int)$link['api_id'] : null;
             $id = $link['id'] ?? '';
             $sizeVal = $link['size_val'] ?? '0';
             $sizeLbl = $link['size_lbl'] ?? 'MB';
@@ -353,7 +353,7 @@ class MovieModel extends Model
                 }
 
                 //get exist link
-                $dlLink = $linkModel->where('id', $id)
+                $dlLink = $linkModel->where('id', $id)->where('movie_id', $movieId)
                                     ->where('type', $type)
                                     ->first();
 
@@ -391,13 +391,25 @@ class MovieModel extends Model
                 $data['upnshare_video_id'] = trim((string) ($link['upnshare_video_id'] ?? '')) ?: null;
             }
 
+            $resetHealth = $type === 'stream' && !empty($dlLink->id)
+                && ((string)$dlLink->link !== (string)$url || (int)$dlLink->api_id !== (int)$api_id
+                    || (string)$dlLink->upnshare_video_id !== (string)($data['upnshare_video_id'] ?? ''));
+            if ($resetHealth && (string)$dlLink->link !== (string)$url) { $data['upnshare_video_id'] = null; }
             $dlLink->fill( $data );
 
             if($dlLink->hasChanged()){
 
                 try{
                     //we does not care about saving errors
-                    $linkModel->save( $dlLink );
+                    $saved = $linkModel->save( $dlLink );
+                    if ($saved && $resetHealth && $linkModel->supportsProviderStatus()) {
+                        $linkModel->protect(false)->update($dlLink->id, [
+                            'provider_status'=>null, 'provider_message'=>null, 'provider_checked_at'=>null, 'health_job_checked_at'=>null,
+                            'is_broken'=>0, 'failure_count'=>0, 'last_checked_at'=>null,
+                            'last_success_at'=>null, 'last_failure_at'=>null, 'last_error'=>null,
+                        ]);
+                        $linkModel->protect(true);
+                    }
                 }catch (\ReflectionException $e){}
             }
 

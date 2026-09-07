@@ -1,3 +1,6 @@
+<?php if (($tpAPI->provider ?? '') === 'upnshare'): ?>
+<section class="host-api-guide"><p>UPNShare: pemeriksaan status video melalui API. <a href="https://upnshare.com/api-document/index.html" target="_blank" rel="noopener noreferrer">Dokumentasi API</a></p></section>
+<?php else: ?>
 <section class="host-api-guide">
     <div class="host-api-guide__copy">
         <span class="host-api-guide__eyebrow">R2 STORAGE</span>
@@ -11,3 +14,5 @@
         <span>Use R2 S3 API credentials and a public bucket domain.</span>
     </div>
 </section>
+
+<?php endif; ?>

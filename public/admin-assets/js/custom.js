@@ -322,6 +322,7 @@
                     .attr('title', 'Waiting for the first availability check')
                     .html('<i class="fa fa-clock-o"></i> Not checked');
 
+                clonedGroup.find('select[name$="[api_id]"]').attr('name', 'st_links['+ uniqId +'][api_id]').val('');
                 clonedGroup.find('input[type="hidden"]').remove();
                 clonedGroup.find('.link-meta-info').remove();
                 clonedGroup.find('label:first').text('Link ' + uniqId);

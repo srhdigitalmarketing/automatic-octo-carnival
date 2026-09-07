@@ -10,7 +10,7 @@ class RemoveLegacyVideoHostApiAccess extends Migration
     {
         $legacyIds = $this->db->table('third_party_apis')
             ->select('id')
-            ->where('provider !=', 'cloudflare_r2')
+            ->whereNotIn('provider', ['cloudflare_r2', 'upnshare'])
             ->get()
             ->getResultArray();
 

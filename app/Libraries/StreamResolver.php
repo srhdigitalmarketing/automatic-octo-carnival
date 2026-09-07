@@ -19,14 +19,13 @@ class StreamResolver
     private $links;
     /** @var UpnShare */
     private $config;
-    /** @var UpnShareClient */
-    private $upnShare;
+    private $upnHealth;
 
-    public function __construct(?LinkModel $links = null, ?UpnShareClient $upnShare = null)
+    public function __construct(?LinkModel $links = null)
     {
         $this->links = $links ?: new LinkModel();
         $this->config = config('UpnShare');
-        $this->upnShare = $upnShare ?: new UpnShareClient($this->config);
+        $this->upnHealth = new UpnShareHealth($this->links);
     }
 
     public function resolve(int $movieId, ?int $preferredId = null, array $excludedIds = []): ?Link
@@ -79,6 +78,7 @@ class StreamResolver
             return;
         }
 
+        if (in_array($link->provider_status, ['deleted','error','processing'], true)) { return; }
         $count = (int) $link->failure_count + 1;
         $this->links->protect(false)->update($linkId, [
             'failure_count' => $count,
@@ -125,7 +125,7 @@ class StreamResolver
             return false;
         }
 
-        if (! $this->isHealthy($link)) {
+        if (! $this->isHealthy($link, true)) {
             return false;
         }
 
@@ -133,11 +133,25 @@ class StreamResolver
         return true;
     }
 
-    private function isHealthy(Link $link): bool
+    private function isHealthy(Link $link, bool $force = false): bool
     {
         $lastCheck = $link->last_checked_at ? strtotime($link->last_checked_at) : 0;
-        if ($lastCheck && (time() - $lastCheck) < $this->config->healthCacheSeconds) {
+        if (! $force && $lastCheck && (time() - $lastCheck) < $this->config->healthCacheSeconds) {
             return ! (bool) $link->is_broken && empty($link->last_error);
+        }
+
+        // API calls run in the scheduled job, not on high-traffic player requests.
+        if (!$force && $link->provider_status === 'available') { return true; }
+        $upnStatus = $force ? $this->upnHealth->check($link) : null;
+        if ($upnStatus !== null) {
+            if ($upnStatus['status'] === 'available') { return true; }
+            if (in_array($upnStatus['status'], ['deleted','error','processing'], true)) { return false; }
+            // A failed API check is inconclusive, not proof of deletion.
+            return $this->isSafePublicUrl($link->link) && $this->probeHost($link->link);
+        }
+        if (in_array($link->provider_status, ['deleted','error','processing'], true)) {
+            $this->links->protect(false)->update($link->id, ['last_checked_at'=>date('Y-m-d H:i:s')]);
+            return false;
         }
 
         // A provider API is authoritative for deletions. HTTP probing remains
@@ -174,11 +188,7 @@ class StreamResolver
             ? (new ThirdPartyApi())->find((int) $link->api_id)
             : $this->configuredApiForLink($link);
         if ($api !== null && $api->status === 'active' && trim((string) $api->api_token) !== '') {
-            return $this->checkConfiguredProvider($api, $videoId);
-        }
-
-        if ($this->upnShare->isConfigured()) {
-            return $this->upnShare->videoIsAvailable($videoId);
+            return $api->provider === 'upnshare' ? null : $this->checkConfiguredProvider($api, $videoId);
         }
 
         return null;
