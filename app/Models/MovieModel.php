@@ -15,6 +15,9 @@ use CodeIgniter\Model;
  */
 class MovieModel extends Model
 {
+    // A stored public image URL; local filenames and empty values are excluded.
+    public const IMAGE_LINK_SQL = "(COALESCE(banner, '') REGEXP '^https?://[^/[:space:]]+(/[^[:space:]]*)?$')";
+
     protected $table = 'movies';
     protected $allowedFields = [
         'imdb_id',

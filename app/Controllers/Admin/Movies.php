@@ -38,7 +38,9 @@ class Movies extends BaseController
             'with_st_links',
             'without_st_links',
             'good_health_servers',
-            'bad_health_network'
+            'bad_health_network',
+            'with_image',
+            'without_image'
         ];
 
         // The table itself is loaded page-by-page through the DataTables AJAX
@@ -65,6 +67,10 @@ class Movies extends BaseController
             if($filter == 'bad_health_network')
                 $countModel->withUnhealthyStreamLinks();
 
+        }
+
+        if (in_array($filter, ['with_image', 'without_image'], true)) {
+            $countModel->where(\App\Models\MovieModel::IMAGE_LINK_SQL . ($filter === 'with_image' ? ' = 1' : ' = 0'), null, false);
         }
 
         $moviesCount = $countModel->where('type', $type)->countAllResults();

@@ -4,6 +4,7 @@ namespace App\Controllers\Admin\Ajax;
 
 use App\Controllers\BaseController;
 use App\Models\LinkModel;
+use App\Models\MovieModel;
 use CodeIgniter\Database\BaseBuilder;
 
 /**
@@ -41,8 +42,8 @@ class TableData extends BaseController
                 '<span class="video-title">' . esc($movie['title']) . '</span>',
                 esc($movie['imdb_id']),
                 $this->videoServerLabels($serversByMovie[$id] ?? []),
-                // Match the stored URL shown in the edit form's "Link dari R2" field.
-                filter_var((string) ($movie['banner'] ?? ''), FILTER_VALIDATE_URL) !== false
+                // Use the same image status as the server-side filter.
+                (int) $movie['has_image'] === 1
                     ? '<span style="color: #000;">Image</span>'
                     : '<span style="color: #000;">No Image</span>',
                 format_date_time($movie['created_at']),
@@ -226,6 +227,10 @@ class TableData extends BaseController
     private function movieBuilder(string $filter): BaseBuilder
     {
         $builder = db_connect()->table('movies')->where('type', 'movie');
+        $builder->select('movies.*')->select(MovieModel::IMAGE_LINK_SQL . ' AS has_image', false);
+        if (in_array($filter, ['with_image', 'without_image'], true)) {
+            $builder->where(MovieModel::IMAGE_LINK_SQL . ($filter === 'with_image' ? ' = 1' : ' = 0'), null, false);
+        }
 
         if ($filter === 'with_st_links') {
             $builder->whereIn('id', static function ($query) {

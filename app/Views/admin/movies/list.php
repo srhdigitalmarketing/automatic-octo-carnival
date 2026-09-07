@@ -10,6 +10,8 @@
             'onchange' => 'filter_movie_results(this.value)',
             'options' => [
                     'all' => 'All',
+                    'with_image' => 'Image',
+                    'without_image' => 'No Image',
                     'with_st_links' => 'Have Stream Links',
                     'without_st_links' => 'Haven\'t Stream Links',
                     'good_health_servers' => 'Good Health Server',
