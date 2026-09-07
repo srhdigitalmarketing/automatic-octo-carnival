@@ -74,6 +74,25 @@ try {
     $command->run([]);
     check($links->find($id)->health_job_checked_at !== null, 'Cron advances separate rotation timestamp');
     check($links->find($id)->provider_status === 'deleted', 'Paused account cannot clear known deletion');
+    // Deleted high-priority/preferred links must never block a lower-priority host.
+    $links->protect(false)->update($id, ['host_priority'=>100,'provider_status'=>'deleted','is_broken'=>0,
+        'last_checked_at'=>date('Y-m-d H:i:s'),'last_success_at'=>date('Y-m-d H:i:s'),'last_error'=>null]);
+    $links->protect(true);
+    $fallback = $links->insert(['movie_id'=>1,'link'=>'https://fallback.example/e/low123','type'=>'stream','host_priority'=>1,
+        'last_checked_at'=>date('Y-m-d H:i:s'),'last_success_at'=>date('Y-m-d H:i:s')]);
+    $resolver = new App\Libraries\StreamResolver($links);
+    $healthyMethod = new ReflectionMethod($resolver,'isHealthy'); $healthyMethod->setAccessible(true);
+    check($healthyMethod->invoke($resolver,$links->find($id)) === false, 'Deleted overrides a fresh successful cache');
+    check((int)$resolver->resolve(1,(int)$id)->id === (int)$fallback, 'Deleted preferred priority 100 falls back to priority 1');
+    check($resolver->resolve(1,(int)$id,[(int)$fallback]) === null, 'No available host never returns deleted link');
+    $stale = $links->find($fallback);
+    $links->protect(false)->update($fallback,['provider_status'=>'deleted','is_broken'=>1]); $links->protect(true);
+    $success = new ReflectionMethod($resolver,'recordSuccess'); $success->setAccessible(true);
+    check($success->invoke($resolver,$stale) === false, 'Stale player success cannot override concurrent API deletion');
+    check((int)$links->find($fallback)->is_broken === 1, 'Deleted host stays blocked after stale success');
+    $links->protect(false)->update($id,['provider_status'=>'available','is_broken'=>0,'last_error'=>null]); $links->protect(true);
+    check((int)$resolver->resolve(1)->id === (int)$id, 'Recovered API host returns to eligible priority ordering');
+    $links->delete($fallback);
     $migration->down(); $db->resetDataCache();
     check(!in_array('provider_status',$db->getFieldNames('links'),true), 'Migration rollback');
     check($db->table('links')->countAllResults() === 1, 'Migration preserves video links');

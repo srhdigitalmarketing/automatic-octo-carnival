@@ -59,6 +59,10 @@ class LinkModel extends Model
 
         if(! $withBroken){
             $this->where('is_broken', 0);
+            if ($this->supportsProviderStatus()) {
+                $this->groupStart()->where('provider_status', null)
+                    ->orWhereNotIn('provider_status', ['deleted','error','processing'])->groupEnd();
+            }
         }
 
         if ($this->supportsStreamHealthFields()) {

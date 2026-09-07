@@ -47,7 +47,7 @@ class StreamResolver
 
         if (! empty($preferredId) && ! in_array($preferredId, $excludedIds, true)) {
             usort($candidates, function (Link $left, Link $right) use ($preferredId) {
-                return ($left->id === $preferredId ? 0 : 1) <=> ($right->id === $preferredId ? 0 : 1);
+                return ((int)$left->id === $preferredId ? 0 : 1) <=> ((int)$right->id === $preferredId ? 0 : 1);
             });
         }
 
@@ -60,8 +60,7 @@ class StreamResolver
                 continue;
             }
 
-            $this->recordSuccess($link);
-            return $link;
+            if ($this->recordSuccess($link)) { return $link; }
         }
 
         return null;
@@ -129,12 +128,14 @@ class StreamResolver
             return false;
         }
 
-        $this->recordSuccess($link, false);
-        return true;
+        return $this->recordSuccess($link, false);
     }
 
     private function isHealthy(Link $link, bool $force = false): bool
     {
+        // Provider deletion overrides cached HTTP success and host priority.
+        // Explicit cron checks may still recover a restored file.
+        if (!$force && in_array($link->provider_status, ['deleted','error','processing'], true)) { return false; }
         $lastCheck = $link->last_checked_at ? strtotime($link->last_checked_at) : 0;
         if (! $force && $lastCheck && (time() - $lastCheck) < $this->config->healthCacheSeconds) {
             return ! (bool) $link->is_broken && empty($link->last_error);
@@ -393,10 +394,10 @@ class StreamResolver
         }
     }
 
-    private function recordSuccess(Link $link, bool $markServed = true): void
+    private function recordSuccess(Link $link, bool $markServed = true): bool
     {
         if (! $this->links->supportsStreamHealthFields()) {
-            return;
+            return true;
         }
 
         $now = date('Y-m-d H:i:s');
@@ -414,7 +415,19 @@ class StreamResolver
             $data['last_served_at'] = $now;
         }
 
-        $this->links->protect(false)->update($link->id, $data);
+        // A cron check can mark a link deleted after candidates were loaded.
+        // Never overwrite that authoritative state with a cached player success.
+        if ($this->links->supportsProviderStatus()) {
+            $this->links->groupStart()->where('provider_status', null)
+                ->orWhereNotIn('provider_status', ['deleted','error','processing'])->groupEnd();
+        }
+        $saved = $this->links->protect(false)->update($link->id, $data);
+        $this->links->protect(true);
+        if (!$saved) { return false; }
+        $current = $this->links->getLink((int)$link->id);
+        if ($current === null || (bool)$current->is_broken
+            || in_array($current->provider_status, ['deleted','error','processing'], true)) { return false; }
+
 
         // A successful provider/API or HTTP check confirms the visitor report
         // is no longer actionable. Keep "wrong video" reports for a person to
@@ -422,6 +435,7 @@ class StreamResolver
         if ((int) ($link->reports_not_working ?? 0) > 0) {
             $this->links->clearNotWorkingReports((int) $link->id);
         }
+        return true;
     }
 
     private function probeHost(string $url): bool

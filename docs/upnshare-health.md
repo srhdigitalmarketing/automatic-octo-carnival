@@ -58,3 +58,7 @@ php tests/upnshare_mysql_test.php 13389
 ```
 
 Tes MySQL membuat dan menghapus database acak khusus tes. Jangan arahkan pengujian ke database produksi.
+
+## Rotasi jika file terhapus
+
+Status API Deleted/Error/Processing selalu dikeluarkan dari kandidat, termasuk saat link itu dipilih player atau memiliki prioritas tertinggi. Contoh: host A prioritas 100 terhapus, host B prioritas 1 tersedia → player memakai B. Prioritas hanya mengurutkan host yang memenuhi syarat, bukan syarat minimum. Cache sukses lama tidak mengalahkan status Deleted. Jika tidak ada host tersedia, player menampilkan pesan tidak ada host sehat. Pemilihan berikutnya memakai status terbaru yang telah disimpan cron; iframe yang sudah terbuka tidak diputus secara paksa.
