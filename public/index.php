@@ -1,5 +1,8 @@
 <?php
 
+// Also cover redirects and bootstrap errors before framework filters run.
+header('X-Robots-Tag: noindex, nofollow, noimageindex, nosnippet');
+
 if(file_exists('./install.php')){
     header("Location: ./install.php");
     exit;

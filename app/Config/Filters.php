@@ -25,6 +25,7 @@ class Filters extends BaseConfig
      * @var array
      */
     public $aliases = [
+        'noindex' => \App\Filters\NoIndex::class,
         'csrf'          => CSRF::class,
         'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
@@ -47,6 +48,7 @@ class Filters extends BaseConfig
      */
     public $globals = [
         'before' => [
+            'noindex',
             'auth',
             // 'honeypot',
             // 'csrf',
@@ -54,6 +56,7 @@ class Filters extends BaseConfig
         ],
         'after' => [
             'toolbar',
+            'noindex',
             // 'honeypot',
             // 'secureheaders',
         ],

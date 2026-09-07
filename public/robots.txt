@@ -1,2 +1,4 @@
+# Crawling must remain allowed so search engines can read X-Robots-Tag noindex.
+# This site intentionally does not publish a sitemap.
 User-agent: *
-Disallow: 
+Disallow:

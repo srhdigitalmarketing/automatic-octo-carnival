@@ -1,3 +1,8 @@
+# Applies to static files/images and PHP responses when Apache mod_headers is enabled.
+<IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex, nofollow, noimageindex, nosnippet"
+</IfModule>
+
 # Disable directory browsing
 Options All -Indexes
 

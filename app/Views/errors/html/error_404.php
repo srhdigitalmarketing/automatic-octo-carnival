@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="robots" content="noindex, nofollow, noimageindex, nosnippet">
 	<meta charset="utf-8">
 	<title>404 Page Not Found</title>
 
