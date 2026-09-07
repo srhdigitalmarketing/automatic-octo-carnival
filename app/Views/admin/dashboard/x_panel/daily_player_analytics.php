@@ -14,7 +14,7 @@
                     <th><i class="fa fa-calendar"></i> Date</th>
                     <th class="text-right"><i class="fa fa-eye"></i> Impressions</th>
                     <th class="text-right"><i class="fa fa-play-circle"></i> Play clicks</th>
-                    <th class="text-right"><i class="fa fa-users"></i> Unique visitors</th>
+                    <th class="text-right"><i class="fa fa-users"></i> Unique visitors (GA4)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -23,14 +23,14 @@
                         <td><strong><?= esc($row['date']) ?></strong></td>
                         <td class="text-right"><?= number_format($row['impressions']) ?></td>
                         <td class="text-right"><?= number_format($row['play_clicks']) ?></td>
-                        <td class="text-right"><?= number_format($row['unique_visitors']) ?></td>
+                        <td class="text-right"><?= $visitorStats['tracking_ready'] ? number_format($row['unique_visitors']) : '&mdash;' ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
         <?php if (! $dailyPlayerAnalytics['tracking_ready']): ?>
-            <p class="dashboard-chart-notice dashboard-daily-analytics-notice"><i class="fa fa-info-circle"></i> Import tabel analytics atau jalankan migration untuk mulai mencatat impressions dan play clicks.</p>
+            <p class="dashboard-chart-notice dashboard-daily-analytics-notice"><i class="fa fa-info-circle"></i> Pastikan tabel metrik player tersedia dan akses laporan GA4 sudah dihubungkan.</p>
         <?php endif; ?>
     </div>
 </div>

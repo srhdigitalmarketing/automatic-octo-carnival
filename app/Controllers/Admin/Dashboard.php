@@ -28,7 +28,7 @@ class Dashboard extends BaseController
 
         $liveTraffic = $this->liveTrafficSummary();
         $visitorStats = $this->visitorStatistics();
-        $dailyPlayerAnalytics = $this->dailyPlayerAnalytics();
+        $dailyPlayerAnalytics = $this->dailyPlayerAnalytics($visitorStats);
         $revenueSummary = (new AdRevenueToday())->cachedSummary();
 
         $data = compact('title', 'hidePageTitle', 'anytc', 'topMovies', 'liveTraffic', 'visitorStats', 'dailyPlayerAnalytics', 'revenueSummary');
@@ -66,105 +66,16 @@ class Dashboard extends BaseController
         }
     }
 
-    /**
-     * Build a 30-day view from compact, anonymous daily visitor rows.
-     * The raw rows are automatically pruned by LiveTrafficModel after 30 days.
-     */
     private function visitorStatistics(): array
     {
-        try {
-            $cached = cache()->get('dashboard_visitor_statistics_30_days');
-            if (is_array($cached)) {
-                return $cached;
-            }
-        } catch (\Throwable $exception) {
-            // Statistics remain available when the optional cache is unavailable.
-        }
-
-        $start = new \DateTimeImmutable('-29 days');
-        $labels = [];
-        $daily = [];
-        $byDate = [];
-
-        for ($day = 0; $day < 30; $day++) {
-            $date = $start->modify("+{$day} days");
-            $key = $date->format('Y-m-d');
-            $labels[] = $date->format('d M');
-            $daily[] = 0;
-            $byDate[$key] = $day;
-        }
-
-        $result = [
-            'labels' => $labels,
-            'daily' => $daily,
-            'total' => 0,
-            'platforms' => ['desktop' => 0, 'mobile' => 0],
-            'tracking_ready' => false,
-        ];
-
-        try {
-            $db = db_connect();
-            if (! $db->tableExists('traffic_daily_visitors')) {
-                return $result;
-            }
-
-            $from = $start->format('Y-m-d');
-            $dailyRows = $db->table('traffic_daily_visitors')
-                ->select('visit_date, COUNT(*) AS visitors')
-                ->where('visit_date >=', $from)
-                ->groupBy('visit_date')
-                ->get()
-                ->getResultArray();
-
-            foreach ($dailyRows as $row) {
-                $date = (string) $row['visit_date'];
-                if (isset($byDate[$date])) {
-                    $result['daily'][$byDate[$date]] = (int) $row['visitors'];
-                }
-            }
-
-            $platformRows = $db->table('traffic_daily_visitors')
-                ->select('platform, COUNT(*) AS visitors')
-                ->where('visit_date >=', $from)
-                ->groupBy('platform')
-                ->get()
-                ->getResultArray();
-
-            foreach ($platformRows as $row) {
-                $platform = (string) $row['platform'];
-                if (array_key_exists($platform, $result['platforms'])) {
-                    $result['platforms'][$platform] = (int) $row['visitors'];
-                }
-            }
-
-            $totalRow = $db->table('traffic_daily_visitors')
-                ->select('COUNT(DISTINCT visitor_key) AS visitors', false)
-                ->where('visit_date >=', $from)
-                ->get()
-                ->getFirstRow();
-
-            $result['total'] = $totalRow ? (int) $totalRow->visitors : 0;
-            $result['tracking_ready'] = true;
-
-            try {
-                cache()->save('dashboard_visitor_statistics_30_days', $result, 300);
-            } catch (\Throwable $exception) {
-                // A cache failure must not block the admin dashboard.
-            }
-        } catch (\Throwable $exception) {
-            log_message('error', 'Visitor statistics could not be loaded: {message}', [
-                'message' => $exception->getMessage(),
-            ]);
-        }
-
-        return $result;
+        return (new \App\Libraries\GoogleAnalyticsAudience())->summary();
     }
 
     /**
      * Keep the dashboard focused on daily player activity rather than a
      * cumulative table: embeds opened, first plays, and unique browsers.
      */
-    private function dailyPlayerAnalytics(): array
+    private function dailyPlayerAnalytics(array $visitorStats): array
     {
         $start = new \DateTimeImmutable('-6 days');
         $rowsByDate = [];
@@ -187,7 +98,7 @@ class Dashboard extends BaseController
         try {
             $db = db_connect();
             $metricsReady = $db->tableExists('traffic_daily_player_metrics');
-            $visitorsReady = $db->tableExists('traffic_daily_visitors');
+            $visitorsReady = $visitorStats['tracking_ready'];
 
             if (! $metricsReady && ! $visitorsReady) {
                 return $result;
@@ -211,21 +122,12 @@ class Dashboard extends BaseController
             }
 
             if ($visitorsReady) {
-                $visitors = $db->table('traffic_daily_visitors')
-                    ->select('visit_date, COUNT(*) AS visitors')
-                    ->where('visit_date >=', $from)
-                    ->groupBy('visit_date')
-                    ->get()
-                    ->getResultArray();
-
-                foreach ($visitors as $visitor) {
-                    $date = (string) $visitor['visit_date'];
+                foreach ($visitorStats['dates'] as $index => $date) {
                     if (isset($rowsByDate[$date])) {
-                        $rowsByDate[$date]['unique_visitors'] = (int) $visitor['visitors'];
+                        $rowsByDate[$date]['unique_visitors'] = $visitorStats['daily'][$index];
                     }
                 }
             }
-
             $result['rows'] = array_values(array_reverse($rowsByDate));
             $result['tracking_ready'] = $metricsReady && $visitorsReady;
         } catch (\Throwable $exception) {

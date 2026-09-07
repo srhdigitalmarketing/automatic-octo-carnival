@@ -7,7 +7,8 @@
         if (visitorsTarget) {
             new ApexCharts(visitorsTarget, {
                 chart: { type: 'area', height: 276, toolbar: { show: false }, fontFamily: 'Inter, Segoe UI, Arial, sans-serif' },
-                series: [{ name: 'Visitors', data: statistics.daily }],
+                series: statistics.tracking_ready ? [{ name: 'Visitors', data: statistics.daily }] : [],
+                noData: { text: 'Laporan GA4 belum tersedia' },
                 colors: ['#3569ef'],
                 dataLabels: { enabled: false },
                 stroke: { curve: 'smooth', width: 3 },
@@ -20,12 +21,13 @@
         }
 
         if (platformTarget) {
-            var platformTotal = statistics.platforms.desktop + statistics.platforms.mobile;
+            var platformTotal = statistics.platforms.desktop + statistics.platforms.mobile + statistics.platforms.tablet + statistics.platforms.other;
             new ApexCharts(platformTarget, {
                 chart: { type: 'donut', height: 248, fontFamily: 'Inter, Segoe UI, Arial, sans-serif' },
-                series: platformTotal ? [statistics.platforms.desktop, statistics.platforms.mobile] : [1, 0],
-                labels: ['Desktop', 'Mobile'],
-                colors: ['#3569ef', '#8b7cf6'],
+                noData: { text: statistics.tracking_ready ? 'Belum ada data' : 'Laporan GA4 belum tersedia' },
+                series: platformTotal ? [statistics.platforms.desktop, statistics.platforms.mobile, statistics.platforms.tablet, statistics.platforms.other] : [],
+                labels: ['Desktop', 'Mobile', 'Tablet', 'Lainnya'],
+                colors: ['#3569ef', '#8b7cf6', '#28a745', '#8892a0'],
                 stroke: { colors: ['#fff'], width: 6 },
                 dataLabels: { enabled: false },
                 legend: { show: false },

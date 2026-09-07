@@ -12,3 +12,4 @@
 /public/.well-known/
 /public/uploads/.shortpixel/
 *.log
+/ga4-service-account*.json

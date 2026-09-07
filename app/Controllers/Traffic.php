@@ -45,13 +45,7 @@ class Traffic extends BaseController
             $traffic = new LiveTrafficModel();
             $traffic->touchEmbedVisitor($visitorKey);
 
-            if ($this->request->getPost('record_daily') === '1') {
-                $agent = $this->request->getUserAgent();
-                $traffic->recordDailyEmbedVisitor(
-                    $visitorKey,
-                    $agent && $agent->isMobile() ? 'mobile' : 'desktop'
-                );
-            }
+            // Audience and device statistics are collected by GA4 in the browser.
 
             $analytics = new DailyPlayerAnalyticsModel();
             if ($this->request->getPost('record_impression') === '1') {

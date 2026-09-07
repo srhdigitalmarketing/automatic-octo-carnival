@@ -121,6 +121,7 @@
 <script src="<?= theme_assets('js/player.js?v=20260906-3') ?>"></script>
 
 <?php if (! empty($links)): ?>
+<?= $this->include('themes/pirate/ga4_audience') ?>
 <script>
 (function () {
     if (! window.fetch || ! window.localStorage) return;
@@ -166,8 +167,7 @@
         if (eventName === 'play') {
             body += '&event=play';
         } else {
-            body += '&record_daily=' + (shouldRecordDaily ? '1' : '0')
-                + '&record_impression=' + (shouldRecordDaily ? '1' : '0');
+            body += '&record_impression=' + (shouldRecordDaily ? '1' : '0');
         }
 
         return fetch('<?= site_url('/traffic/embed') ?>', {
