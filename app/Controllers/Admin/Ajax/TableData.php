@@ -142,13 +142,14 @@ class TableData extends BaseController
                 'error' => ['class'=>'is-broken','icon'=>'fa-times-circle','label'=>'Error'],
                 'processing' => ['class'=>'is-unchecked','icon'=>'fa-clock-o','label'=>'Processing'],
                 'unknown' => ['class'=>'is-unchecked','icon'=>'fa-clock-o','label'=>'Check failed'],
-                'healthy' => ['class' => 'is-healthy', 'icon' => 'fa-check-circle', 'label' => 'Available'],
+                'available' => ['class'=>'is-healthy','icon'=>'fa-check-circle','label'=>'API available'],
+                'healthy' => ['class' => 'is-unchecked', 'icon' => 'fa-clock-o', 'label' => 'HTTP reachable; video availability not verified by API'],
                 'broken' => ['class' => 'is-broken', 'icon' => 'fa-times-circle', 'label' => 'Unavailable'],
                 'unchecked' => ['class' => 'is-unchecked', 'icon' => 'fa-clock-o', 'label' => 'Not checked'],
             ][$status] ?? ['class' => 'is-unchecked', 'icon' => 'fa-clock-o', 'label' => 'Not checked'];
 
             return '<span class="video-server-label ' . $meta['class'] . '" title="' . esc($meta['label']) . '">'
-                . '<i class="fa ' . $meta['icon'] . '"></i> ' . esc($server['name']) . (in_array($status, ['deleted','error','processing','unknown'], true) ? ' — ' . esc($meta['label']) : '') . '</span>';
+                . '<i class="fa ' . $meta['icon'] . '"></i> ' . esc($server['name']) . (in_array($status, ['deleted','error','processing','unknown','available'], true) ? ' — ' . esc($meta['label']) : '') . '</span>';
         }, $servers);
 
         return '<div class="video-server-list">' . implode('', $labels) . '</div>';
@@ -157,7 +158,8 @@ class TableData extends BaseController
     /** @param array<string, mixed> $link */
     private function streamLinkStatus(array $link, bool $healthAvailable): string
     {
-        if (in_array($link['provider_status'] ?? '', ['deleted','error','processing','unknown'], true)) { return $link['provider_status']; }
+        if (($link['provider_status'] ?? '') === 'available' && (!empty($link['is_broken']) || !empty($link['last_error']))) { return 'broken'; }
+        if (in_array($link['provider_status'] ?? '', ['deleted','error','processing','unknown','available'], true)) { return $link['provider_status']; }
         if (! $healthAvailable || empty($link['last_checked_at'])) {
             return 'unchecked';
         }
@@ -171,7 +173,7 @@ class TableData extends BaseController
 
     private function statusWeight(string $status): int
     {
-        return ['broken' => 0, 'unchecked' => 1, 'healthy' => 2][$status] ?? 1;
+        return ['broken' => 0, 'unchecked' => 1, 'healthy' => 2, 'available' => 3][$status] ?? 1;
     }
 
     public function links()

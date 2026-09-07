@@ -12,8 +12,11 @@ $streamServerStatus = static function ($link): array {
         return [$host, 'is-broken', 'fa-times', 'Unavailable', 'The last availability check failed'];
     }
 
+    if ($link->provider_status === 'available') {
+        return [$host, 'is-healthy', 'fa-check', 'Healthy', 'Video availability confirmed by provider API'];
+    }
     if (! empty($link->last_checked_at) && ! empty($link->last_success_at)) {
-        return [$host, 'is-healthy', 'fa-check', 'Healthy', 'Video link passed the latest check'];
+        return [$host, 'is-unchecked', 'fa-clock-o', 'HTTP reachable', 'Only the web page responded. Video availability has not been confirmed by API.'];
     }
 
     return [$host, 'is-unchecked', 'fa-clock-o', 'Not checked', 'Waiting for the first availability check'];
@@ -83,6 +86,8 @@ $streamServerStatus = static function ($link): array {
                                     <i class="fa <?= esc($serverStatusIcon) ?>"></i> <?= esc($serverStatusLabel) ?>
                                 </span>
                             </div>
+                            <button type="button" class="btn btn-sm btn-light stream-check-now" data-url="<?= esc(admin_url('/stream-health/check?id=' . (int)$link->id), 'attr') ?>">Cek file via API</button>
+                            <small class="stream-check-message d-block" aria-live="polite"></small>
                         </div>
                     </div>
 

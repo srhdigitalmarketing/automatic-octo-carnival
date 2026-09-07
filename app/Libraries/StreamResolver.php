@@ -147,8 +147,9 @@ class StreamResolver
         if ($providerStatus !== null) {
             if ($providerStatus['status'] === 'available') { return true; }
             if (in_array($providerStatus['status'], ['deleted','error','processing'], true)) { return false; }
-            // A failed API check is inconclusive, not proof of deletion.
-            return $this->isSafePublicUrl($link->link) && $this->probeHost($link->link);
+            // HTTP 200 can be the provider's 'video deleted' error page.
+            // An inconclusive API check must never be upgraded to success by HTTP.
+            return false;
         }
         if (in_array($link->provider_status, ['deleted','error','processing'], true)) {
             $this->links->protect(false)->update($link->id, ['last_checked_at'=>date('Y-m-d H:i:s')]);

@@ -103,5 +103,13 @@ check($hostHealth->check(new App\Entities\Link(['id'=>1,'api_id'=>2,'link'=>'htt
 check($hostHealth->check(new App\Entities\Link(['id'=>2,'api_id'=>1,'link'=>'https://vid.example/embed-vid123.html','upnshare_video_id'=>'stale']))['status'] === 'available', 'VidHide selected by hostname despite stale account/id');
 check($seen === ['upn','vid123'], 'Each host dispatched to the correct API with URL file ID');
 check($hostHealth->check(new App\Entities\Link(['id'=>3,'api_id'=>1,'link'=>'https://unconfigured.example/e/vid123'])) === null, 'Unconfigured host cannot use stale account');
+check(App\Libraries\VideoHostHealth::videoId('https://ustreamplay.online/#9aboc') === '9aboc', 'User-reported fragment ID extracted correctly');
+$unknownHealth = new class(new MemoryLinks()) extends App\Libraries\VideoHostHealth {
+    public function check(App\Entities\Link $link): ?array { return ['status'=>'unknown','message'=>'HTTP 401']; }
+};
+$resolver = new App\Libraries\StreamResolver(new MemoryLinks());
+$healthProperty = new ReflectionProperty($resolver,'hostHealth'); $healthProperty->setAccessible(true); $healthProperty->setValue($resolver,$unknownHealth);
+$healthyMethod = new ReflectionMethod($resolver,'isHealthy'); $healthyMethod->setAccessible(true);
+check($healthyMethod->invoke($resolver,new App\Entities\Link(['id'=>1,'link'=>'https://ustreamplay.online/#9aboc']),true) === false, 'Unknown API must not fall back to HTTP success');
 echo "PASS: VidHide responses and automatic mixed-host routing, including stale account/video IDs.\n";
 echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

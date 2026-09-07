@@ -66,3 +66,9 @@ Status API Deleted/Error/Processing selalu dikeluarkan dari kandidat, termasuk s
 ## Result koneksi API & R2 Storage
 
 Kolom Result diperiksa otomatis saat halaman dibuka, tanpa menunggu API untuk menampilkan tabel. Terhubung berarti autentikasi dan respons API valid; Tidak terhubung berarti pemeriksaan gagal, termasuk token/izin atau gangguan jaringan. Paused ditampilkan sebagai Tidak diperiksa. Tombol Cek ulang memakai cache maksimal 60 detik; perubahan konfigurasi/kredensial otomatis memakai hasil baru. Waktu hasil ditampilkan pada baris. Tes R2 menggunakan HeadBucket, sehingga tidak membuat/menghapus objek dan tidak menjamin izin upload atau akses URL gambar publik. Kegagalan permintaan browser ditampilkan Gagal memeriksa, bukan dianggap bukti API mati.
+
+## Halaman player berhasil dimuat tetapi video terhapus
+
+HTTP 200 hanya membuktikan halaman web merespons. Contoh `https://ustreamplay.online/#9aboc`: request HTTP biasa tidak mengirim fragmen `9aboc`, sehingga halaman utama dapat tetap merespons 200 ketika videonya terhapus. Label **HTTP reachable** (abu-abu) tidak berarti video sehat. **Healthy/API available** hanya berasal dari konfirmasi provider. Pemeriksaan API yang gagal tidak lagi dinaikkan menjadi sukses oleh probe HTTP.
+
+Pada Edit Video → Stream Links, gunakan **Cek file via API** untuk memeriksa URL tersimpan saat itu tanpa menunggu giliran cron. Simpan dahulu jika URL baru diubah. Jika hostname tidak memiliki konfigurasi API aktif, muncul penjelasan untuk memperbaiki Embed hostnames. Cache tombol maksimal 15 detik. Cron tetap diperlukan untuk pemeriksaan seluruh koleksi.
