@@ -119,5 +119,18 @@ foreach ([['http'=>404,'body'=>null], ['http'=>410,'body'=>null], ['http'=>200,'
     $persist->invoke($health, $link404, $result);
     check((int)$link404->is_broken === 1, 'VidHide 404 excluded from playback');
 }
+$upn522 = client([['http'=>522,'body'=>null]])->videoStatus('abc123');
+check($upn522['status'] === 'unknown' && $upn522['skip_playback'] === true, 'UPNShare 522 rotates without false Deleted');
+foreach ([['http'=>522,'body'=>null], ['http'=>200,'body'=>['status'=>522]], ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>'abc123','status'=>522]]]]] as $response522) {
+    $vid522 = new App\Libraries\VidHideClient('test-key', static function($id) use ($response522) { return $response522; });
+    $result522 = $vid522->videoStatus('abc123');
+    check($result522['status'] === 'unknown' && $result522['skip_playback'] === true, 'VidHide 522 rotates at HTTP/API/file levels');
+    $failed522 = new App\Entities\Link(['id'=>99,'provider_status'=>'available']);
+    $persist->invoke($health,$failed522,$result522);
+    check((int)$failed522->is_broken === 1 && $failed522->provider_status === 'unknown', '522 excluded from playback');
+    $persist->invoke($health,$failed522,['status'=>'available','message'=>'Recovered']);
+    check((int)$failed522->is_broken === 0, 'Recovery after 522 restores host');
+}
+echo "PASS: HTTP/API/file 522 skip playback and recover without marking Deleted.\n";
 echo "PASS: VidHide responses and automatic mixed-host routing, including stale account/video IDs.\n";
 echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

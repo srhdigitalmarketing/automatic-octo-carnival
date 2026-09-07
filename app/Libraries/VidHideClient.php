@@ -37,7 +37,7 @@ class VidHideClient
         $body = $response['body'] ?? null;
         $httpStatus = (int)($response['http'] ?? 0);
         $apiStatus = is_array($body) ? (int)($body['status'] ?? 0) : 0;
-        if (in_array($httpStatus, [404,410], true) || ($httpStatus === 200 && in_array($apiStatus, [404,410], true))) {
+        if (in_array($httpStatus, [404,410,522], true) || ($httpStatus === 200 && in_array($apiStatus, [404,410,522], true))) {
             return ['status'=>'unknown','skip_playback'=>true,
                 'message'=>'VidHide/EarnVids check failed (' . ($httpStatus === 200 ? 'API ' . $apiStatus : 'HTTP ' . $httpStatus) . ')'];
         }
@@ -50,6 +50,7 @@ class VidHideClient
             if ($status === 404 || $status === 410) {
                 return ['status'=>'deleted','message'=>'VidHide reports this file as not found in the configured account'];
             }
+            if ($status === 522) { return ['status'=>'unknown','skip_playback'=>true,'message'=>'VidHide/EarnVids file check failed (522)']; }
             if ($status !== 200) { return $unknown; }
             if (!in_array($file['canplay'] ?? null, [0,1,'0','1',true,false], true)) { return $unknown; }
             $canPlay = (bool)$file['canplay'];
