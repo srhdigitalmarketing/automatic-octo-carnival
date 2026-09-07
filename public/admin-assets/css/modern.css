@@ -1,0 +1,115 @@
+/*
+ * VideoHub admin refresh. Loaded after the legacy bundle so the existing
+ * application behaviour stays compatible.
+ */
+:root {
+    --vh-ink: #111827;
+    --vh-violet: #6d28d9;
+    --vh-indigo: #4338ca;
+    --vh-border: #e5e7eb;
+}
+
+body {
+    background: #f6f7fb;
+    color: #334155;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.left_col, .nav_title, .sidebar-footer {
+    background: linear-gradient(180deg, #111827 0%, #27124a 100%) !important;
+}
+
+.nav_title {
+    border: 0;
+    height: 72px;
+    padding-top: 11px;
+}
+
+.site_title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+}
+
+.nav.side-menu > li.active > a,
+.nav.side-menu > li.current-page > a,
+.nav.side-menu > li > a:hover {
+    background: rgba(255, 255, 255, .1) !important;
+    border-radius: 10px;
+    box-shadow: none !important;
+}
+
+.nav.side-menu > li > a {
+    margin: 5px 10px;
+    padding: 12px 14px;
+}
+
+.right_col {
+    min-height: 100vh;
+    padding: 28px 26px;
+}
+
+.x_panel {
+    border: 1px solid var(--vh-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+    overflow: hidden;
+}
+
+.x_title {
+    border-bottom: 1px solid var(--vh-border);
+    padding: 16px 20px;
+}
+
+.x_title h2 {
+    color: var(--vh-ink);
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.x_content {
+    padding: 20px;
+}
+
+.form-control,
+.select2-container--default .select2-selection--single {
+    border-color: #d7dce5;
+    border-radius: 9px;
+    min-height: 38px;
+    box-shadow: none;
+}
+
+.form-control:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, .14);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--vh-violet), var(--vh-indigo));
+    border-color: var(--vh-indigo);
+    border-radius: 9px;
+}
+
+.btn {
+    border-radius: 9px;
+}
+
+.stream-health-fields {
+    background: #f8fafc;
+    border: 1px solid #e9edf3;
+    border-radius: 10px;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 12px 4px 4px;
+}
+
+.stream-health-fields label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+}
+
+footer {
+    background: transparent;
+    color: #64748b;
+}

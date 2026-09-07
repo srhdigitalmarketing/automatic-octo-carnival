@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+/vendor/
+/writable/**
+!/writable/.htaccess
+!/writable/**/
+!/writable/**/index.html
+!/writable/**/.gitkeep
+/database.sql
+/.user.ini
+/public/.well-known/
+/public/uploads/.shortpixel/
+*.log

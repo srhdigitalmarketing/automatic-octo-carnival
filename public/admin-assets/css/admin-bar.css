@@ -1,0 +1,92 @@
+.ve-admin--bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #383838;
+    font-family: sans-serif;
+    font-size: 14px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1111;
+    max-height: 38px;
+    box-shadow: 0 0 4px #434343;
+    -moz-box-shadow: 0 0 4px #434343;
+    -webkit-box-shadow: 0 0 4px #4343
+}
+
+.ve-admin--bar ul{
+    margin: 0;
+    list-style: none;
+}
+
+.ve-admin--bar ul li{
+    margin: 0;
+
+}
+.ve-admin--bar ul li a{
+    padding: 8px 15px;
+    display: inline-block;
+    transition-duration: 0.2s;
+}
+
+.ve-admin--bar a{
+    color: #dfdfdf !important;
+    text-decoration: none;
+}
+
+.ve-admin--bar li a:hover {
+    background-color: #252525;
+}
+
+.ve-admin--bar .ve-left > li {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.ve-admin--bar .ve-dropdown {
+    position: relative;
+}
+
+.ve-admin--bar .ve-dropdown > ul{
+    position: absolute;
+    bottom: 38px;
+    background: #383838;
+    min-width: 150px;
+    display: none;
+}
+
+.ve-admin--bar .ve-dropdown > ul li a{
+    display: block;
+    padding: 6px 8px;
+    border-bottom: 1px solid #252525;
+}
+
+.ve-admin--bar .ve-link{
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+.ve-admin--bar .ve-link img{
+    vertical-align: middle;
+}
+
+.ve-admin--bar .ve-dropdown:hover > ul{
+    display: block;
+}
+
+.ve-admin--bar .ve-link ion-icon{
+    margin-right: 4px;
+}
+
+
+@media only screen and (max-width: 728px) {
+    .ve-admin--bar {
+        display: none;
+    }
+}
