@@ -29,6 +29,7 @@
                 <th>Name</th>
                 <th>Video ID</th>
                 <th>Server</th>
+                <th>Image</th>
                 <th>Added on</th>
                 <th>Last updated</th>
                 <th>Views</th>

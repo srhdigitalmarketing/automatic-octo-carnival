@@ -29,7 +29,7 @@ class TableData extends BaseController
 
         $builder = $this->movieBuilder($filter);
         $this->applySearch($builder, ['title', 'imdb_id'], $this->searchTerm());
-        $this->applyPage($builder, ['id', 'title', 'imdb_id', 'id', 'created_at', 'updated_at', 'views', 'id'], 'id', 'desc');
+        $this->applyPage($builder, ['id', 'title', 'imdb_id', 'id', 'id', 'created_at', 'updated_at', 'views', 'id'], 'id', 'desc');
 
         $movies = $builder->get()->getResultArray();
         $serversByMovie = $this->videoServersByMovie(array_column($movies, 'id'));
@@ -41,6 +41,10 @@ class TableData extends BaseController
                 '<span class="video-title">' . esc($movie['title']) . '</span>',
                 esc($movie['imdb_id']),
                 $this->videoServerLabels($serversByMovie[$id] ?? []),
+                // Match the stored URL shown in the edit form's "Link dari R2" field.
+                filter_var((string) ($movie['banner'] ?? ''), FILTER_VALIDATE_URL) !== false
+                    ? '<span class="badge badge-success">Image</span>'
+                    : '<span class="badge badge-secondary">No Image</span>',
                 format_date_time($movie['created_at']),
                 format_date_time($movie['updated_at']),
                 number_format((int) $movie['views']),
