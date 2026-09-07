@@ -111,5 +111,13 @@ $resolver = new App\Libraries\StreamResolver(new MemoryLinks());
 $healthProperty = new ReflectionProperty($resolver,'hostHealth'); $healthProperty->setAccessible(true); $healthProperty->setValue($resolver,$unknownHealth);
 $healthyMethod = new ReflectionMethod($resolver,'isHealthy'); $healthyMethod->setAccessible(true);
 check($healthyMethod->invoke($resolver,new App\Entities\Link(['id'=>1,'link'=>'https://ustreamplay.online/#9aboc']),true) === false, 'Unknown API must not fall back to HTTP success');
+foreach ([['http'=>404,'body'=>null], ['http'=>410,'body'=>null], ['http'=>200,'body'=>['status'=>404]]] as $failure) {
+    $vid404 = new App\Libraries\VidHideClient('test-key', static function($id) use ($failure) { return $failure; });
+    $result = $vid404->videoStatus('x4qkbbog3gc4');
+    check($result['status'] === 'unknown' && $result['skip_playback'] === true, 'VidHide missing endpoint/API record skips playback without false Deleted');
+    $link404 = new App\Entities\Link(['id'=>99,'provider_status'=>'available']);
+    $persist->invoke($health, $link404, $result);
+    check((int)$link404->is_broken === 1, 'VidHide 404 excluded from playback');
+}
 echo "PASS: VidHide responses and automatic mixed-host routing, including stale account/video IDs.\n";
 echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

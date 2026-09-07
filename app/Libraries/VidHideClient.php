@@ -35,6 +35,12 @@ class VidHideClient
             return ['status'=>'unknown','message'=>'VidHide connection failed'];
         }
         $body = $response['body'] ?? null;
+        $httpStatus = (int)($response['http'] ?? 0);
+        $apiStatus = is_array($body) ? (int)($body['status'] ?? 0) : 0;
+        if (in_array($httpStatus, [404,410], true) || ($httpStatus === 200 && in_array($apiStatus, [404,410], true))) {
+            return ['status'=>'unknown','skip_playback'=>true,
+                'message'=>'VidHide/EarnVids check failed (' . ($httpStatus === 200 ? 'API ' . $apiStatus : 'HTTP ' . $httpStatus) . ')'];
+        }
         if (($response['http'] ?? 0) !== 200 || !is_array($body) || (int)($body['status'] ?? 0) !== 200 || !is_array($body['result'] ?? null)) {
             return $unknown;
         }
