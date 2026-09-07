@@ -1455,13 +1455,10 @@
                                 columns: ':visible'
                             }
                         },
-                        {
-                            extend: "excel",
-                            className: "btn-sm",
-                            exportOptions: {
-                                columns: ':visible'
-                            }
-                        },
+                        window.videoExcelExport(function () {
+                            return $('#movies-list-datatable').DataTable()
+                                .rows({ search: 'applied', order: 'applied', page: 'current' }).data().toArray();
+                        }),
                         {
                             extend: "pdfHtml5",
                             className: "btn-sm",

@@ -37,7 +37,15 @@ class TableData extends BaseController
         $rows = [];
         foreach ($movies as $movie) {
             $id = (int) $movie['id'];
+            $entity = new \App\Entities\Movie($movie);
             $rows[] = [
+                'DT_RowData' => ['excel' => [
+                    'id' => $id,
+                    'name' => (string) $movie['title'],
+                    'video_id' => (string) $movie['imdb_id'],
+                    'image' => (int) $movie['has_image'] === 1 ? (string) $movie['banner'] : '',
+                    'embed' => $entity->getEmbedLink(),
+                ]],
                 (string) $id,
                 '<span class="video-title">' . esc($movie['title']) . '</span>',
                 esc($movie['imdb_id']),
