@@ -1563,7 +1563,7 @@
         } );
 
         $('#reported-links-datatable').DataTable({
-            dom: '<"link-table-toolbar"<"link-table-toolbar__left"l><"link-table-toolbar__right"f>>rt<"link-table-footer"<"link-table-footer__info"i><"link-table-footer__pagination"p>>',
+            dom: '<"link-table-toolbar"<"link-table-toolbar__left"l><"link-table-toolbar__host"><"link-table-toolbar__right"f>>rt<"link-table-footer"<"link-table-footer__info"i><"link-table-footer__pagination"p>>',
             responsive: true,
             stateSave: false,
             processing: true,
@@ -1584,6 +1584,8 @@
                 infoEmpty: 'No reported links found'
             }
         });
+
+        $('#reported-host-filter').appendTo('#reported-links-datatable_wrapper .link-table-toolbar__host');
 
         $('#series-list-datatable').DataTable( {
             dom: '<"datatable-top-btn-list"B><"float-left"l><"float-right"f>rtip',

@@ -2974,3 +2974,16 @@ footer.admin-footer {
   .nav-md .left_col.scroll-view,
   .nav-sm .left_col.scroll-view { background: #fff !important; min-height: 100vh; }
 }
+
+/* Reported Links: compact host filter between page length and search. */
+#reported-links-datatable_wrapper .link-table-toolbar { flex-wrap: wrap; }
+#reported-links-datatable_wrapper .link-table-toolbar__host { flex: 1 1 320px; min-width: 0; }
+.reported-host-filter { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; }
+.reported-host-filter label { color: #111827; font-size: 12px; font-weight: 600; margin: 0; white-space: nowrap; }
+.reported-host-filter .form-control { flex: 0 1 230px; min-width: 0; width: 230px; height: 34px; padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+.reported-host-filter .btn { flex-shrink: 0; height: 34px; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+@media (max-width: 767px) {
+  #reported-links-datatable_wrapper .link-table-toolbar__host { flex-basis: 100%; order: 3; }
+  .reported-host-filter { justify-content: flex-start; flex-wrap: wrap; }
+  .reported-host-filter .form-control { flex: 1 1 120px; width: auto; }
+}

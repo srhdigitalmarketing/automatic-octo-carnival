@@ -12,8 +12,8 @@
     <span class="reported-links-summary"><i class="fa fa-exclamation-circle"></i> <?= number_format($linksCount) ?> need review</span>
 </div>
 
-<form method="get" class="form-inline" style="margin-bottom:15px">
-    <label for="reported-host">Stream host:&nbsp;</label>
+<form method="get" id="reported-host-filter" class="reported-host-filter">
+    <label for="reported-host">Stream host</label>
     <select id="reported-host" name="host" class="form-control">
         <option value="">All hosts</option>
         <?php foreach ($hosts as $hostname): ?>
