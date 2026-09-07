@@ -121,7 +121,6 @@
 <script src="<?= theme_assets('js/player.js?v=20260906-3') ?>"></script>
 
 <?php if (! empty($links)): ?>
-<?= $this->include('themes/pirate/ga4_audience') ?>
 <script>
 (function () {
     if (! window.fetch || ! window.localStorage) return;

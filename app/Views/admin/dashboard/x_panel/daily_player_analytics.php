@@ -14,7 +14,7 @@
                     <th><i class="fa fa-calendar"></i> Date</th>
                     <th class="text-right"><i class="fa fa-eye"></i> Impressions</th>
                     <th class="text-right"><i class="fa fa-play-circle"></i> Play clicks</th>
-                    <th class="text-right"><i class="fa fa-users"></i> Unique visitors (GA4)</th>
+                    <th class="text-right"><i class="fa fa-users"></i> Unique visitors</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -30,7 +30,7 @@
             </table>
         </div>
         <?php if (! $dailyPlayerAnalytics['tracking_ready']): ?>
-            <p class="dashboard-chart-notice dashboard-daily-analytics-notice"><i class="fa fa-info-circle"></i> Pastikan tabel metrik player tersedia dan akses laporan GA4 sudah dihubungkan.</p>
+            <p class="dashboard-chart-notice dashboard-daily-analytics-notice"><i class="fa fa-info-circle"></i> Pastikan tabel metrik player tersedia untuk mencatat impressions dan play clicks.</p>
         <?php endif; ?>
     </div>
 </div>

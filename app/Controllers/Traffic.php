@@ -45,7 +45,7 @@ class Traffic extends BaseController
             $traffic = new LiveTrafficModel();
             $traffic->touchEmbedVisitor($visitorKey);
 
-            // Audience and device statistics are collected by GA4 in the browser.
+            // Daily audience storage remains disabled until another analytics provider is configured.
 
             $analytics = new DailyPlayerAnalyticsModel();
             if ($this->request->getPost('record_impression') === '1') {

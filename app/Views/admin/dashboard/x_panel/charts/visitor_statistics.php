@@ -3,7 +3,7 @@
         <div>
             <span class="dashboard-eyebrow">AUDIENCE OVERVIEW</span>
             <h2 id="latest-statistics-title">Audience latest statistic</h2>
-            <p>Pengunjung unik embed player menurut GA4, 30 hari terakhir.</p>
+            <p>Pengunjung unik embed player  30 hari terakhir.</p>
         </div>
         <span class="dashboard-period-chip"><i class="fa fa-calendar"></i> 30 hari</span>
     </header>
@@ -22,7 +22,7 @@
         <div>
             <span class="dashboard-eyebrow">DEVICES</span>
             <h2 id="platform-title">By platform</h2>
-            <p>Distribusi perangkat menurut GA4, 30 hari terakhir.</p>
+            <p>Distribusi perangkat  30 hari terakhir.</p>
         </div>
         <span class="dashboard-period-chip"><i class="fa fa-mobile"></i> Platform</span>
     </header>

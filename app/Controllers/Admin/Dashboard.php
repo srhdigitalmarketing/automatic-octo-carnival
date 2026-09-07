@@ -68,7 +68,14 @@ class Dashboard extends BaseController
 
     private function visitorStatistics(): array
     {
-        return (new \App\Libraries\GoogleAnalyticsAudience())->summary();
+        // Audience tracking is disabled until another provider is configured.
+        // Do not resume per-visitor database writes or query the legacy table.
+        return [
+            'labels' => [], 'dates' => [], 'daily' => [], 'total' => 0,
+            'platforms' => ['desktop' => 0, 'mobile' => 0, 'tablet' => 0, 'other' => 0],
+            'tracking_ready' => false,
+            'notice' => 'Statistik audience dinonaktifkan. Layanan analytics belum dihubungkan.',
+        ];
     }
 
     /**
@@ -129,7 +136,7 @@ class Dashboard extends BaseController
                 }
             }
             $result['rows'] = array_values(array_reverse($rowsByDate));
-            $result['tracking_ready'] = $metricsReady && $visitorsReady;
+            $result['tracking_ready'] = $metricsReady;
         } catch (\Throwable $exception) {
             log_message('error', 'Daily player analytics could not be loaded: {message}', [
                 'message' => $exception->getMessage(),
