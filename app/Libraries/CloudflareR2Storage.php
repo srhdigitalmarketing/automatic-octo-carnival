@@ -49,6 +49,14 @@ class CloudflareR2Storage
         return filter_var($config->r2_public_url, FILTER_VALIDATE_URL) !== false;
     }
 
+    public static function checkConnection(object $config): void
+    {
+        if (!self::isConfigured($config) || !preg_match('/^[a-f0-9]{32}$/i', (string)$config->r2_account_id)) {
+            throw new RuntimeException('Invalid R2 configuration');
+        }
+        (new self($config))->signedRequest('HEAD', '');
+    }
+
     public function uploadBanner(File $file): string
     {
         // Temporary downloads have no extension, and fileinfo may be unavailable.
@@ -95,7 +103,7 @@ class CloudflareR2Storage
     private function signedRequest(string $method, string $key, ?string $filePath = null, ?string $contentType = null): void
     {
         $host = trim((string) $this->config->r2_account_id) . '.r2.cloudflarestorage.com';
-        $canonicalUri = '/' . rawurlencode((string) $this->config->r2_bucket) . '/' . implode('/', array_map('rawurlencode', explode('/', ltrim($key, '/'))));
+        $canonicalUri = '/' . rawurlencode((string) $this->config->r2_bucket) . ($key === '' ? '' : '/' . implode('/', array_map('rawurlencode', explode('/', ltrim($key, '/')))));
         $payloadHash = $filePath === null ? hash('sha256', '') : hash_file('sha256', $filePath);
         $timestamp = gmdate('Ymd\\THis\\Z');
         $date = gmdate('Ymd');
@@ -134,7 +142,8 @@ class CloudflareR2Storage
             CURLOPT_HTTPHEADER => $requestHeaders,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT => 45,
+            CURLOPT_TIMEOUT => $method === 'HEAD' ? 8 : 45,
+            CURLOPT_NOBODY => $method === 'HEAD',
         ]);
         if ($filePath !== null) {
             $stream = fopen($filePath, 'rb');

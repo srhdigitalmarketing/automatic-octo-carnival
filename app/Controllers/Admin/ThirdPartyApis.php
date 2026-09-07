@@ -33,6 +33,19 @@ class ThirdPartyApis extends BaseController
 
 
 
+    public function result()
+    {
+        $api = $this->getApi((int)$this->request->getGet('id'));
+        // Credential changes invalidate cached results without storing secrets in cache keys.
+        $key = 'provider_connection_' . hash('sha256', json_encode($api->toRawArray()));
+        $result = cache()->get($key);
+        if (!is_array($result)) {
+            $result = (new \App\Libraries\ProviderConnection())->check($api);
+            cache()->save($key, $result, 60);
+        }
+        return $this->response->setHeader('Cache-Control', 'no-store')->setJSON($result);
+    }
+
     public function new()
     {
 

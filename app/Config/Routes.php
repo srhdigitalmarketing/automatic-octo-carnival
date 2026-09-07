@@ -49,6 +49,7 @@ $routes->get('/admin/next-for-you', 'Admin/FailedMovies::index');
 $routes->get('/admin/reported-links', 'Admin/ReportedLinks::index');
 
 $routes->get('/admin/third-party-apis', 'Admin/ThirdPartyApis::index');
+$routes->get('/admin/third-party-apis/result', 'Admin/ThirdPartyApis::result');
 $routes->get('/admin/third-party-apis/new', 'Admin/ThirdPartyApis::new');
 $routes->get('/admin/third-party-apis/edit', 'Admin/ThirdPartyApis::edit');
 $routes->get('/admin/third-party-apis/delete', 'Admin/ThirdPartyApis::delete');

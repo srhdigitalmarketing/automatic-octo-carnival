@@ -28,6 +28,7 @@
                 <th>Data scopes</th>
                 <th>Created At</th>
                 <th>Status</th>
+                <th>Result <small class="d-block">Cache maksimal 60 detik</small></th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -46,6 +47,11 @@
                         <i class="fa fa-circle"></i> <?= esc($api->status) ?>
                     </span>
                 </td>
+                <td class="provider-connection" data-url="<?= esc(admin_url('/third-party-apis/result?id=' . (int)$api->id), 'attr') ?>" aria-live="polite">
+                    <span class="provider-result">Memeriksa…</span>
+                    <small class="provider-result-detail d-block"></small>
+                    <button type="button" class="btn btn-sm btn-light provider-recheck">Cek ulang</button>
+                </td>
                 <td class="text-center">
                     <div class="table-actions">
                         <a href="<?= admin_url("/third-party-apis/edit?id={$api->id}") ?>" class="btn btn-sm link-action-btn link-action-btn--edit"><i class="fa fa-pencil"></i> Edit</a>
@@ -62,4 +68,8 @@
     </div>
 </div>
 
+<?php $this->endSection() ?>
+
+<?php $this->section('scripts') ?>
+<script src="<?= site_url('/admin-assets/js/provider-connection.js?v=20260908-1') ?>"></script>
 <?php $this->endSection() ?>

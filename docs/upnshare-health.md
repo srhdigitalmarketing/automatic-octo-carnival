@@ -62,3 +62,7 @@ Tes MySQL membuat dan menghapus database acak khusus tes. Jangan arahkan penguji
 ## Rotasi jika file terhapus
 
 Status API Deleted/Error/Processing selalu dikeluarkan dari kandidat, termasuk saat link itu dipilih player atau memiliki prioritas tertinggi. Contoh: host A prioritas 100 terhapus, host B prioritas 1 tersedia → player memakai B. Prioritas hanya mengurutkan host yang memenuhi syarat, bukan syarat minimum. Cache sukses lama tidak mengalahkan status Deleted. Jika tidak ada host tersedia, player menampilkan pesan tidak ada host sehat. Pemilihan berikutnya memakai status terbaru yang telah disimpan cron; iframe yang sudah terbuka tidak diputus secara paksa.
+
+## Result koneksi API & R2 Storage
+
+Kolom Result diperiksa otomatis saat halaman dibuka, tanpa menunggu API untuk menampilkan tabel. Terhubung berarti autentikasi dan respons API valid; Tidak terhubung berarti pemeriksaan gagal, termasuk token/izin atau gangguan jaringan. Paused ditampilkan sebagai Tidak diperiksa. Tombol Cek ulang memakai cache maksimal 60 detik; perubahan konfigurasi/kredensial otomatis memakai hasil baru. Waktu hasil ditampilkan pada baris. Tes R2 menggunakan HeadBucket, sehingga tidak membuat/menghapus objek dan tidak menjamin izin upload atau akses URL gambar publik. Kegagalan permintaan browser ditampilkan Gagal memeriksa, bukan dianggap bukti API mati.
