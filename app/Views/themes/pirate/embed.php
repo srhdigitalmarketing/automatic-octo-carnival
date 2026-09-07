@@ -44,7 +44,6 @@
             --player-button-size: <?= $playerButtonSize ?>px;
             --player-icon-size: <?= (int) round($playerButtonSize * .38) ?>px;
         }
-        .next-stream-host { position:fixed; top:10px; right:10px; z-index:1000; display:none; border:1px solid #666; border-radius:6px; padding:6px 10px; background:#222; color:#fff; cursor:pointer; }
     </style>
 
     <!-- header custom codes-->
@@ -58,7 +57,6 @@
     <div class="sticky-alerts bottom-0 top-auto mb-15"></div>
     <div id="servers" class="d-none" data-initial-id="<?= esc((string) $initialLinkId) ?>"></div>
   
-        <button type="button" class="next-stream-host" onclick="Player.skipHost()" title="Video macet atau gagal? Coba host berikutnya">Ganti server</button>
         <div class="main-content">
             <div class="cover" style="background: linear-gradient( rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3) ), url(<?= banner_uri(
                 $movie->banner
@@ -121,7 +119,7 @@
 
 <script src="<?= theme_assets('js/template.min.js?v=1.2') ?>"></script>
 <script src="<?= theme_assets('js/custom.min.js?v=1.2') ?>"></script>
-<script src="<?= theme_assets('js/player.js?v=20260908-1') ?>"></script>
+<script src="<?= theme_assets('js/player.js?v=20260908-2') ?>"></script>
 
 <?php if (! empty($links)): ?>
 <script>

@@ -182,7 +182,7 @@ const Player = {
     },
     loading: function (){
         let self = this;
-        self.node.find('.cover, .play-btn, .frame, .error, .next-stream-host').hide();
+        self.node.find('.cover, .play-btn, .frame, .error').hide();
         self.node.find('.loader').css('display', 'flex');
     },
     loaded: function ( ) {
@@ -200,20 +200,9 @@ const Player = {
         let self = this;
         window.clearTimeout(self.frameLoadTimeout);
         self.node.find('iframe').prop('src', link);
-        self.node.find('.next-stream-host').show();
         self.frameLoadTimeout = window.setTimeout(function () {
             self.handleFrameFailure();
         }, 15000);
-    },
-    skipHost: function () {
-        let self = this;
-        if (self.activeLinkId === null) return;
-        if (self.failedHosts.indexOf(self.activeLinkId) === -1) self.failedHosts.push(self.activeLinkId);
-        window.clearTimeout(self.frameLoadTimeout);
-        self.activeLinkId = null;
-        self.node.find('.next-stream-host').hide();
-        // A manual switch only excludes the host for this viewer; it does not mark it deleted.
-        self.play(true);
     },
     handleFrameFailure: function () {
         let self = this;
@@ -281,6 +270,10 @@ $(document).ready(function() {
         Player.play( true );
 
     };
+
+    $('#embed-player iframe').on('error', function () {
+        if (Player.activeLinkId !== null) Player.handleFrameFailure();
+    });
 
     // ========================== waiting till once iframe is done loading ==========================
     $('#embed-player iframe').on('load', function(){
