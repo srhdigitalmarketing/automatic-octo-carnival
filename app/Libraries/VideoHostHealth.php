@@ -66,7 +66,7 @@ class VideoHostHealth
         // Failed checks cannot resurrect a previously confirmed deleted/error file.
         if ($status === 'unknown' && in_array($link->provider_status, ['deleted','error','processing'], true)) { $status = $link->provider_status; }
         $data = ['provider_status'=>$status, 'provider_message'=>$result['message'], 'provider_checked_at'=>$now, 'last_checked_at'=>$now];
-        if (in_array($status, ['deleted','error','processing'], true)) {
+        if (in_array($status, ['deleted','error','processing'], true) || !empty($result['skip_playback'])) {
             $data += ['is_broken'=>1, 'last_failure_at'=>$now, 'last_error'=>$result['message']];
         } elseif ($status === 'available') {
             $data += ['is_broken'=>0, 'failure_count'=>0, 'last_error'=>null, 'last_success_at'=>$now];

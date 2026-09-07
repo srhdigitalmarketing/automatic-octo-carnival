@@ -55,7 +55,7 @@ class UpnShareClient
             if ($this->accountVerified) { return ['status' => 'deleted', 'message' => 'UPNShare: file not found in the configured account (404)']; }
         }
         if ($http !== 200) {
-            return ['status' => 'unknown', 'message' => $http === 0 ? 'UPNShare connection failed' : 'UPNShare check failed (HTTP ' . $http . ')'];
+            return ['status' => 'unknown', 'skip_playback' => $http === 404, 'message' => $http === 0 ? 'UPNShare connection failed' : 'UPNShare check failed (HTTP ' . $http . ')'];
         }
         $record = is_array($body) ? ($body['data'] ?? $body) : null;
         if (! is_array($record) || ! isset($record['id']) || (string) $record['id'] !== $id) {

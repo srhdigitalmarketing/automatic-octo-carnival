@@ -85,6 +85,18 @@ try {
     check($healthyMethod->invoke($resolver,$links->find($id)) === false, 'Deleted overrides a fresh successful cache');
     check((int)$resolver->resolve(1,(int)$id)->id === (int)$fallback, 'Deleted preferred priority 100 falls back to priority 1');
     check($resolver->resolve(1,(int)$id,[(int)$fallback]) === null, 'No available host never returns deleted link');
+    $links->protect(false)->update($id,['provider_status'=>'available','is_broken'=>0,'last_error'=>null]); $links->protect(true);
+    $oldPlayerLink = $links->find($id);
+    $api404 = new App\Libraries\UpnShareClient($config, static function($path) { return ['http'=>404,'body'=>null]; });
+    $result404 = $api404->videoStatus('abc123');
+    $persist404 = new ReflectionMethod($health,'persist'); $persist404->setAccessible(true);
+    $persist404->invoke($health,$links->find($id),$result404);
+    check($links->find($id)->provider_status === 'unknown' && (int)$links->find($id)->is_broken === 1, 'Unconfirmed API 404 skips playback but is not Deleted');
+    check((int)$resolver->resolve(1,(int)$id)->id === (int)$fallback, 'API 404 at priority 100 rotates to non-API link at priority 1');
+    $staleSuccess = new ReflectionMethod($resolver,'recordSuccess'); $staleSuccess->setAccessible(true);
+    check($staleSuccess->invoke($resolver,$oldPlayerLink) === false, 'Concurrent cached player success cannot undo API 404 exclusion');
+    $resolver->recordPlayerFailure((int)$id);
+    check((int)$links->find($id)->is_broken === 1, 'Player failure report cannot reactivate API 404');
     $stale = $links->find($fallback);
     $links->protect(false)->update($fallback,['provider_status'=>'deleted','is_broken'=>1]); $links->protect(true);
     $success = new ReflectionMethod($resolver,'recordSuccess'); $success->setAccessible(true);

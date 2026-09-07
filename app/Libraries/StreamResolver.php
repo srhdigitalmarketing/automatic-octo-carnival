@@ -77,7 +77,7 @@ class StreamResolver
             return;
         }
 
-        if (in_array($link->provider_status, ['deleted','error','processing'], true)) { return; }
+        if (in_array($link->provider_status, ['deleted','error','processing'], true) || ($link->provider_status === 'unknown' && (bool)$link->is_broken)) { return; }
         $count = (int) $link->failure_count + 1;
         $this->links->protect(false)->update($linkId, [
             'failure_count' => $count,
@@ -136,6 +136,7 @@ class StreamResolver
         // Provider deletion overrides cached HTTP success and host priority.
         // Explicit cron checks may still recover a restored file.
         if (!$force && in_array($link->provider_status, ['deleted','error','processing'], true)) { return false; }
+        if (!$force && $link->provider_status === 'unknown' && (bool)$link->is_broken) { return false; }
         $lastCheck = $link->last_checked_at ? strtotime($link->last_checked_at) : 0;
         if (! $force && $lastCheck && (time() - $lastCheck) < $this->config->healthCacheSeconds) {
             return ! (bool) $link->is_broken && empty($link->last_error);
@@ -421,6 +422,8 @@ class StreamResolver
         if ($this->links->supportsProviderStatus()) {
             $this->links->groupStart()->where('provider_status', null)
                 ->orWhereNotIn('provider_status', ['deleted','error','processing'])->groupEnd();
+            $this->links->groupStart()->where('provider_status', null)
+                ->orWhere('provider_status !=', 'unknown')->orWhere('is_broken', 0)->groupEnd();
         }
         $saved = $this->links->protect(false)->update($link->id, $data);
         $this->links->protect(true);
