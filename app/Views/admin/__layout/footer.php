@@ -31,7 +31,7 @@
 
 <!-- Custom Theme Scripts -->
 <script src="<?= site_url('/admin-assets/js/template.min.js?v=1.2') ?>"></script>
-<script src="<?= site_url('/admin-assets/js/video-excel-export.js?v=20260907-01') ?>"></script>
+<script src="<?= site_url('/admin-assets/js/video-excel-export.js?v=20260907-02') ?>"></script>
 <script src="<?= site_url('/admin-assets/js/custom.js?v=20260907-10') ?>"></script>
 
 

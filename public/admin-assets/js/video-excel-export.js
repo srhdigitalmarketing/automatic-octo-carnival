@@ -22,7 +22,9 @@
                 });
                 data.header = headers.slice();
                 data.body = rows;
-                data.footer = [];
+                // Buttons 2.2 reads footer[col].length when footer is truthy.
+                // No footer must be null, not an empty (truthy) array.
+                data.footer = null;
             },
             customize: function (xlsx) {
                 var sheet = xlsx.xl.worksheets['sheet1.xml'];
