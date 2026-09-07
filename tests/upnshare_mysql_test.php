@@ -28,7 +28,7 @@ try {
     $links = new App\Models\LinkModel();
     $id = $links->insert(['movie_id'=>1,'api_id'=>$apiId,'link'=>'https://embed.example/e/abc123','type'=>'stream']);
     check($id !== false, 'Link saved: ' . json_encode($links->errors()));
-    $health = new App\Libraries\UpnShareHealth($links);
+    $health = new App\Libraries\VideoHostHealth($links);
     $config = new Config\UpnShare(); $config->apiToken = 'test-only-token';
     $client = new App\Libraries\UpnShareClient($config, static function ($path) {
         return strpos($path,'?') !== false ? ['http'=>200,'body'=>['data'=>[]]] : ['http'=>404,'body'=>['message'=>'Not found']];
@@ -46,15 +46,26 @@ try {
     $method->invoke($movieModel,1,[['id'=>$id,'api_id'=>$apiId,'url'=>'https://embed.example/e/new456']], 'stream');
     $changed = $links->find($id);
     check($changed->provider_status === null && (int)$changed->is_broken === 0 && $changed->health_job_checked_at === null, 'Changing URL clears stale deletion and queues fresh check');
-    // Two accounts with the same hostname require an explicit selection.
+    // Duplicate hostnames are ambiguous; never use an old link api_id to override them.
     $apis->insert(['name'=>'Other account','provider'=>'upnshare','api_token'=>'test-only-token','embed_domains'=>'embed.example','status'=>'active']);
     $links->update($id,['api_id'=>null]);
-    $result = (new App\Libraries\UpnShareHealth($links))->check($links->find($id));
+    $result = (new App\Libraries\VideoHostHealth($links))->check($links->find($id));
     check($result['status'] === 'unknown' && strpos($result['message'],'Multiple') !== false, 'Ambiguous account is not marked deleted');
+    $admin = new App\Controllers\Admin\ThirdPartyApis();
+    $hostErrors = new ReflectionMethod($admin, 'hostnameErrors'); $hostErrors->setAccessible(true);
+    check(count($hostErrors->invoke($admin, ['provider'=>'vidhide','status'=>'active','embed_domains'=>'EMBED.EXAMPLE'])) === 1, 'Reject hostname overlap across different providers');
+    $vidId = $apis->insert(['name'=>'VidHide account','provider'=>'vidhide','api_token'=>'test-only-token','embed_domains'=>'vid.example','status'=>'active']);
+    check($vidId !== false, 'VidHide provider accepted by model');
+    helper(['form','template','general']);
+    $vidHtml = view('admin/third_party_apis/x_panels/main_form', ['tpAPI'=>$apis->find($vidId)]);
+    check(strpos($vidHtml, 'VidHide video health checks') !== false && strpos($vidHtml, 'test-only-token') === false, 'VidHide settings render with token masked');
+    $newHtml = view('admin/movies/form_x_panels/stream_links', ['streamLinks'=>[]]);
+    check(strpos($newHtml, 'UPNShare account') === false && strpos($newHtml, '[api_id]') === false, 'New link form contains no account selector');
+    $apis->update($vidId,['status'=>'paused']);
     // Render actual PHP partials, including persisted account selection and token masking.
     helper(['form','template','general']);
     $html = view('admin/movies/form_x_panels/stream_links', ['streamLinks'=>[$links->find($id)]]);
-    check(strpos($html, 'Check failed') !== false && strpos($html, 'st_links[1][api_id]') !== false, 'Stream form renders badge and account selector');
+    check(strpos($html, 'Check failed') !== false && strpos($html, '[api_id]') === false && strpos($html, 'UPNShare account') === false, 'Stream form renders badge without per-link account fields');
     $html = view('admin/third_party_apis/x_panels/main_form', ['tpAPI'=>$apis->find($apiId)]);
     check(strpos($html, 'upn-token') !== false && strpos($html, 'test-only-token') === false, 'UPN form renders without stored token');
     $apis->where('provider','upnshare')->set(['status'=>'paused'])->update();

@@ -76,7 +76,7 @@ class CheckStreamHealth extends BaseCommand
             if (!empty($link->provider_status)) { $key = $link->provider_status; $providerCounts[$key] = ($providerCounts[$key] ?? 0) + 1; }
         }
 
-        if ($providerCounts) { CLI::write('UPNShare: ' . json_encode($providerCounts)); }
+        if ($providerCounts) { CLI::write('Video host API: ' . json_encode($providerCounts)); }
         CLI::write(
             'Checked ' . count($batch) . ' stream link(s): ' . $healthy . ' available, ' . $unavailable . ' unavailable, '
             . $autoClearedReports . ' not-working report(s) auto-cleared.',

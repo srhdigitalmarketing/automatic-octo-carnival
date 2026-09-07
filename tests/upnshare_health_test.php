@@ -34,17 +34,17 @@ foreach ([null, '<html>Not found</html>', ['error'=>'Not found']] as $body) {
 check(client([['http'=>404,'body'=>['message'=>'Not found']], ['http'=>401,'body'=>null]])->videoStatus('abc123')['status'] === 'unknown', 'Unverified account cannot mark deleted');
 check(client([['http'=>200,'body'=>['id'=>'other','status'=>'ready']]])->videoStatus('abc123')['status'] === 'unknown', 'Reject wrong video response');
 check(client([])->videoStatus('../abc')['status'] === 'unknown' && $calls === [], 'Reject invalid ID before request');
-check(App\Libraries\UpnShareHealth::matchesHost('https://embed.example/e/abc123', 'embed.example, upnshare.com'), 'Exact embed host mapping');
-check(!App\Libraries\UpnShareHealth::matchesHost('https://embed.example.evil.test/e/abc123', 'embed.example'), 'Reject suffix host mismatch');
-check(App\Libraries\UpnShareHealth::videoId('https://embed.example/#abc123') === 'abc123', 'Fragment video ID');
-check(App\Libraries\UpnShareHealth::videoId('https://embed.example/e/abc123?x=1') === 'abc123', 'Path video ID');
+check(App\Libraries\VideoHostHealth::matchesHost('https://embed.example/e/abc123', 'embed.example, upnshare.com'), 'Exact embed host mapping');
+check(!App\Libraries\VideoHostHealth::matchesHost('https://embed.example.evil.test/e/abc123', 'embed.example'), 'Reject suffix host mismatch');
+check(App\Libraries\VideoHostHealth::videoId('https://embed.example/#abc123') === 'abc123', 'Fragment video ID');
+check(App\Libraries\VideoHostHealth::videoId('https://embed.example/e/abc123?x=1') === 'abc123', 'Path video ID');
 class MemoryLinks extends App\Models\LinkModel {
     public $saved = [];
     public function __construct() {}
     public function supportsProviderStatus(): bool { return true; }
     public function update($id = null, $data = null): bool { $this->saved = $data; return true; }
 }
-$links = new MemoryLinks(); $health = new App\Libraries\UpnShareHealth($links);
+$links = new MemoryLinks(); $health = new App\Libraries\VideoHostHealth($links);
 $persist = new ReflectionMethod($health, 'persist'); $persist->setAccessible(true);
 $link = new App\Entities\Link(['id'=>1,'provider_status'=>null]);
 $persist->invoke($health, $link, ['status'=>'deleted','message'=>'File missing']);
@@ -67,4 +67,41 @@ $admin = (new ReflectionClass(App\Controllers\Admin\ThirdPartyApis::class))->new
 $validate = new ReflectionMethod($admin, 'providerErrors'); $validate->setAccessible(true);
 check($validate->invoke($admin, ['provider'=>'upnshare','api_token'=>'token','embed_domains'=>'embed.example']) === [], 'Valid account settings');
 check(count($validate->invoke($admin, ['provider'=>'upnshare','api_token'=>'','embed_domains'=>'https://embed.example/e/id'])) === 2, 'Reject blank token and URL instead of hostname');
+
+foreach ([200,404,410] as $fileStatus) {
+    $c = new App\Libraries\VidHideClient('test-only-key', static function ($id) use ($fileStatus) {
+        return ['http'=>200, 'body'=>['status'=>200, 'result'=>[['file_code'=>$id,'status'=>$fileStatus,'canplay'=>1]]]];
+    });
+    check($c->videoStatus('vid123')['status'] === ($fileStatus === 200 ? 'available' : 'deleted'), 'VidHide per-file status');
+}
+foreach ([
+ ['http'=>404,'body'=>null],
+ ['http'=>200,'body'=>['status'=>403]],
+ ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>'other','status'=>404]]]],
+ ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>'vid123','status'=>200,'canplay'=>null]]]],
+] as $response) {
+    $c = new App\Libraries\VidHideClient('test-only-key', static function ($id) use ($response) { return $response; });
+    check($c->videoStatus('vid123')['status'] === 'unknown', 'VidHide inconclusive response cannot mean deleted');
+}
+$c = new App\Libraries\VidHideClient('test-only-key', static function ($id) {
+ return ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>$id,'status'=>200,'canplay'=>0]]]];
+});
+check($c->videoStatus('vid123')['status'] === 'error', 'VidHide unplayable file is Error');
+$hostHealth = new App\Libraries\VideoHostHealth(new MemoryLinks());
+$apisProperty = new ReflectionProperty($hostHealth, 'apis'); $apisProperty->setAccessible(true);
+$clientsProperty = new ReflectionProperty($hostHealth, 'clients'); $clientsProperty->setAccessible(true);
+$apisProperty->setValue($hostHealth, [
+ (object)['id'=>1,'provider'=>'upnshare','embed_domains'=>'ustreamplay.online'],
+ (object)['id'=>2,'provider'=>'vidhide','embed_domains'=>'vid.example'],
+]);
+$seen = [];
+$clientsProperty->setValue($hostHealth, [
+ 'api-1'=>new App\Libraries\UpnShareClient($config, static function($path) use (&$seen) { $seen[]='upn'; return ['http'=>200,'body'=>['id'=>'upn123','status'=>'ready']]; }),
+ 'api-2'=>new App\Libraries\VidHideClient('test-only-key', static function($id) use (&$seen) { $seen[]=$id; return ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>$id,'status'=>200,'canplay'=>1]]]]; }),
+]);
+check($hostHealth->check(new App\Entities\Link(['id'=>1,'api_id'=>2,'link'=>'https://ustreamplay.online/e/upn123','upnshare_video_id'=>'stale']))['status'] === 'available', 'UPN selected by hostname despite stale account/id');
+check($hostHealth->check(new App\Entities\Link(['id'=>2,'api_id'=>1,'link'=>'https://vid.example/embed-vid123.html','upnshare_video_id'=>'stale']))['status'] === 'available', 'VidHide selected by hostname despite stale account/id');
+check($seen === ['upn','vid123'], 'Each host dispatched to the correct API with URL file ID');
+check($hostHealth->check(new App\Entities\Link(['id'=>3,'api_id'=>1,'link'=>'https://unconfigured.example/e/vid123'])) === null, 'Unconfigured host cannot use stale account');
+echo "PASS: VidHide responses and automatic mixed-host routing, including stale account/video IDs.\n";
 echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

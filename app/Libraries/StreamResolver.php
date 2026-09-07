@@ -19,13 +19,13 @@ class StreamResolver
     private $links;
     /** @var UpnShare */
     private $config;
-    private $upnHealth;
+    private $hostHealth;
 
     public function __construct(?LinkModel $links = null)
     {
         $this->links = $links ?: new LinkModel();
         $this->config = config('UpnShare');
-        $this->upnHealth = new UpnShareHealth($this->links);
+        $this->hostHealth = new VideoHostHealth($this->links);
     }
 
     public function resolve(int $movieId, ?int $preferredId = null, array $excludedIds = []): ?Link
@@ -142,10 +142,10 @@ class StreamResolver
 
         // API calls run in the scheduled job, not on high-traffic player requests.
         if (!$force && $link->provider_status === 'available') { return true; }
-        $upnStatus = $force ? $this->upnHealth->check($link) : null;
-        if ($upnStatus !== null) {
-            if ($upnStatus['status'] === 'available') { return true; }
-            if (in_array($upnStatus['status'], ['deleted','error','processing'], true)) { return false; }
+        $providerStatus = $force ? $this->hostHealth->check($link) : null;
+        if ($providerStatus !== null) {
+            if ($providerStatus['status'] === 'available') { return true; }
+            if (in_array($providerStatus['status'], ['deleted','error','processing'], true)) { return false; }
             // A failed API check is inconclusive, not proof of deletion.
             return $this->isSafePublicUrl($link->link) && $this->probeHost($link->link);
         }
@@ -188,7 +188,7 @@ class StreamResolver
             ? (new ThirdPartyApi())->find((int) $link->api_id)
             : $this->configuredApiForLink($link);
         if ($api !== null && $api->status === 'active' && trim((string) $api->api_token) !== '') {
-            return $api->provider === 'upnshare' ? null : $this->checkConfiguredProvider($api, $videoId);
+            return in_array($api->provider, ['upnshare','vidhide'], true) ? null : $this->checkConfiguredProvider($api, $videoId);
         }
 
         return null;

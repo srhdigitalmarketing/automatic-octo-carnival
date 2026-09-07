@@ -40,6 +40,7 @@
                             <li><a href="<?= admin_url('/third-party-apis') ?>">All API & R2 Storage</a></li>
                             <li><a href="<?= admin_url('/third-party-apis/new') ?>">Add R2 Storage</a></li>
                             <li><a href="<?= admin_url('/third-party-apis/new?provider=upnshare') ?>">Add UPNShare</a></li>
+                            <li><a href="<?= admin_url('/third-party-apis/new?provider=vidhide') ?>">Add VidHide</a></li>
                         </ul>
                     </li>
 

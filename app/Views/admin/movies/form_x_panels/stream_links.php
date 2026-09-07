@@ -1,8 +1,4 @@
 <?php
-$upnAccounts = ['' => 'Automatic by hostname'];
-foreach ((new \App\Models\ThirdPartyApi())->where('provider', 'upnshare')->findAll() as $account) {
-    $upnAccounts[$account->id] = $account->name . ($account->status !== 'active' ? ' (paused)' : '');
-}
 $streamServerStatus = static function ($link): array {
     $host = parse_url((string) $link->link, PHP_URL_HOST);
     $host = is_string($host) && $host !== '' ? preg_replace('/^www\./i', '', $host) : 'Unknown server';
@@ -54,7 +50,7 @@ $streamServerStatus = static function ($link): array {
                             'name' => "st_links[{$key}][url]",
                             'class' => 'form-control link',
                             'value' => old("st_links.{$key}.url", $link->link)
-                        ]; if( $link->isApiBased() && !isset($upnAccounts[$link->api_id]) ) $fields['readonly'] = 'readonly' ?>
+                        ]; ?>
                         <?= form_input($fields) ?>
 
                         <span class="input-group-btn ml-2">
@@ -87,17 +83,10 @@ $streamServerStatus = static function ($link): array {
                                     <i class="fa <?= esc($serverStatusIcon) ?>"></i> <?= esc($serverStatusLabel) ?>
                                 </span>
                             </div>
-                            <?= form_hidden("st_links[{$key}][upnshare_video_id]", old("st_links.{$key}.upnshare_video_id", $link->upnshare_video_id ?? '')) ?>
                         </div>
                     </div>
 
                     <?= form_hidden("st_links[{$key}][id]", $link->id); ?>
-                    <?php if (empty($link->api_id) || isset($upnAccounts[$link->api_id])): ?>
-                        <label>UPNShare account</label>
-                        <?= form_dropdown("st_links[{$key}][api_id]", $upnAccounts, old("st_links.{$key}.api_id", $link->api_id ?? ''), ['class'=>'form-control']) ?>
-                    <?php else: ?>
-                        <?= form_hidden("st_links[{$key}][api_id]", $link->api_id) ?>
-                    <?php endif; ?>
 
 
                 </div>
@@ -146,8 +135,6 @@ $streamServerStatus = static function ($link): array {
 
 
 
-                    <label>UPNShare account (Link <?= $i ?>)</label>
-                    <?= form_dropdown("st_links[{$i}][api_id]", $upnAccounts, old("st_links.{$i}.api_id", ''), ['class'=>'form-control']) ?>
                 </div>
             <?php endfor; ?>
         <?php endif; ?>

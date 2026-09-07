@@ -1,5 +1,5 @@
-<?php if (($tpAPI->provider ?? '') === 'upnshare'): ?>
-<section class="host-api-guide"><p>UPNShare: pemeriksaan status video melalui API. <a href="https://upnshare.com/api-document/index.html" target="_blank" rel="noopener noreferrer">Dokumentasi API</a></p></section>
+<?php if (in_array($tpAPI->provider ?? '', ['upnshare','vidhide'], true)): ?>
+<section class="host-api-guide"><p>Video host: pemeriksaan status video melalui API. <a href="<?= $tpAPI->provider === 'vidhide' ? 'https://www.vidhideapi.com/api.html' : 'https://upnshare.com/api-document/index.html' ?>" target="_blank" rel="noopener noreferrer">Dokumentasi API</a></p></section>
 <?php else: ?>
 <section class="host-api-guide">
     <div class="host-api-guide__copy">
