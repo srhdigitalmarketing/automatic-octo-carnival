@@ -73,6 +73,7 @@ if(! function_exists( 'get_selected_languages' ))
     function get_selected_languages($withEng = false ): array
     {
         $list = get_config( 'selected_languages' );
+        $list = is_array($list) ? $list : ['en-US'];
         if(! $withEng){
             $k = array_search('en-US', $list);
             if($k !== false){
@@ -97,7 +98,7 @@ if(! function_exists( 'is_multi_languages_enabled' ))
 {
     function is_multi_languages_enabled(): bool
     {
-        return get_config( 'is_multi_lang' );
+        return filter_var(get_config('is_multi_lang') ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 }
 

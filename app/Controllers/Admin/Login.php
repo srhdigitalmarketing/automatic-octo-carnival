@@ -17,6 +17,11 @@ class Login extends BaseController
 
         if($this->request->getMethod() == 'post')
         {
+            $key = 'admin-login-' . hash('sha256', $this->request->getIPAddress());
+            if (! service('throttler')->check($key, 10, 300)) {
+                return $this->response->setStatusCode(429)->setHeader('Retry-After', '300')
+                    ->setBody('Too many login attempts. Please try again in five minutes.');
+            }
             $username = $this->request->getPost('username');
             $password = $this->request->getPost('password');
 
@@ -28,8 +33,7 @@ class Login extends BaseController
             }
 
             return redirect()->back()
-                             ->with('error', 'Invalid username or password')
-                             ->withInput();
+                             ->with('error', 'Invalid username or password');
 
         }
 

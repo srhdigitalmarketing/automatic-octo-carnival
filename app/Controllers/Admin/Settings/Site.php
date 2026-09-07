@@ -123,7 +123,7 @@ class Site extends BaseSettings
 
         $logoImg = $this->request->getFile('logo_file');
 
-        if($logoImg->isValid()){
+        if($logoImg !== null && $logoImg->isValid()){
             $validationRule = [
                 'logo_file' => [
                     'label' => 'Logo file',
@@ -137,7 +137,7 @@ class Site extends BaseSettings
             if($this->validate( $validationRule )){
 
 
-                $logoName = 'logo.' . $logoImg->getExtension();
+                $logoName = 'logo.' . \App\Libraries\SafeImageName::extension($logoImg);
                 $dir = FCPATH . 'uploads/';
                 $logoImg->move( $dir, $logoName, true);
 
@@ -152,7 +152,7 @@ class Site extends BaseSettings
 
         $faviconImg = $this->request->getFile('favicon_file');
 
-        if( $faviconImg->isValid() ){
+        if( $faviconImg !== null && $faviconImg->isValid() ){
             $validationRule = [
                 'favicon_file' => [
                     'label' => 'Favicon file',
@@ -164,7 +164,7 @@ class Site extends BaseSettings
 
                 if($this->validate( $validationRule )){
 
-                    $favName = 'favicon.' . $faviconImg->getExtension();
+                    $favName = 'favicon.ico';
                     $dir = FCPATH . 'uploads/';
                     $faviconImg->move( $dir, $favName, true);
 

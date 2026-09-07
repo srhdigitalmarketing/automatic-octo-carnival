@@ -47,6 +47,7 @@ class Filters extends BaseConfig
      */
     public $globals = [
         'before' => [
+            'auth',
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
@@ -100,8 +101,6 @@ class Filters extends BaseConfig
         'stream_links_throttle' => [
             'before' => ['ajax/get_stream_link']
         ],
-        'auth' => [
-            'before' => ['admin/*']
-        ]
+
     ];
 }

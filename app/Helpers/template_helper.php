@@ -437,7 +437,7 @@ if(! function_exists('site_name'))
 {
     function site_name(): string
     {
-        return get_config('site_name');
+        return (string) (get_config('site_name') ?? '');
     }
 }
 

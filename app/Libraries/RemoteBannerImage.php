@@ -34,7 +34,7 @@ class RemoteBannerImage
         }
     }
 
-    private function download(string $url): string
+    public function download(string $url): string
     {
         // Redirects are intentionally not followed: each supplied address must be public.
         $target = $this->publicTarget($url);

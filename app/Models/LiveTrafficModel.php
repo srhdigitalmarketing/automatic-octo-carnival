@@ -14,22 +14,13 @@ class LiveTrafficModel extends Model
     {
         $this->pruneExpiredLiveVisitors();
 
-        $existing = $this->where('page', 'embed')
-            ->where('visitor_key', $visitorKey)
-            ->first();
-
-        $data = [
-            'page' => 'embed',
-            'visitor_key' => $visitorKey,
-            'last_seen_at' => date('Y-m-d H:i:s'),
-        ];
-
-        if ($existing === null) {
-            $this->insert($data);
-            return;
+        $ok = $this->db->query(
+            "INSERT INTO live_traffic (page, visitor_key, last_seen_at) VALUES ('embed', ?, ?) ON DUPLICATE KEY UPDATE last_seen_at = VALUES(last_seen_at)",
+            [$visitorKey, date('Y-m-d H:i:s')]
+        );
+        if ($ok === false) {
+            throw new \RuntimeException('Live visitor could not be saved.');
         }
-
-        $this->update($existing['id'], $data);
     }
 
     public function activeEmbedVisitors(int $withinSeconds = 180): int

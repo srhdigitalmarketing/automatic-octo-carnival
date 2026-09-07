@@ -15,6 +15,10 @@ class Authentication
     public function login($username, $password): bool
     {
 
+        if (! is_string($username) || ! is_string($password) || $username === '' || $password === ''
+            || strlen($username) > 254 || strlen($password) > 4096) {
+            return false;
+        }
         $admin = $this->getAdminUser();
 
         if($admin === null)
@@ -28,7 +32,7 @@ class Authentication
 
 
         $session = session();
-        $session->regenerate();
+        $session->regenerate(true);
         $session->set('is_logged', 1);
 
         return true;

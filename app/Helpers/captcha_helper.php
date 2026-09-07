@@ -1,35 +1,22 @@
 <?php
 
-
-if(! function_exists('validate_gcaptcha'))
-{
-    function validate_gcaptcha( $response )
+if (! function_exists('validate_gcaptcha')) {
+    function validate_gcaptcha($response)
     {
-        $query = http_build_query([
-            'secret' => get_config('gcaptcha_secret_key'),
-            'response' => $response
-        ]);
-
-        $url = "https://www.google.com/recaptcha/api/siteverify?{$query}";
-
-        $contextOptions = [
-            'ssl' => [
-                "verify_peer"=> false,
-                "verify_peer_name"=> false
-            ]
-        ];
-
-        // Get verify response data
-        $verifyResponse = file_get_contents($url, false, stream_context_create( $contextOptions ));
-        if(isJson($verifyResponse)){
-
-            $responseData = json_decode($verifyResponse);
-            if($responseData->success)
-                return true;
-
+        if (! is_string($response) || $response === '') { return false; }
+        try {
+            $client = \Config\Services::curlrequest([
+                'timeout' => 10, 'connect_timeout' => 5,
+                'http_errors' => false, 'verify' => true,
+            ], null, null, false);
+            $result = $client->post('https://www.google.com/recaptcha/api/siteverify', [
+                'form_params' => ['secret' => get_config('gcaptcha_secret_key'), 'response' => $response],
+            ]);
+            $data = json_decode($result->getBody(), true);
+            return $result->getStatusCode() === 200 && is_array($data) && ($data['success'] ?? false) === true;
+        } catch (\Throwable $error) {
+            log_message('warning', 'Captcha verification unavailable.');
+            return false;
         }
-
-        return false;
-
     }
 }

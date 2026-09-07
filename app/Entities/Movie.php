@@ -200,17 +200,17 @@ class Movie extends \CodeIgniter\Entity\Entity
 
     public function addPoster($posterFile)
     {
-        $this->posterRemoved();
-        $posterName = $posterFile->getRandomName();
+        $posterName = \App\Libraries\SafeImageName::random($posterFile);
         $posterFile->move( poster_dir(), $posterName );
+        $this->posterRemoved();
         $this->poster = $posterName;
     }
 
     public function addBanner($bannerFile)
     {
-        $this->bannerRemoved();
-        $bannerName = $bannerFile->getRandomName();
+        $bannerName = \App\Libraries\SafeImageName::random($bannerFile);
         $bannerFile->move( banner_dir(), $bannerName );
+        $this->bannerRemoved();
         $this->banner = $bannerName;
     }
 

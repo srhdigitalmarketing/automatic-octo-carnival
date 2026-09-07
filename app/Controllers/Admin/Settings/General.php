@@ -55,7 +55,7 @@ class General extends BaseSettings
         $bannerImg = $this->request->getFile('default_banner_file');
 
         //save banner image
-        if($bannerImg->isValid()){
+        if($bannerImg !== null && $bannerImg->isValid()){
             $validationRule = [
                 'default_banner_file' => [
                     'label' => 'Default banner image',
@@ -68,7 +68,7 @@ class General extends BaseSettings
 
             if($this->validate( $validationRule )){
 
-                $bannerName = 'default-banner.' . $bannerImg->getExtension();
+                $bannerName = 'default-banner.' . \App\Libraries\SafeImageName::extension($bannerImg);
                 $dir = FCPATH . 'uploads/';
                 $bannerImg->move( $dir, $bannerName, true);
 

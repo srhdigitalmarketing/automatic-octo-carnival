@@ -26,13 +26,33 @@ class Auth implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
 
-        if(! service('auth')->isLogged()) {
+        $router = service('router');
+        $resolved = $router->controllerName();
+        $controller = is_string($resolved) ? strtolower(ltrim($resolved, '\\')) : '';
+        $path = strtolower(trim($request->uri->getPath(), '/'));
+        $isLogin = $controller === 'app\\controllers\\admin\\login';
+        $isAdmin = strpos($controller, 'app\\controllers\\admin\\') === 0
+            || $path === 'admin' || strpos($path, 'admin/') === 0;
+        if (! $isAdmin && ! $isLogin) { return; }
 
-            //set user requested url as redirect url after login
+        if (! $isLogin && ! service('auth')->isLogged()) {
             session()->set('redirect_url', current_url());
-
-            //redirect to login page
             return redirect()->to('/admin_login');
+        }
+
+        $method = strtolower($request->getMethod());
+        $action = strtolower($router->methodName());
+        $mutates = ! in_array($method, ['get', 'head', 'options'], true)
+            || preg_match('/^(delete|remove|clear|reset|logout)/', $action)
+            || $path === 'admin/logout';
+        if ($mutates) {
+            $origin = $request->getHeaderLine('Origin');
+            $source = $origin !== '' ? $origin : $request->getHeaderLine('Referer');
+            // Use configured public origin so TLS-terminating proxies remain supported.
+            if (! \App\Libraries\AdminOrigin::matches($source, (string) config('App')->baseURL)) {
+                return service('response')->setStatusCode(403)
+                    ->setBody('Admin action rejected. Open the admin page on the configured website domain and try again.');
+            }
         }
     }
 
