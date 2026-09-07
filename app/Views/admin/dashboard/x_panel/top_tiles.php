@@ -11,7 +11,7 @@
         </div>
         <div class="live-traffic-card__count js-active-now"><?= number_format($liveTraffic['active_now']) ?></div>
         <p class="live-traffic-card__caption js-live-traffic-caption">
-            <?= $liveTraffic['tracking_ready'] ? 'Visitors active in the last 3 minutes.' : 'Run database migrations to start tracking.' ?>
+            <?= $liveTraffic['tracking_ready'] ? 'Visitors active in the last 3 minutes.' : 'Import the latest database update to start tracking.' ?>
         </p>
         <div class="live-traffic-card__footer"><i class="fa fa-refresh"></i> Updates every 30 seconds</div>
     </div>

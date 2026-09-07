@@ -31,7 +31,7 @@
                 stroke: { colors: ['#fff'], width: 6 },
                 dataLabels: { enabled: false },
                 legend: { show: false },
-                plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: platformTotal ? 'Pengunjung per perangkat' : 'Belum ada data', formatter: function () { return platformTotal.toLocaleString('id-ID'); } } } } } },
+                plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: platformTotal ? 'Visitors' : 'Belum ada data', formatter: function () { return platformTotal.toLocaleString('id-ID'); } } } } } },
                 tooltip: { y: { formatter: function (value) { return platformTotal ? value.toLocaleString('id-ID') + ' visitors' : 'Belum ada data'; } } }
             }).render();
         }
