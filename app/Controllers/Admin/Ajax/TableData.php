@@ -43,8 +43,8 @@ class TableData extends BaseController
                 $this->videoServerLabels($serversByMovie[$id] ?? []),
                 // Match the stored URL shown in the edit form's "Link dari R2" field.
                 filter_var((string) ($movie['banner'] ?? ''), FILTER_VALIDATE_URL) !== false
-                    ? '<span class="badge badge-success">Image</span>'
-                    : '<span class="badge badge-secondary">No Image</span>',
+                    ? '<span style="color: #000;">Image</span>'
+                    : '<span style="color: #000;">No Image</span>',
                 format_date_time($movie['created_at']),
                 format_date_time($movie['updated_at']),
                 number_format((int) $movie['views']),
