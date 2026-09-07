@@ -30,7 +30,8 @@ class TableData extends BaseController
 
         $builder = $this->movieBuilder($filter);
         $this->applySearch($builder, ['title', 'imdb_id'], $this->searchTerm());
-        $this->applyPage($builder, ['id', 'title', 'imdb_id', 'id', 'id', 'created_at', 'updated_at', 'views', 'id'], 'id', 'desc');
+        $this->applyPage($builder, ['id', 'title', 'imdb_id', 'id', 'id', 'created_at', 'updated_at', 'views', 'id'], 'id', 'desc', $this->request->getGet('export') === '1');
+        $builder->orderBy('id', 'DESC');
 
         $movies = $builder->get()->getResultArray();
         $serversByMovie = $this->videoServersByMovie(array_column($movies, 'id'));
@@ -318,7 +319,7 @@ class TableData extends BaseController
     }
 
     /** @param array<int, string> $columns */
-    private function applyPage(BaseBuilder $builder, array $columns, string $defaultColumn, string $defaultDirection): void
+    private function applyPage(BaseBuilder $builder, array $columns, string $defaultColumn, string $defaultDirection, bool $export = false): void
     {
         $order = (array) $this->request->getGet('order');
         $order = $order[0] ?? [];
@@ -327,7 +328,7 @@ class TableData extends BaseController
         $direction = strtolower((string) ($order['dir'] ?? $defaultDirection)) === 'asc' ? 'ASC' : 'DESC';
 
         $length = (int) $this->request->getGet('length');
-        $length = in_array($length, self::PAGE_LENGTHS, true) ? $length : 25;
+        $length = $export ? 1000 : (in_array($length, self::PAGE_LENGTHS, true) ? $length : 25);
         $start = max(0, (int) $this->request->getGet('start'));
 
         $builder->orderBy($column, $direction)->limit($length, $start);

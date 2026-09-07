@@ -1448,24 +1448,24 @@
                     extend: 'collection',
                     text: 'Export data',
                     buttons: [
-                        {
+                        window.allVideoExport({
                             extend: "csv",
                             className: "btn-sm",
                             exportOptions: {
                                 columns: ':visible'
                             }
-                        },
-                        window.videoExcelExport(function () {
+                        }),
+                        window.allVideoExport(window.videoExcelExport(function () {
                             return $('#movies-list-datatable').DataTable()
                                 .rows({ search: 'applied', order: 'applied', page: 'current' }).data().toArray();
-                        }),
-                        {
+                        })),
+                        window.allVideoExport({
                             extend: "pdfHtml5",
                             className: "btn-sm",
                             exportOptions: {
                                 columns: ':visible'
                             }
-                        },
+                        }),
                     ]
                 },
                 {
