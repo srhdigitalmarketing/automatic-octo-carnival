@@ -188,14 +188,17 @@
         }
     };
 
+    var analyticsPingPending = false;
     function pingLiveTraffic() {
+        if (analyticsPingPending) return;
         if (document.visibilityState && document.visibilityState !== 'visible') return;
 
+        analyticsPingPending = true;
         sendAnalytics('impression').then(function (response) {
             return response.ok ? response.json() : null;
         }).then(function (data) {
             if (data && data.ok) shouldRecordDaily = false;
-        }).catch(function () {});
+        }).catch(function () {}).then(function () { analyticsPingPending = false; });
     }
 
     pingLiveTraffic();

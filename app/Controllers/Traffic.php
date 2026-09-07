@@ -3,8 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\PopupAdSelector;
-use App\Models\DailyPlayerAnalyticsModel;
-use App\Models\LiveTrafficModel;
+use App\Libraries\RedisAnalytics;
 
 class Traffic extends BaseController
 {
@@ -38,25 +37,14 @@ class Traffic extends BaseController
         }
 
         try {
-            if (! db_connect()->tableExists('live_traffic')) {
-                return $this->response->setJSON(['ok' => false, 'tracking' => 'unavailable']);
-            }
-
-            $traffic = new LiveTrafficModel();
-            $traffic->touchEmbedVisitor($visitorKey);
-
-            // Daily audience storage remains disabled until another analytics provider is configured.
-
-            $analytics = new DailyPlayerAnalyticsModel();
-            if ($this->request->getPost('record_impression') === '1') {
-                $analytics->recordImpression();
-            }
-
-            if ($this->request->getPost('event') === 'play') {
-                $analytics->recordPlayClick();
-            }
+            (new RedisAnalytics())->record(
+                $visitorKey,
+                RedisAnalytics::platform((string) $this->request->getUserAgent()),
+                $this->request->getPost('record_impression') === '1',
+                $this->request->getPost('event') === 'play'
+            );
         } catch (\Throwable $exception) {
-            log_message('error', 'Live traffic heartbeat could not be saved: {message}', [
+            log_message('error', 'Redis analytics request failed: {message}', [
                 'message' => $exception->getMessage(),
             ]);
 

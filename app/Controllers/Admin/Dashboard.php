@@ -5,7 +5,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Libraries\Analytics;
 use App\Libraries\AdRevenueToday;
-use App\Models\LiveTrafficModel;
+use App\Libraries\RedisAnalytics;
 use App\Models\MovieModel;
 
 
@@ -49,14 +49,7 @@ class Dashboard extends BaseController
     private function liveTrafficSummary(): array
     {
         try {
-            if (! db_connect()->tableExists('live_traffic')) {
-                return ['active_now' => 0, 'tracking_ready' => false];
-            }
-
-            return [
-                'active_now' => (new LiveTrafficModel())->activeEmbedVisitors(),
-                'tracking_ready' => true,
-            ];
+            return ['active_now' => (new RedisAnalytics())->active(), 'tracking_ready' => true];
         } catch (\Throwable $exception) {
             log_message('error', 'Live traffic summary could not be loaded: {message}', [
                 'message' => $exception->getMessage(),
@@ -68,13 +61,16 @@ class Dashboard extends BaseController
 
     private function visitorStatistics(): array
     {
-        // Audience tracking is disabled until another provider is configured.
-        // Do not resume per-visitor database writes or query the legacy table.
+        try {
+            return (new RedisAnalytics())->audience();
+        } catch (\Throwable $exception) {
+            log_message('warning', 'Redis audience unavailable: {message}', ['message' => $exception->getMessage()]);
+        }
         return [
             'labels' => [], 'dates' => [], 'daily' => [], 'total' => 0,
             'platforms' => ['desktop' => 0, 'mobile' => 0, 'tablet' => 0, 'other' => 0],
             'tracking_ready' => false,
-            'notice' => 'Statistik audience dinonaktifkan. Layanan analytics belum dihubungkan.',
+            'notice' => 'Statistik Redis belum tersedia. Periksa konfigurasi dan koneksi Redis.',
         ];
     }
 
@@ -84,7 +80,7 @@ class Dashboard extends BaseController
      */
     private function dailyPlayerAnalytics(array $visitorStats): array
     {
-        $start = new \DateTimeImmutable('-6 days');
+        $start = new \DateTimeImmutable('today -6 days', new \DateTimeZone((string) env('analytics.timezone', 'Asia/Jakarta')));
         $rowsByDate = [];
 
         for ($day = 0; $day < 7; $day++) {
@@ -104,7 +100,7 @@ class Dashboard extends BaseController
 
         try {
             $db = db_connect();
-            $metricsReady = $db->tableExists('traffic_daily_player_metrics');
+            $metricsReady = $db->tableExists('analytics_daily');
             $visitorsReady = $visitorStats['tracking_ready'];
 
             if (! $metricsReady && ! $visitorsReady) {
@@ -113,8 +109,8 @@ class Dashboard extends BaseController
 
             $from = $start->format('Y-m-d');
             if ($metricsReady) {
-                $metrics = $db->table('traffic_daily_player_metrics')
-                    ->select('visit_date, impressions, play_clicks')
+                $metrics = $db->table('analytics_daily')
+                    ->select('visit_date, impressions, play_clicks, unique_visitors')
                     ->where('visit_date >=', $from)
                     ->get()
                     ->getResultArray();
@@ -124,6 +120,17 @@ class Dashboard extends BaseController
                     if (isset($rowsByDate[$date])) {
                         $rowsByDate[$date]['impressions'] = (int) $metric['impressions'];
                         $rowsByDate[$date]['play_clicks'] = (int) $metric['play_clicks'];
+                        $rowsByDate[$date]['unique_visitors'] = (int) $metric['unique_visitors'];
+                    }
+                }
+            }
+
+            // Preserve pre-Redis player history; these counters are no longer written.
+            if ($db->tableExists('traffic_daily_player_metrics')) {
+                foreach ($db->table('traffic_daily_player_metrics')->where('visit_date >=', $from)->get()->getResultArray() as $old) {
+                    if (isset($rowsByDate[$old['visit_date']])) {
+                        $rowsByDate[$old['visit_date']]['impressions'] += (int) $old['impressions'];
+                        $rowsByDate[$old['visit_date']]['play_clicks'] += (int) $old['play_clicks'];
                     }
                 }
             }
@@ -131,7 +138,7 @@ class Dashboard extends BaseController
             if ($visitorsReady) {
                 foreach ($visitorStats['dates'] as $index => $date) {
                     if (isset($rowsByDate[$date])) {
-                        $rowsByDate[$date]['unique_visitors'] = $visitorStats['daily'][$index];
+                        $rowsByDate[$date]['unique_visitors'] = max($rowsByDate[$date]['unique_visitors'], $visitorStats['daily'][$index]);
                     }
                 }
             }
