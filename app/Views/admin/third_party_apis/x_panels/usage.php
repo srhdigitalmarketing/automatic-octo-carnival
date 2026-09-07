@@ -1,3 +1,4 @@
+<?php if (($tpAPI->provider ?? '') === 'custom_http') { echo '<section class="host-api-guide"><p>Custom hostname: pemeriksaan HTTP tanpa token.</p></section>'; return; } ?>
 <?php if (in_array($tpAPI->provider ?? '', ['upnshare','vidhide'], true)): ?>
 <section class="host-api-guide"><p>Video host: pemeriksaan status video melalui API. <a href="<?= $tpAPI->provider === 'vidhide' ? 'https://www.vidhideapi.com/api.html' : 'https://upnshare.com/api-document/index.html' ?>" target="_blank" rel="noopener noreferrer">Dokumentasi API</a></p></section>
 <?php else: ?>

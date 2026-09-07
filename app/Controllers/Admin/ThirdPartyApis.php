@@ -20,12 +20,13 @@ class ThirdPartyApis extends BaseController
     {
         $title = 'API & R2 Storage';
 
-        $apis = $this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide'])->findAll();
+        $apis = $this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http'])->findAll();
 
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis/new' => 'Add R2 Storage',
             'admin/third-party-apis/new?provider=upnshare' => 'Add UPNShare',
-            'admin/third-party-apis/new?provider=vidhide' => 'Add VidHide'
+            'admin/third-party-apis/new?provider=vidhide' => 'Add VidHide',
+            'admin/third-party-apis/new?provider=custom_http' => 'Add Custom hostname'
         ]);
 
         return view('admin/third_party_apis/list', compact('title', 'apis', 'topBtnGroup'));
@@ -51,13 +52,14 @@ class ThirdPartyApis extends BaseController
 
         $title = 'Add R2 Storage';
         $tpAPI = new \App\Entities\ThirdPartyApi();
-        $tpAPI->provider = in_array($this->request->getGet('provider'), ['upnshare','vidhide'], true) ? $this->request->getGet('provider') : 'cloudflare_r2';
+        $tpAPI->provider = in_array($this->request->getGet('provider'), ['upnshare','vidhide','custom_http'], true) ? $this->request->getGet('provider') : 'cloudflare_r2';
         $title = $tpAPI->provider === 'vidhide' ? 'Add VidHide' : ($tpAPI->provider === 'upnshare' ? 'Add UPNShare' : $title);
 
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis' => 'Back to API & R2 Storage'
         ]);
 
+        if ($tpAPI->provider === 'custom_http') { $title = 'Add Custom hostname'; }
         return view('admin/third_party_apis/new', compact('title', 'tpAPI', 'topBtnGroup'));
 
     }
@@ -70,6 +72,7 @@ class ThirdPartyApis extends BaseController
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis' => 'Back to API & R2 Storage'
         ]);
+        if ($tpAPI->provider === 'custom_http') { $title = 'Edit Custom hostname'; }
         return view('admin/third_party_apis/edit', compact('title', 'tpAPI', 'topBtnGroup'));
 
     }
@@ -77,7 +80,7 @@ class ThirdPartyApis extends BaseController
     public function create(): \CodeIgniter\HTTP\RedirectResponse
     {
         $data = $this->request->getPost();
-        $data['provider'] = in_array($data['provider'] ?? '', ['upnshare','vidhide'], true) ? $data['provider'] : 'cloudflare_r2';
+        $data['provider'] = in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true) ? $data['provider'] : 'cloudflare_r2';
         $data = $this->providerData($data);
         $errors = array_merge($this->providerErrors($data), $this->hostnameErrors($data));
         if (! empty($errors)) {
@@ -147,7 +150,7 @@ class ThirdPartyApis extends BaseController
 
     protected function getApi($id)
     {
-        $api = $this->model->where('id', $id)->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide'])->first();
+        $api = $this->model->where('id', $id)->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http'])->first();
 
         if($api === null){
             throw new PageNotFoundException('Third party API not found');
@@ -158,23 +161,24 @@ class ThirdPartyApis extends BaseController
 
     private function providerData(array $data): array
     {
-        $fields = in_array($data['provider'], ['upnshare','vidhide'], true)
+        $fields = in_array($data['provider'], ['upnshare','vidhide','custom_http'], true)
             ? ['name', 'provider', 'status', 'api_token', 'embed_domains']
             : ['name', 'provider', 'status', 'r2_account_id', 'r2_access_key_id', 'r2_secret_access_key', 'r2_bucket', 'r2_public_url'];
         $data = array_intersect_key($data, array_flip($fields));
-        if (in_array($data['provider'], ['upnshare','vidhide'], true)) {
+        if (in_array($data['provider'], ['upnshare','vidhide','custom_http'], true)) {
             $data['api_base_url'] = $data['provider'] === 'vidhide' ? 'https://earnvidsapi.com/api' : 'https://upnshare.com/api/v1';
             $data['api_token'] = trim((string) ($data['api_token'] ?? ''));
             $data['embed_domains'] = strtolower(trim((string) ($data['embed_domains'] ?? '')));
         }
+        if ($data['provider'] === 'custom_http') { $data['api_token'] = null; $data['api_base_url'] = null; }
         return $data;
     }
 
     private function hostnameErrors(array $data, int $currentId = 0): array
     {
-        if (!in_array($data['provider'] ?? '', ['upnshare','vidhide'], true) || ($data['status'] ?? 'active') !== 'active') { return []; }
+        if (!in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true) || ($data['status'] ?? 'active') !== 'active') { return []; }
         $domains = preg_split('/[\s,]+/', strtolower(trim((string)($data['embed_domains'] ?? ''))), -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($this->model->whereIn('provider', ['upnshare','vidhide'])->where('status', 'active')->findAll() as $api) {
+        foreach ($this->model->whereIn('provider', ['upnshare','vidhide','custom_http'])->where('status', 'active')->findAll() as $api) {
             if ((int)$api->id === $currentId) { continue; }
             $existing = preg_split('/[\s,]+/', strtolower(trim((string)$api->embed_domains)), -1, PREG_SPLIT_NO_EMPTY);
             if (array_intersect($domains, $existing)) { return ['An embed hostname is already assigned to another active API. Remove it there or pause that configuration first.']; }
@@ -184,10 +188,10 @@ class ThirdPartyApis extends BaseController
 
     private function providerErrors(array $data): array
     {
-        if (!in_array($data['provider'] ?? '', ['upnshare','vidhide'], true)) { return $this->r2Errors($data); }
+        if (!in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true)) { return $this->r2Errors($data); }
         $errors = [];
         $token = trim((string) ($data['api_token'] ?? ''));
-        if ($token === '' || strlen($token) > 255 || preg_match('/[\r\n]/', $token)) { $errors[] = 'A valid provider API token is required (maximum 255 characters).'; }
+        if (($data['provider'] ?? '') !== 'custom_http' && ($token === '' || strlen($token) > 255 || preg_match('/[\r\n]/', $token))) { $errors[] = 'A valid provider API token is required (maximum 255 characters).'; }
         $domains = trim((string) ($data['embed_domains'] ?? ''));
         if ($domains === '' || strlen($domains) > 1000) { $errors[] = 'Enter the embed hostname(s), maximum 1000 characters.'; }
         foreach (preg_split('/[\s,]+/', $domains, -1, PREG_SPLIT_NO_EMPTY) as $domain) {

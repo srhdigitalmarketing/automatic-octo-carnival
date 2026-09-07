@@ -86,7 +86,7 @@ $streamServerStatus = static function ($link): array {
                                     <i class="fa <?= esc($serverStatusIcon) ?>"></i> <?= esc($serverStatusLabel) ?>
                                 </span>
                             </div>
-                            <button type="button" class="btn btn-sm btn-light stream-check-now" data-url="<?= esc(admin_url('/stream-health/check?id=' . (int)$link->id), 'attr') ?>">Cek file via API</button>
+                            <button type="button" class="btn btn-sm btn-light stream-check-now" data-url="<?= esc(admin_url('/stream-health/check?id=' . (int)$link->id), 'attr') ?>">Cek file</button>
                             <small class="stream-check-message d-block" aria-live="polite"></small>
                         </div>
                     </div>

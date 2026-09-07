@@ -36,7 +36,7 @@
 <script src="<?= site_url('/admin-assets/js/custom.js?v=20260908-3') ?>"></script>
 
 
-<script src="<?= site_url('/admin-assets/js/stream-health-check.js?v=20260908-1') ?>"></script>
+<script src="<?= site_url('/admin-assets/js/stream-health-check.js?v=20260908-2') ?>"></script>
 <?php $this->renderSection('scripts'); ?>
 
 

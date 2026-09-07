@@ -13,6 +13,9 @@ class ProviderConnection
             return array_merge($result, ['state'=>'paused','label'=>'Tidak diperiksa','message'=>'Konfigurasi sedang Paused.']);
         }
         try {
+            if ($api->provider === 'custom_http') {
+                return array_merge($result, ['state'=>'paused','label'=>'Tanpa API','message'=>'Pemeriksaan HTTP per link. Gunakan Cek file pada Stream Links atau cron.']);
+            }
             if ($api->provider === 'cloudflare_r2') {
                 CloudflareR2Storage::checkConnection($api);
                 return array_merge($result, ['state'=>'connected','label'=>'Terhubung','message'=>'Autentikasi dan akses bucket R2 berhasil. Izin upload dan URL publik belum diuji.']);

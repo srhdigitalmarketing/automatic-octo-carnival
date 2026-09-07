@@ -30,13 +30,16 @@ class VideoHostHealth
     public function check(Link $link): ?array
     {
         if (! $this->links->supportsProviderStatus()) { return null; }
-        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'vidhide'])->where('status', 'active')->findAll(); }
+        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'vidhide', 'custom_http'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
             if (self::matchesHost((string)$link->link, (string)$api->embed_domains)) { $matches[] = $api; }
         }
         if (count($matches) > 1) {
             return $this->persist($link, ['status'=>'unknown','message'=>'Multiple active APIs match this hostname; keep this hostname on only one active provider configuration']);
+        }
+        if ($matches && $matches[0]->provider === 'custom_http') {
+            return $this->persist($link, (new CustomHostClient())->videoStatus((string)$link->link));
         }
         if ($matches) {
             $api = $matches[0]; $key = 'api-' . $api->id;
@@ -68,7 +71,7 @@ class VideoHostHealth
         $data = ['provider_status'=>$status, 'provider_message'=>$result['message'], 'provider_checked_at'=>$now, 'last_checked_at'=>$now];
         if (in_array($status, ['deleted','error','processing'], true) || !empty($result['skip_playback'])) {
             $data += ['is_broken'=>1, 'last_failure_at'=>$now, 'last_error'=>$result['message']];
-        } elseif ($status === 'available') {
+        } elseif (in_array($status, ['available','reachable'], true)) {
             $data += ['is_broken'=>0, 'failure_count'=>0, 'last_error'=>null, 'last_success_at'=>$now];
         }
         if (!$this->links->protect(false)->update((int)$link->id, $data)) { throw new \RuntimeException('Provider status could not be saved'); }

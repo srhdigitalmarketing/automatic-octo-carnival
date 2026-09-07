@@ -146,7 +146,7 @@ class StreamResolver
         if (!$force && $link->provider_status === 'available') { return true; }
         $providerStatus = $force ? $this->hostHealth->check($link) : null;
         if ($providerStatus !== null) {
-            if ($providerStatus['status'] === 'available') { return true; }
+            if (in_array($providerStatus['status'], ['available','reachable'], true)) { return true; }
             if (in_array($providerStatus['status'], ['deleted','error','processing'], true)) { return false; }
             // HTTP 200 can be the provider's 'video deleted' error page.
             // An inconclusive API check must never be upgraded to success by HTTP.

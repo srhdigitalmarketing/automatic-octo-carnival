@@ -22,7 +22,7 @@ class StreamHealth extends BaseController
         if (!is_array($result)) {
             $result = (new VideoHostHealth($links))->check($link);
             if ($result === null) {
-                $result = ['status'=>'unknown','message'=>'Tidak ada API aktif yang cocok dengan hostname link ini. Periksa Embed hostnames di API & R2 Storage.'];
+                $result = ['status'=>'unknown','message'=>'Tidak ada konfigurasi host aktif yang cocok dengan hostname link ini. Periksa Embed hostnames di API & R2 Storage.'];
             } else {
                 cache()->save($key, $result, 15);
             }

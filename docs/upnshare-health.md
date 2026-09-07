@@ -82,3 +82,11 @@ Dengan jadwal mingguan, perubahan status file bisa baru terdeteksi hingga sekita
 VidHide/EarnVids HTTP/API 404 atau 410 juga melewati host tanpa menganggapnya pasti Deleted. Status 404/410 pada record file dengan ID yang cocok tetap Deleted. Error favicon `manifest.json` bukan status file video. Player tidak menampilkan panel/tombol pemilihan server. Rotasi berlangsung otomatis saat API menyatakan link harus dilewati, atau iframe gagal dimuat/timeout 15 detik. Host gagal dikecualikan dari percobaan selanjutnya pada sesi penonton. Jika halaman iframe sudah selesai dimuat tetapi stream internal mengalami CORS/timeout, kegagalan tersebut tidak selalu dapat diamati oleh halaman induk. Browser induk tidak dapat membaca error internal iframe lintas domain secara langsung.
 
 Status **522** dari UPNShare atau VidHide/EarnVids juga membuat link dilewati (Check failed, bukan Deleted). Host berikutnya dapat berupa link tanpa API dengan prioritas lebih rendah. Jika pemeriksaan HTTP host tanpa API menerima 522, resolver juga melanjutkan ke host berikutnya. Link API dapat dipulihkan pada pemeriksaan berikutnya saat provider kembali menyatakan tersedia. Deteksi ini berlaku untuk respons yang diterima server pemeriksa; status internal iframe lintas domain tetap tidak selalu terlihat oleh halaman induk.
+
+## Custom hostname tanpa token
+
+Pilih **API & R2 Storage → Add Custom hostname**. Isi Display name, Embed hostnames, dan Active; tidak ada API token. Pemetaan hostname berlaku otomatis seperti provider API, dengan satu konfigurasi aktif per hostname. Gunakan **Cek file** pada link tersimpan atau cron mingguan yang sudah ada.
+
+Pemeriksaan HTTP hanya menerima URL publik HTTP(S) port 80/443, memvalidasi DNS lalu mengunci alamat koneksi, membatasi waktu/ukuran respons, dan tidak mengikuti redirect. HTTP 2xx menjadi **HTTP reachable**, bukan Healthy. HTTP 4xx/5xx (termasuk 404/410/522) atau koneksi gagal membuat link dilewati tanpa menyebutnya Deleted. Respons 3xx memerlukan URL embed langsung. HTTP 200 dari halaman error/JavaScript atau URL #ID tidak membuktikan video ada. Host tanpa API tidak dapat menjamin deteksi error stream internal.
+
+Kolom Result konfigurasi ini menampilkan **Tanpa API**; koneksi diperiksa per URL file, bukan sekadar halaman utama hostname.
