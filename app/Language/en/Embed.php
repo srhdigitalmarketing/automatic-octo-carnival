@@ -10,6 +10,6 @@ return [
     'unknown_error_occurred' => 'Error Occurred',
 
     'load_another_server' => 'Load another server',
-    'please_wait' => 'Loading Server...'
+    'please_wait' => 'Loading Video...'
 
 ];
