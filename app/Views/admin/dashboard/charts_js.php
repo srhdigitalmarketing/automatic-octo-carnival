@@ -8,7 +8,7 @@
             new ApexCharts(visitorsTarget, {
                 chart: { type: 'area', height: 276, toolbar: { show: false }, fontFamily: 'Inter, Segoe UI, Arial, sans-serif' },
                 series: statistics.tracking_ready ? [{ name: 'Visitors', data: statistics.daily }] : [],
-                noData: { text: 'Statistik audience dinonaktifkan' },
+                noData: { text: 'Statistik belum tersedia' },
                 colors: ['#3569ef'],
                 dataLabels: { enabled: false },
                 stroke: { curve: 'smooth', width: 3 },
@@ -24,7 +24,7 @@
             var platformTotal = statistics.platforms.desktop + statistics.platforms.mobile + statistics.platforms.tablet + statistics.platforms.other;
             new ApexCharts(platformTarget, {
                 chart: { type: 'donut', height: 248, fontFamily: 'Inter, Segoe UI, Arial, sans-serif' },
-                noData: { text: statistics.tracking_ready ? 'Belum ada data' : 'Statistik audience dinonaktifkan' },
+                noData: { text: statistics.tracking_ready ? 'Belum ada data' : 'Statistik belum tersedia' },
                 series: platformTotal ? [statistics.platforms.desktop, statistics.platforms.mobile, statistics.platforms.tablet, statistics.platforms.other] : [],
                 labels: ['Desktop', 'Mobile', 'Tablet', 'Lainnya'],
                 colors: ['#3569ef', '#8b7cf6', '#28a745', '#8892a0'],

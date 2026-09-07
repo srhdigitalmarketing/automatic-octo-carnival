@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\Analytics;
+use App\Libraries\MysqlAudience;
 use App\Libraries\AdRevenueToday;
 use App\Models\LiveTrafficModel;
 use App\Models\MovieModel;
@@ -68,13 +69,16 @@ class Dashboard extends BaseController
 
     private function visitorStatistics(): array
     {
-        // Audience tracking is disabled until another provider is configured.
-        // Do not resume per-visitor database writes or query the legacy table.
+        try {
+            return (new MysqlAudience())->audience();
+        } catch (\Throwable $exception) {
+            log_message('warning', 'Audience statistics unavailable: {message}', ['message' => $exception->getMessage()]);
+        }
         return [
             'labels' => [], 'dates' => [], 'daily' => [], 'total' => 0,
             'platforms' => ['desktop' => 0, 'mobile' => 0, 'tablet' => 0, 'other' => 0],
             'tracking_ready' => false,
-            'notice' => 'Statistik audience dinonaktifkan. Layanan analytics belum dihubungkan.',
+            'notice' => 'Statistik MySQL belum tersedia. Periksa migrasi tabel traffic_daily_visitors.',
         ];
     }
 

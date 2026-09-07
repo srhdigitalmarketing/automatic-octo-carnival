@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\PopupAdSelector;
+use App\Libraries\MysqlAudience;
 use App\Models\DailyPlayerAnalyticsModel;
 use App\Models\LiveTrafficModel;
 
@@ -45,7 +46,11 @@ class Traffic extends BaseController
             $traffic = new LiveTrafficModel();
             $traffic->touchEmbedVisitor($visitorKey);
 
-            // Daily audience storage remains disabled until another analytics provider is configured.
+            try {
+                (new MysqlAudience())->record($visitorKey, (string) $this->request->getUserAgent());
+            } catch (\Throwable $exception) {
+                log_message('warning', 'Audience tracking unavailable: {message}', ['message' => $exception->getMessage()]);
+            }
 
             $analytics = new DailyPlayerAnalyticsModel();
             if ($this->request->getPost('record_impression') === '1') {
