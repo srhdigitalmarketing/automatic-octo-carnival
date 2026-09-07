@@ -36,10 +36,14 @@ try {
     $property = new ReflectionProperty($health,'clients'); $property->setAccessible(true); $property->setValue($health,['api-'.$apiId=>$client]);
     $result = $health->check($links->find($id));
     check($result['status'] === 'deleted' && (int)$links->find($id)->is_broken === 1, 'Confirmed deletion persisted with actual model validation');
+    check((int)$links->find($id)->reports_not_working === 1, '404 creates report');
+    $health->check($links->find($id));
+    check((int)$links->find($id)->reports_not_working === 1, 'Repeated 404 does not inflate reports');
     check($links->findByMovieId(1,'stream',false) === [], 'Deleted link excluded from playback');
     $property->setValue($health,['api-'.$apiId=>new App\Libraries\UpnShareClient($config, static function ($path) { return ['http'=>200,'body'=>['id'=>'abc123','status'=>'ready']]; })]);
     $health->check($links->find($id));
     check((int)$links->find($id)->is_broken === 0 && count($links->findByMovieId(1,'stream',false)) === 1, 'Recovered file returns to playback');
+    check((int)$links->find($id)->reports_not_working === 0, 'Recovery clears broken report');
     $links->protect(false)->update($id,['provider_status'=>'deleted','is_broken'=>1]); $links->protect(true);
     $movieModel = new App\Models\MovieModel();
     $method = new ReflectionMethod($movieModel,'addLinks'); $method->setAccessible(true);
@@ -51,6 +55,16 @@ try {
     $links->update($id,['api_id'=>null]);
     $result = (new App\Libraries\VideoHostHealth($links))->check($links->find($id));
     check($result['status'] === 'unknown' && strpos($result['message'],'Multiple') !== false, 'Ambiguous account is not marked deleted');
+    $table = new App\Controllers\Admin\Ajax\TableData();
+    $request = Config\Services::request();
+    $requestProperty = new ReflectionProperty($table, 'request'); $requestProperty->setAccessible(true); $requestProperty->setValue($table, $request);
+    $filter = new ReflectionMethod($table, 'applyReportedHostFilter'); $filter->setAccessible(true);
+    foreach (['embed.example'=>1, 'example'=>0, 'embed.example.evil'=>0, "x' OR 1=1"=>0] as $host=>$expected) {
+        $request->setGlobal('get', ['host'=>$host]);
+        $builder = $db->table('links'); $filter->invoke($table, $builder);
+        check($builder->countAllResults() === $expected, 'Exact host filter: ' . $host);
+    }
+    $request->setGlobal('get', []);
     $admin = new App\Controllers\Admin\ThirdPartyApis();
     $hostErrors = new ReflectionMethod($admin, 'hostnameErrors'); $hostErrors->setAccessible(true);
     check(count($hostErrors->invoke($admin, ['provider'=>'vidhide','status'=>'active','embed_domains'=>'EMBED.EXAMPLE'])) === 1, 'Reject hostname overlap across different providers');

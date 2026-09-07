@@ -48,7 +48,7 @@ class VidHideClient
             if (!is_array($file) || (string)($file['file_code'] ?? '') !== $id) { continue; }
             $status = (int)($file['status'] ?? 0);
             if ($status === 404 || $status === 410) {
-                return ['status'=>'deleted','message'=>'VidHide reports this file as not found in the configured account'];
+                return ['status'=>'deleted','message'=>'VidHide reports this file as not found in the configured account (' . $status . ')' ];
             }
             if ($status === 522) { return ['status'=>'unknown','skip_playback'=>true,'message'=>'VidHide/EarnVids file check failed (522)']; }
             if ($status !== 200) { return $unknown; }

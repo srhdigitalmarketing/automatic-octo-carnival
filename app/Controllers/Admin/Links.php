@@ -57,7 +57,14 @@ class Links extends BaseController
 
         $linksCount = $this->model->reported()->countAllResults();
 
-        $data = compact('title', 'linksCount');
+        $hosts = [];
+        foreach ($this->model->select('link')->where('type', 'stream')->distinct()->findAll() as $stream) {
+            $hostname = strtolower((string)parse_url((string)$stream->link, PHP_URL_HOST));
+            if ($hostname !== '') { $hosts[$hostname] = $hostname; }
+        }
+        sort($hosts);
+        $host = strtolower(trim((string)$this->request->getGet('host')));
+        $data = compact('title', 'linksCount', 'hosts', 'host');
 
         return view('admin/links/reported', $data);
     }

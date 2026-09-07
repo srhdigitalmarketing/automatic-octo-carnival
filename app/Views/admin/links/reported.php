@@ -12,10 +12,20 @@
     <span class="reported-links-summary"><i class="fa fa-exclamation-circle"></i> <?= number_format($linksCount) ?> need review</span>
 </div>
 
+<form method="get" class="form-inline" style="margin-bottom:15px">
+    <label for="reported-host">Stream host:&nbsp;</label>
+    <select id="reported-host" name="host" class="form-control">
+        <option value="">All hosts</option>
+        <?php foreach ($hosts as $hostname): ?>
+        <option value="<?= esc($hostname, 'attr') ?>" <?= $host === $hostname ? 'selected' : '' ?>><?= esc($hostname) ?></option>
+        <?php endforeach ?>
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+</form>
 <div class="x_panel link-table-panel">
     <div class="card-box table-responsive">
 
-        <table id="reported-links-datatable" class="table link-operations-table link-operations-table--reported data-list-table" data-source="<?= admin_url('/ajax/tables/reported-links') ?>" style="width:100%">
+        <table id="reported-links-datatable" class="table link-operations-table link-operations-table--reported data-list-table" data-source="<?= esc(admin_url('/ajax/tables/reported-links') . '?host=' . rawurlencode($host), 'attr') ?>" style="width:100%">
             <thead>
             <tr>
                 <th>ID</th>

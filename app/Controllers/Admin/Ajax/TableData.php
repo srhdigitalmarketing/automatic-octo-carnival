@@ -202,10 +202,12 @@ class TableData extends BaseController
         $total = $this->reportedLinkBuilder()->countAllResults();
 
         $builder = $this->reportedLinkBuilder();
+        $this->applyReportedHostFilter($builder);
         $this->applySearch($builder, ['link'], $this->searchTerm());
         $filtered = $builder->countAllResults();
 
         $builder = $this->reportedLinkBuilder();
+        $this->applyReportedHostFilter($builder);
         $this->applySearch($builder, ['link'], $this->searchTerm());
         $this->applyPage(
             $builder,
@@ -219,7 +221,8 @@ class TableData extends BaseController
         foreach ($builder->get()->getResultArray() as $link) {
             $id = (int) $link['id'];
             $reason = (int) $link['reports_not_working'] >= (int) $link['reports_wrong_link'] ? 'Not working' : 'Wrong video';
-            $reasonClass = $reason === 'Not working' ? 'is-broken' : 'is-wrong';
+            if ((int)$link['reports_not_working'] > 0 && preg_match('/\b404\b/', (string)($link['provider_message'] ?? ''))) { $reason = 'Broken link'; }
+            $reasonClass = in_array($reason, ['Not working', 'Broken link'], true) ? 'is-broken' : 'is-wrong';
             $reports = (int) $link['reports_not_working'] + (int) $link['reports_wrong_link'];
 
             $rows[] = [
@@ -301,6 +304,14 @@ class TableData extends BaseController
         }
 
         return $builder;
+    }
+
+    private function applyReportedHostFilter(BaseBuilder $builder): void
+    {
+        $host = strtolower(trim((string)$this->request->getGet('host')));
+        if ($host === '') { return; }
+        if (!preg_match('/^[a-z0-9.-]+$/D', $host)) { $builder->where('1 = 0', null, false); return; }
+        $builder->where('type', 'stream')->where('LOWER(link) REGEXP ' . db_connect()->escape('^https?://' . str_replace('.', '[.]', $host) . '([/:?#]|$)'), null, false);
     }
 
     private function reportedLinkBuilder(): BaseBuilder

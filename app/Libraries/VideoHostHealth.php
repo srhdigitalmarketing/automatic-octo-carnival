@@ -74,6 +74,11 @@ class VideoHostHealth
         } elseif (in_array($status, ['available','reachable'], true)) {
             $data += ['is_broken'=>0, 'failure_count'=>0, 'last_error'=>null, 'last_success_at'=>$now];
         }
+        if (preg_match('/\b404\b/', (string)$result['message'])) {
+            $data['reports_not_working'] = max(1, (int)$link->reports_not_working);
+        } elseif (in_array($status, ['available','reachable'], true)) {
+            $data['reports_not_working'] = 0;
+        }
         if (!$this->links->protect(false)->update((int)$link->id, $data)) { throw new \RuntimeException('Provider status could not be saved'); }
         $this->links->protect(true);
         foreach ($data as $field=>$value) { $link->$field=$value; }
