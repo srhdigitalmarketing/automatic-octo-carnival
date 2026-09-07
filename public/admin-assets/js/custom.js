@@ -958,16 +958,22 @@
             let hasInput = $.trim(scope.find('input[name="banner_file"]').val() || '') !== '';
             let hasCurrentBanner = scope.find('.banner-wrap img').length > 0;
             scope.find('[data-upload-banner-to-r2]').prop('disabled', ! hasInput);
+            let imageUrl = scope.find('[data-source-image-url]')[0];
+            scope.find('[data-grab-banner-to-r2]').prop('disabled', ! imageUrl || ! imageUrl.value.trim() || ! imageUrl.checkValidity());
             scope.find('[data-clear-banner-image]').prop('disabled', ! hasInput && ! hasCurrentBanner);
         }
 
         bannerInputs.each(function(){ updateBannerActions($(this).closest('.x_content')); });
         bannerInputs.on('input change', function(){ updateBannerActions($(this).closest('.x_content')); });
+        $('[data-source-image-url]').on('input change', function(){
+            updateBannerActions($(this).closest('.x_content'));
+        });
 
         $(document).on('click', '[data-clear-banner-image]', function(){
             let scope = $(this).closest('.x_content');
             scope.find('input[name="banner_file"]').val('').trigger('input').trigger('change');
             scope.find('[data-r2-banner-link]').val('');
+            scope.find('[data-source-image-url]').val('');
             scope.find('input[name="remove_banner"]').val('1');
             scope.find('.banner-wrap').empty();
             updateBannerActions(scope);

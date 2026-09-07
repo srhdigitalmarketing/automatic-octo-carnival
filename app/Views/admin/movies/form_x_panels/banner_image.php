@@ -28,6 +28,15 @@
                 'data-r2-banner-link' => 'true',
             ]) ?>
         </div>
+        <div class="form-group">
+            <?= form_label('Image URL:', 'source-image-url') ?>
+            <input type="url" id="source-image-url" name="source_image_url" class="form-control"
+                   placeholder="https://example.com/image.jpg" data-source-image-url>
+            <small class="form-text">Direct public image URL. JPG, PNG, or WebP, up to 4 MB. This button saves the video and uploads the image.</small>
+            <button type="submit" name="grab_banner" value="1" class="btn btn-primary mt-2" data-grab-banner-to-r2 disabled>
+                <i class="fa fa-cloud-upload"></i> Grab Image to R2
+            </button>
+        </div>
         <div class="separator"> or </div>
         <div class="form-group">
             <?= form_label('Select from PC:') ?>

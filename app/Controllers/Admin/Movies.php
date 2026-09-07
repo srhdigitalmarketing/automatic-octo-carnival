@@ -185,7 +185,7 @@ class Movies extends BaseController
                 }
 
                 //save media files
-                if( is_media_download_to_server() || $usesR2BannerStorage ){
+                if( is_media_download_to_server() || $usesR2BannerStorage || $this->request->getPost('grab_banner') === '1' ){
                     $this->saveMediaFiles( $movie );
                 }
 
@@ -263,7 +263,7 @@ class Movies extends BaseController
             }
 
             // save media files
-            if(is_media_download_to_server() || $usesR2BannerStorage){
+            if(is_media_download_to_server() || $usesR2BannerStorage || $this->request->getPost('grab_banner') === '1'){
                 $this->saveMediaFiles( $movie );
             }
 
@@ -298,11 +298,15 @@ class Movies extends BaseController
 
     protected function saveMediaFiles(\App\Entities\Movie $movie)
     {
+        if ($this->request->getPost('grab_banner') === '1') {
+            $this->grabBannerImage($movie);
+            return;
+        }
         $imageValidationRules = [];
 
         $bannerFile = $this->request->getFile('banner_file');
 
-        if(! $bannerFile->isValid()) $bannerFile = null;
+        if($bannerFile === null || ! $bannerFile->isValid()) $bannerFile = null;
 
         if($bannerFile !== null) {
             $imageValidationRules['banner_file'] =[
@@ -352,6 +356,41 @@ class Movies extends BaseController
             }
         }
 
+    }
+
+    protected function grabBannerImage(\App\Entities\Movie $movie): void
+    {
+        $previousBanner = $movie->banner;
+        try {
+            $storage = \App\Libraries\CloudflareR2Storage::active();
+            if ($storage === null) {
+                $this->mediaWarnings[] = 'Configure an active Cloudflare R2 connection before grabbing an image.';
+                return;
+            }
+            $url = (new \App\Libraries\RemoteBannerImage())->upload(
+                trim((string) $this->request->getPost('source_image_url')),
+                $storage
+            );
+            $movie->banner = $url;
+            if (! $this->model->skipValidation(true)->save($movie)) {
+                $movie->banner = $previousBanner;
+                try {
+                    $storage->deletePublicUrl($url);
+                } catch (\Throwable $cleanupError) {
+                    log_message('warning', 'Unable to remove an unsaved grabbed image.');
+                }
+                $this->mediaWarnings[] = 'The image was uploaded but could not be saved. Please try again.';
+                return;
+            }
+        } catch (\Throwable $exception) {
+            $movie->banner = $previousBanner;
+            $this->mediaWarnings[] = $exception instanceof \RuntimeException
+                ? $exception->getMessage() : 'Unable to grab the image. Please check the image URL and R2 configuration.';
+            return;
+        }
+        if (! empty($previousBanner) && $previousBanner !== $url) {
+            delete_banner($previousBanner);
+        }
     }
 
     protected function saveLinks(\App\Entities\Movie $movie)

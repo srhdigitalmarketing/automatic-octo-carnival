@@ -51,10 +51,12 @@ class CloudflareR2Storage
 
     public function uploadBanner(File $file): string
     {
-        $extension = strtolower((string) pathinfo($file->getName(), PATHINFO_EXTENSION));
-        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) ? $extension : 'jpg';
-        $key = 'banners/' . date('Y/m') . '/' . bin2hex(random_bytes(16)) . '.' . $extension;
-        $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $mime = $file->getMimeType();
+        $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if (! isset($extensions[$mime])) {
+            throw new RuntimeException('Only JPG, PNG, and WebP images can be uploaded.');
+        }
+        $key = 'banners/' . date('Y/m') . '/' . bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
 
         $this->signedRequest('PUT', $key, $file->getPathname(), $mime);
 
