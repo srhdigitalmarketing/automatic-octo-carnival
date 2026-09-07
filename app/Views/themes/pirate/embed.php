@@ -119,7 +119,7 @@
 
 <script src="<?= theme_assets('js/template.min.js?v=1.2') ?>"></script>
 <script src="<?= theme_assets('js/custom.min.js?v=1.2') ?>"></script>
-<script src="<?= theme_assets('js/player.js?v=20260908-2') ?>"></script>
+<script src="<?= theme_assets('js/player.js?v=20260908-3') ?>"></script>
 
 <?php if (! empty($links)): ?>
 <script>

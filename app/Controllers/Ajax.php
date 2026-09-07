@@ -67,6 +67,7 @@ class Ajax extends BaseAjax
                     'link' => $resolver->deliveryUrl($link, (string) $this->request->getIPAddress()),
                     'id' => encode_id($link->id),
                     'host' => $link->getHost(true),
+                    'frame_load_timeout_ms' => $resolver->frameLoadTimeout($link),
                 ]);
 
                 /*

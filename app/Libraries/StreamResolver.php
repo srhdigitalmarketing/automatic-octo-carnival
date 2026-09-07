@@ -92,6 +92,21 @@ class StreamResolver
      * EarnVids direct links are generated for the current viewer IP, so they
      * must be requested only when playback starts and must never be stored.
      */
+    /** Page-load deadline only: cross-origin iframe playback is not observable. */
+    public function frameLoadTimeout(Link $link): int
+    {
+        if (VideoHostHealth::matchesHost((string) $link->link, 'vidplayerpro.online,earnvids.com,vidhide.com')) {
+            return 5000;
+        }
+        $providers = (new ThirdPartyApi())->whereIn('provider', ['vidhide', 'earnvids'])->where('status', 'active')->findAll();
+        foreach ($providers as $provider) {
+            if (VideoHostHealth::matchesHost((string) $link->link, (string) $provider->embed_domains)) {
+                return 5000;
+            }
+        }
+        return 15000;
+    }
+
     public function deliveryUrl(Link $link, string $endUserIp): string
     {
         if (! filter_var($endUserIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) || empty($link->api_id)) {

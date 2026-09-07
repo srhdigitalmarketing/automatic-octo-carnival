@@ -30,6 +30,8 @@ const Player = {
     activeLinkId: null,
     failedHosts: [],
     frameLoadTimeout: null,
+    frameLoadTimeoutMs: 15000,
+    frameGeneration: 0,
     node: null,
     servers: {
 
@@ -160,6 +162,7 @@ const Player = {
                     link = data.data.link;
                     self.linkToken = data.data.token;
                     self.activeLinkId = data.data.id;
+                    self.frameLoadTimeoutMs = data.data.frame_load_timeout_ms === 5000 ? 5000 : 15000;
                     self.servers.selectResolved(data.data.id, data.data.host);
 
                 }else{
@@ -199,10 +202,14 @@ const Player = {
     loadFrame: function ( link ) {
         let self = this;
         window.clearTimeout(self.frameLoadTimeout);
+        const generation = ++self.frameGeneration;
+        const linkId = self.activeLinkId;
         self.node.find('iframe').prop('src', link);
         self.frameLoadTimeout = window.setTimeout(function () {
-            self.handleFrameFailure();
-        }, 15000);
+            if (generation === self.frameGeneration && linkId === self.activeLinkId) {
+                self.handleFrameFailure();
+            }
+        }, self.frameLoadTimeoutMs);
     },
     handleFrameFailure: function () {
         let self = this;

@@ -90,3 +90,9 @@ Pilih **API & R2 Storage → Add Custom hostname**. Isi Display name, Embed host
 Pemeriksaan HTTP hanya menerima URL publik HTTP(S) port 80/443, memvalidasi DNS lalu mengunci alamat koneksi, membatasi waktu/ukuran respons, dan tidak mengikuti redirect. HTTP 2xx menjadi **HTTP reachable**, bukan Healthy. HTTP 4xx/5xx (termasuk 404/410/522) atau koneksi gagal membuat link dilewati tanpa menyebutnya Deleted. Respons 3xx memerlukan URL embed langsung. HTTP 200 dari halaman error/JavaScript atau URL #ID tidak membuktikan video ada. Host tanpa API tidak dapat menjamin deteksi error stream internal.
 
 Kolom Result konfigurasi ini menampilkan **Tanpa API**; koneksi diperiksa per URL file, bukan sekadar halaman utama hostname.
+
+### Batas pemuatan iframe VidHide/EarnVids
+
+Player memberi waktu 5 detik untuk memuat halaman iframe hostname VidHide/EarnVids yang dikonfigurasi aktif, serta vidplayerpro.online, earnvids.com dan vidhide.com. Jika halaman belum selesai dimuat, player otomatis mencoba link berikutnya tanpa panel ganti server. Host lain tetap 15 detik.
+
+Batas ini hanya mengukur pemuatan halaman iframe. Spinner video, buffering dan waktu kembali ke 00:00 setelah iframe selesai dimuat tidak dapat diamati oleh halaman induk lintas domain tanpa event playback dari provider. Timer dihentikan ketika halaman iframe dimuat agar video yang berjalan normal tidak diputus setiap 5 detik. Pemeriksaan API/HTTP tetap menentukan link yang dikeluarkan dari rotasi.
