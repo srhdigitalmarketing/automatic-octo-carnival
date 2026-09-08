@@ -9,6 +9,7 @@
                 <option value="<?= (int)$api->id ?>"><?= esc($api->name) ?></option>
             <?php endforeach ?>
             </select>
+            <label for="latest-grab-category">Kategori</label><select id="latest-grab-category" class="form-control" style="width:200px;max-width:100%"><option value="">Semua kategori</option></select><button type="button" id="latest-grab-categories" class="btn btn-default" style="margin:0">Muat kategori</button>
             <label for="latest-grab-count">Jumlah video</label><input id="latest-grab-count" type="number" min="1" max="100" value="5" class="form-control" style="width:90px">
             <button type="button" id="latest-grab-start" class="btn btn-primary" style="margin:0">Mulai Grab Latest Video</button>
             <button type="button" id="latest-grab-stop" class="btn btn-default" style="margin:0" disabled>Berhenti</button>

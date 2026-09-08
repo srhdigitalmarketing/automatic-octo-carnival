@@ -33,3 +33,5 @@ $catalogStatus = App\Libraries\VodFileHealth::classify('https://example.com/e/ab
 check($catalogStatus['status'] === 'unknown' && strpos($catalogStatus['message'], 'persis') !== false, 'Catalog presence does not prove playback');
 check(App\Libraries\VodFileHealth::classify('https://example.com/e/abc', [['stream_urls'=>['https://other.example/e/abc']]])['status'] === 'unknown', 'Same ID on another hostname does not prove presence');
 check(App\Libraries\VodFileHealth::classify('https://example.com/e/abc', [])['status'] === 'unknown', 'Empty catalog cannot prove deletion');
+
+check(App\Libraries\VodCatalog::normalize(['list'=>[['name'=>'Test','category'=>['Action','Comedy','Action',null]]]])[0]['categories'] === ['Action','Comedy'], 'Category names sanitized and deduplicated');

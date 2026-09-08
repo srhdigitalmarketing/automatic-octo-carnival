@@ -16,6 +16,15 @@ class LatestGrab extends \App\Controllers\BaseController
         $lock = fopen(WRITEPATH.'cache/latest-grab.lock','c');
         if (!$lock || !flock($lock,LOCK_EX | LOCK_NB)) { if ($lock) fclose($lock); return $this->response->setStatusCode(409)->setJSON(['error'=>'Impor lain masih berjalan.']); }
         try {
+            if ($this->request->getPost('action') === 'categories') {
+                $api = (new ThirdPartyApi())->where('provider','vod_catalog')->where('status','active')->find((int)$this->request->getPost('api_id'));
+                if (!$api) throw new \RuntimeException('API tidak tersedia');
+                $items = (new VodCatalog())->search($api->api_base_url, '', true);
+                $categories = [];
+                foreach ($items as $item) { foreach ($item['categories'] as $category) { $categories[$category] = $category; } }
+                sort($categories, SORT_NATURAL | SORT_FLAG_CASE);
+                return $this->response->setJSON(['categories'=>array_values($categories)]);
+            }
             $storage = CloudflareR2Storage::active();
             if (!$storage) throw new \RuntimeException('Siapkan R2 aktif terlebih dahulu.');
             $owner = hash('sha256', session_id());
@@ -24,6 +33,8 @@ class LatestGrab extends \App\Controllers\BaseController
                 $api = (new ThirdPartyApi())->where('provider','vod_catalog')->where('status','active')->find((int)$this->request->getPost('api_id'));
                 if (!$count || !$api) throw new \RuntimeException('Pilih API aktif dan jumlah 1–100.');
                 $items = (new VodCatalog())->search($api->api_base_url, '', true);
+                $category = trim((string)$this->request->getPost('category'));
+                if ($category !== '') { $items = array_values(array_filter($items, static function($item) use ($category) { return in_array($category, $item['categories'], true); })); }
                 $token = bin2hex(random_bytes(24));
                 $job = ['owner'=>$owner,'items'=>$items,'cursor'=>0,'success'=>0,'target'=>$count];
                 if (!cache()->save('latest_'.$token,$job,7200)) throw new \RuntimeException('Cache proses tidak tersedia.');

@@ -5,6 +5,8 @@
     const start = document.getElementById('latest-grab-start'), stop = document.getElementById('latest-grab-stop');
     const api = document.getElementById('latest-grab-api'), status = document.getElementById('latest-grab-status');
     const progress = document.getElementById('latest-grab-progress'), log = document.getElementById('latest-grab-log');
+    const category = document.getElementById('latest-grab-category');
+    const loadCategories = document.getElementById('latest-grab-categories');
     let running = false, stopping = false;
     async function request(data) {
         const response = await fetch(panel.dataset.url, {method:'POST', credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'}, body:new URLSearchParams(data)});
@@ -12,17 +14,34 @@
         if (!response.ok || result.error) throw new Error(result.error || 'Permintaan gagal.');
         return result;
     }
+    async function refreshCategories() {
+        if (running || !api.value) return;
+        const selectedApi = api.value;
+        category.replaceChildren(new Option('Semua kategori', ''));
+        api.disabled = true; loadCategories.disabled = true; start.disabled = true;
+        status.textContent = 'Memuat kategori dari API…';
+        try {
+            const data = await request({action:'categories',api_id:selectedApi});
+            if (api.value !== selectedApi) return;
+            data.categories.forEach(name => category.add(new Option(name, name)));
+            status.textContent = data.categories.length ? 'Pilih kategori dan jumlah video.' : 'Tidak ada kategori pada daftar API.';
+        } catch (error) { status.textContent = 'Gagal memuat kategori. Klik Muat kategori untuk mencoba lagi.'; }
+        finally { api.disabled = false; loadCategories.disabled = false; start.disabled = false; }
+    }
+    loadCategories.addEventListener('click', refreshCategories);
+    api.addEventListener('change', refreshCategories);
     stop.addEventListener('click', function () { stopping = true; stop.disabled = true; status.textContent = 'Menunggu video saat ini selesai…'; });
     start.addEventListener('click', async function () {
         if (running) return;
         if (!api.value) { status.textContent = 'Tambahkan API VOD aktif terlebih dahulu.'; return; }
+        category.disabled = true; loadCategories.disabled = true;
         running = true; stopping = false; start.disabled = true; api.disabled = true; stop.disabled = false;
         log.replaceChildren(); progress.value = 0;
         let processed = 0, success = 0, skipped = 0, failed = 0;
         function summary() { return 'Diproses ' + processed + ' • Berhasil ' + success + ' • Dilewati ' + skipped + ' • Gagal ' + failed; }
         try {
             status.textContent = 'Mengambil daftar video terbaru…';
-            const init = await request({action:'start',api_id:api.value,count:document.getElementById('latest-grab-count').value});
+            const init = await request({action:'start',api_id:api.value,count:document.getElementById('latest-grab-count').value,category:category.value});
             progress.max = init.target;
             while (!stopping && processed < init.total && success < init.target) {
                 status.textContent = 'Memproses video berikutnya… ' + summary();
@@ -38,6 +57,6 @@
             }
             status.textContent = (stopping ? 'Dihentikan. ' : 'Selesai. ') + summary();
         } catch (error) { status.textContent = 'Proses berhenti: ' + error.message + ' ' + summary(); }
-        finally { running = false; start.disabled = false; api.disabled = false; stop.disabled = true; }
+        finally { category.disabled = false; loadCategories.disabled = false; running = false; start.disabled = false; api.disabled = false; stop.disabled = true; }
     });
 })();

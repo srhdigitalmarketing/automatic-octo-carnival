@@ -57,6 +57,7 @@ class VodCatalog
                 'description'=>mb_substr(strip_tags(is_string($description) ? $description : ''),0,10000),
                 'auto_poster_url'=>self::httpUrl($row['poster_url'] ?? ''),
                 'movie_code'=>is_string($row['movie_code'] ?? null) ? $row['movie_code'] : '',
+                'categories'=>array_values(array_unique(array_filter(array_map(static function($v) { return is_string($v) ? trim(strip_tags($v)) : ''; }, is_array($row['category'] ?? null) ? $row['category'] : [])))),
                 'year'=>is_scalar($row['year'] ?? null) ? (int)$row['year'] : 0,
                 'quality'=>is_string($row['quality'] ?? null) ? mb_substr($row['quality'],0,20) : '',
                 'country'=>is_array($row['country'] ?? null) ? implode(', ',array_filter($row['country'],'is_string')) : '',
