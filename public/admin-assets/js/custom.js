@@ -997,7 +997,7 @@
         }
 
         let fixedRoots = {
-            earnvids: 'https://earnvidsapi.com/api',
+            streamhg: 'https://streamhgapi.com/api',
             upnshare: 'https://upnshare.com/api/v1',
             cloudflare_r2: 'https://r2.cloudflarestorage.com'
         };
@@ -1010,7 +1010,7 @@
             });
             $('[data-provider-structure]').prop('hidden', function(){
                 let supported = $(this).data('provider-structure');
-                return supported !== provider && !(supported === 'other' && provider !== 'earnvids' && provider !== 'upnshare' && provider !== 'cloudflare_r2');
+                return supported !== provider && !(supported === 'other' && provider !== 'streamhg' && provider !== 'upnshare' && provider !== 'cloudflare_r2');
             });
             $('[data-r2-settings]').prop('hidden', provider !== 'cloudflare_r2');
             $('[data-video-api-token], [data-video-api-scopes], .host-api-test, #host-api-test-result').prop('hidden', provider === 'cloudflare_r2');
@@ -1225,7 +1225,7 @@
                 return;
             }
 
-            if (['upnshare', 'vidhide', 'earnvids'].includes(item.provider)) {
+            if (['upnshare', 'streamhg'].includes(item.provider)) {
                 let message = 'Host tidak mengembalikan link player.';
                 const inputs = () => $('input[name^="st_links"][name$="[url]"]');
                 if (item.player_url && inputs().filter(function () { return $.trim($(this).val()) === item.player_url; }).length) {
@@ -1277,7 +1277,7 @@
                 streamWasFilled = true;
 
                 // Keep the selected provider and file code with the link.
-                // EarnVids direct URLs are requested later for the visitor's
+                // StreamHG direct URLs are requested later for the visitor's
                 // IP address, so an expiring direct URL is never saved here.
                 let fieldName = streamInput.attr('name') || '';
                 let fieldMatch = fieldName.match(/^st_links\[(\d+)\]\[url\]$/);

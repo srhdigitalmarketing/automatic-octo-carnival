@@ -69,10 +69,10 @@ check($validate->invoke($admin, ['provider'=>'upnshare','api_token'=>'token','em
 check(count($validate->invoke($admin, ['provider'=>'upnshare','api_token'=>'','embed_domains'=>'https://embed.example/e/id'])) === 2, 'Reject blank token and URL instead of hostname');
 
 foreach ([200,404,410] as $fileStatus) {
-    $c = new App\Libraries\VidHideClient('test-only-key', static function ($id) use ($fileStatus) {
+    $c = new App\Libraries\StreamHgClient('test-only-key', static function ($id) use ($fileStatus) {
         return ['http'=>200, 'body'=>['status'=>200, 'result'=>[['file_code'=>$id,'status'=>$fileStatus,'canplay'=>1]]]];
     });
-    check($c->videoStatus('vid123')['status'] === ($fileStatus === 200 ? 'available' : 'deleted'), 'VidHide per-file status');
+    check($c->videoStatus('vid123')['status'] === ($fileStatus === 200 ? 'available' : 'deleted'), 'StreamHg per-file status');
 }
 foreach ([
  ['http'=>404,'body'=>null],
@@ -80,27 +80,27 @@ foreach ([
  ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>'other','status'=>404]]]],
  ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>'vid123','status'=>200,'canplay'=>null]]]],
 ] as $response) {
-    $c = new App\Libraries\VidHideClient('test-only-key', static function ($id) use ($response) { return $response; });
-    check($c->videoStatus('vid123')['status'] === 'unknown', 'VidHide inconclusive response cannot mean deleted');
+    $c = new App\Libraries\StreamHgClient('test-only-key', static function ($id) use ($response) { return $response; });
+    check($c->videoStatus('vid123')['status'] === 'unknown', 'StreamHg inconclusive response cannot mean deleted');
 }
-$c = new App\Libraries\VidHideClient('test-only-key', static function ($id) {
+$c = new App\Libraries\StreamHgClient('test-only-key', static function ($id) {
  return ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>$id,'status'=>200,'canplay'=>0]]]];
 });
-check($c->videoStatus('vid123')['status'] === 'error', 'VidHide unplayable file is Error');
+check($c->videoStatus('vid123')['status'] === 'error', 'StreamHg unplayable file is Error');
 $hostHealth = new App\Libraries\VideoHostHealth(new MemoryLinks());
 $apisProperty = new ReflectionProperty($hostHealth, 'apis'); $apisProperty->setAccessible(true);
 $clientsProperty = new ReflectionProperty($hostHealth, 'clients'); $clientsProperty->setAccessible(true);
 $apisProperty->setValue($hostHealth, [
  (object)['id'=>1,'provider'=>'upnshare','embed_domains'=>'ustreamplay.online'],
- (object)['id'=>2,'provider'=>'vidhide','embed_domains'=>'vid.example'],
+ (object)['id'=>2,'provider'=>'streamhg','embed_domains'=>'vid.example'],
 ]);
 $seen = [];
 $clientsProperty->setValue($hostHealth, [
  'api-1'=>new App\Libraries\UpnShareClient($config, static function($path) use (&$seen) { $seen[]='upn'; return ['http'=>200,'body'=>['id'=>'upn123','status'=>'ready']]; }),
- 'api-2'=>new App\Libraries\VidHideClient('test-only-key', static function($id) use (&$seen) { $seen[]=$id; return ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>$id,'status'=>200,'canplay'=>1]]]]; }),
+ 'api-2'=>new App\Libraries\StreamHgClient('test-only-key', static function($id) use (&$seen) { $seen[]=$id; return ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>$id,'status'=>200,'canplay'=>1]]]]; }),
 ]);
 check($hostHealth->check(new App\Entities\Link(['id'=>1,'api_id'=>2,'link'=>'https://ustreamplay.online/e/upn123','upnshare_video_id'=>'stale']))['status'] === 'available', 'UPN selected by hostname despite stale account/id');
-check($hostHealth->check(new App\Entities\Link(['id'=>2,'api_id'=>1,'link'=>'https://vid.example/embed-vid123.html','upnshare_video_id'=>'stale']))['status'] === 'available', 'VidHide selected by hostname despite stale account/id');
+check($hostHealth->check(new App\Entities\Link(['id'=>2,'api_id'=>1,'link'=>'https://vid.example/embed-vid123.html','upnshare_video_id'=>'stale']))['status'] === 'available', 'StreamHg selected by hostname despite stale account/id');
 check($seen === ['upn','vid123'], 'Each host dispatched to the correct API with URL file ID');
 check($hostHealth->check(new App\Entities\Link(['id'=>3,'api_id'=>1,'link'=>'https://unconfigured.example/e/vid123'])) === null, 'Unconfigured host cannot use stale account');
 check(App\Libraries\VideoHostHealth::videoId('https://ustreamplay.online/#9aboc') === '9aboc', 'User-reported fragment ID extracted correctly');
@@ -112,19 +112,19 @@ $healthProperty = new ReflectionProperty($resolver,'hostHealth'); $healthPropert
 $healthyMethod = new ReflectionMethod($resolver,'isHealthy'); $healthyMethod->setAccessible(true);
 check($healthyMethod->invoke($resolver,new App\Entities\Link(['id'=>1,'link'=>'https://ustreamplay.online/#9aboc']),true) === false, 'Unknown API must not fall back to HTTP success');
 foreach ([['http'=>404,'body'=>null], ['http'=>410,'body'=>null], ['http'=>200,'body'=>['status'=>404]]] as $failure) {
-    $vid404 = new App\Libraries\VidHideClient('test-key', static function($id) use ($failure) { return $failure; });
+    $vid404 = new App\Libraries\StreamHgClient('test-key', static function($id) use ($failure) { return $failure; });
     $result = $vid404->videoStatus('x4qkbbog3gc4');
-    check($result['status'] === 'unknown' && $result['skip_playback'] === true, 'VidHide missing endpoint/API record skips playback without false Deleted');
+    check($result['status'] === 'unknown' && $result['skip_playback'] === true, 'StreamHg missing endpoint/API record skips playback without false Deleted');
     $link404 = new App\Entities\Link(['id'=>99,'provider_status'=>'available']);
     $persist->invoke($health, $link404, $result);
-    check((int)$link404->is_broken === 1, 'VidHide 404 excluded from playback');
+    check((int)$link404->is_broken === 1, 'StreamHg 404 excluded from playback');
 }
 $upn522 = client([['http'=>522,'body'=>null]])->videoStatus('abc123');
 check($upn522['status'] === 'unknown' && $upn522['skip_playback'] === true, 'UPNShare 522 rotates without false Deleted');
 foreach ([['http'=>522,'body'=>null], ['http'=>200,'body'=>['status'=>522]], ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>'abc123','status'=>522]]]]] as $response522) {
-    $vid522 = new App\Libraries\VidHideClient('test-key', static function($id) use ($response522) { return $response522; });
+    $vid522 = new App\Libraries\StreamHgClient('test-key', static function($id) use ($response522) { return $response522; });
     $result522 = $vid522->videoStatus('abc123');
-    check($result522['status'] === 'unknown' && $result522['skip_playback'] === true, 'VidHide 522 rotates at HTTP/API/file levels');
+    check($result522['status'] === 'unknown' && $result522['skip_playback'] === true, 'StreamHg 522 rotates at HTTP/API/file levels');
     $failed522 = new App\Entities\Link(['id'=>99,'provider_status'=>'available']);
     $persist->invoke($health,$failed522,$result522);
     check((int)$failed522->is_broken === 1 && $failed522->provider_status === 'unknown', '522 excluded from playback');
@@ -132,5 +132,5 @@ foreach ([['http'=>522,'body'=>null], ['http'=>200,'body'=>['status'=>522]], ['h
     check((int)$failed522->is_broken === 0, 'Recovery after 522 restores host');
 }
 echo "PASS: HTTP/API/file 522 skip playback and recover without marking Deleted.\n";
-echo "PASS: VidHide responses and automatic mixed-host routing, including stale account/video IDs.\n";
+echo "PASS: StreamHg responses and automatic mixed-host routing, including stale account/video IDs.\n";
 echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

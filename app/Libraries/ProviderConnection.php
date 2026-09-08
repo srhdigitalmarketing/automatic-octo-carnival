@@ -24,7 +24,7 @@ class ProviderConnection
                 CloudflareR2Storage::checkConnection($api);
                 return array_merge($result, ['state'=>'connected','label'=>'Terhubung','message'=>'Autentikasi dan akses bucket R2 berhasil. Izin upload dan URL publik belum diuji.']);
             }
-            if (!in_array($api->provider, ['upnshare','vidhide'], true) || trim((string)$api->api_token) === '') { return $result; }
+            if (!in_array($api->provider, ['upnshare','streamhg'], true) || trim((string)$api->api_token) === '') { return $result; }
             if ($this->transport) { $response = ($this->transport)($api); }
             else {
                 $options = ['timeout'=>8,'connect_timeout'=>4,'http_errors'=>false,'allow_redirects'=>false,'verify'=>true];
@@ -32,7 +32,7 @@ class ProviderConnection
                     $options['headers'] = ['api-token'=>(string)$api->api_token];
                     $url = 'https://upnshare.com/api/v1/video/manage?page=1&perPage=1';
                 } else {
-                    $url = 'https://earnvidsapi.com/api/account/info';
+                    $url = 'https://streamhgapi.com/api/account/info';
                     $options['query'] = ['key'=>(string)$api->api_token];
                 }
                 $http = \Config\Services::curlrequest([], null, null, false)->get($url, $options);

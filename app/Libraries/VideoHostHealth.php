@@ -30,7 +30,7 @@ class VideoHostHealth
     public function check(Link $link): ?array
     {
         if (! $this->links->supportsProviderStatus()) { return null; }
-        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'vidhide', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
+        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'streamhg', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
             if (self::matchesHost((string)$link->link, (string)$api->embed_domains)) { $matches[] = $api; }
@@ -48,7 +48,7 @@ class VideoHostHealth
             $api = $matches[0]; $key = 'api-' . $api->id;
             if (! isset($this->clients[$key])) {
                 $config = new \Config\UpnShare(); $config->apiToken = (string)$api->api_token;
-                $this->clients[$key] = $api->provider === 'vidhide' ? new VidHideClient((string)$api->api_token) : new UpnShareClient($config);
+                $this->clients[$key] = $api->provider === 'streamhg' ? new StreamHgClient((string)$api->api_token) : new UpnShareClient($config);
             }
         } else {
             $config = config('UpnShare');
@@ -58,7 +58,7 @@ class VideoHostHealth
             } else { return null; }
         }
         $id = self::videoId((string)$link->link);
-        if ($matches && $matches[0]->provider === 'vidhide') {
+        if ($matches && $matches[0]->provider === 'streamhg') {
             $path = (string)parse_url((string)$link->link, PHP_URL_PATH);
             if (preg_match('~(?:^|/)(?:embed-)?([A-Za-z0-9_-]{3,128})\.html$~', $path, $m)) { $id = $m[1]; }
         }

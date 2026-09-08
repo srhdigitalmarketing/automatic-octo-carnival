@@ -14,7 +14,7 @@ use Config\UpnShare;
  */
 class StreamResolver
 {
-    private const EARNVIDS_API_ROOT = 'https://earnvidsapi.com/api';
+    private const STREAMHG_API_ROOT = 'https://streamhgapi.com/api';
     /** @var LinkModel */
     private $links;
     /** @var UpnShare */
@@ -89,16 +89,16 @@ class StreamResolver
     }
 
     /**
-     * EarnVids direct links are generated for the current viewer IP, so they
+     * StreamHG direct links are generated for the current viewer IP, so they
      * must be requested only when playback starts and must never be stored.
      */
     /** Page-load deadline only: cross-origin iframe playback is not observable. */
     public function frameLoadTimeout(Link $link): int
     {
-        if (VideoHostHealth::matchesHost((string) $link->link, 'vidplayerpro.online,earnvids.com,vidhide.com')) {
+        if (VideoHostHealth::matchesHost((string) $link->link, 'streamhg.com,streamhg.com,streamhg.com')) {
             return 5000;
         }
-        $providers = (new ThirdPartyApi())->whereIn('provider', ['vidhide', 'earnvids'])->where('status', 'active')->findAll();
+        $providers = (new ThirdPartyApi())->whereIn('provider', ['streamhg'])->where('status', 'active')->findAll();
         foreach ($providers as $provider) {
             if (VideoHostHealth::matchesHost((string) $link->link, (string) $provider->embed_domains)) {
                 return 5000;
@@ -115,11 +115,11 @@ class StreamResolver
 
         $api = (new ThirdPartyApi())->find((int) $link->api_id);
         $videoId = trim((string) $link->upnshare_video_id) ?: $this->videoIdFromUrl((string) $link->link);
-        if ($api === null || $api->provider !== 'earnvids' || $api->status !== 'active' || $videoId === '') {
+        if ($api === null || $api->provider !== 'streamhg' || $api->status !== 'active' || $videoId === '') {
             return (string) $link->link;
         }
 
-        $response = $this->providerRequest(self::EARNVIDS_API_ROOT . '/file/direct_link', [
+        $response = $this->providerRequest(self::STREAMHG_API_ROOT . '/file/direct_link', [
             'key' => (string) $api->api_token,
             'file_code' => $videoId,
             'ip' => $endUserIp,
@@ -206,7 +206,7 @@ class StreamResolver
             ? (new ThirdPartyApi())->find((int) $link->api_id)
             : $this->configuredApiForLink($link);
         if ($api !== null && $api->status === 'active' && trim((string) $api->api_token) !== '') {
-            return in_array($api->provider, ['upnshare','vidhide'], true) ? null : $this->checkConfiguredProvider($api, $videoId);
+            return in_array($api->provider, ['upnshare','streamhg'], true) ? null : $this->checkConfiguredProvider($api, $videoId);
         }
 
         return null;
@@ -300,7 +300,7 @@ class StreamResolver
                 continue;
             }
 
-            // EarnVids/VidHide File Info returns a per-file status and
+            // StreamHG/StreamHg File Info returns a per-file status and
             // canplay flag. A successful HTTP response alone is not enough:
             // deleted, disabled, or still-encoding files must not be marked
             // healthy or used as a banner source.
@@ -325,8 +325,8 @@ class StreamResolver
     /** @return array<int, string> */
     private function apiRoots(string $baseUrl, string $provider): array
     {
-        if ($provider === 'earnvids') {
-            return [self::EARNVIDS_API_ROOT];
+        if ($provider === 'streamhg') {
+            return [self::STREAMHG_API_ROOT];
         }
 
         $baseUrl = rtrim($baseUrl, '/');

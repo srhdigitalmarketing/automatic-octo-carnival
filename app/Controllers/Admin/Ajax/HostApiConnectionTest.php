@@ -14,7 +14,7 @@ use Throwable;
  */
 class HostApiConnectionTest extends BaseAjax
 {
-    private const EARNVIDS_API_ROOT = 'https://earnvidsapi.com/api';
+    private const STREAMHG_API_ROOT = 'https://streamhgapi.com/api';
     private const UPNSHARE_API_ROOT = 'https://upnshare.com/api/v1';
     /** @var string|null */
     private $lastFailure = null;
@@ -26,23 +26,23 @@ class HostApiConnectionTest extends BaseAjax
         $token = trim((string) $this->request->getPost('api_token'));
         $apiId = (int) $this->request->getPost('api_id');
 
-        if (! in_array($provider, ['upnshare', 'vidhide', 'earnvids', 'xvideosharing', 'custom'], true)) {
+        if (! in_array($provider, ['upnshare', 'streamhg', 'xvideosharing', 'custom'], true)) {
             $this->addError('Choose a supported video-host provider before testing the connection.');
 
             return $this->jsonResponse();
         }
 
-        // EarnVids publishes one fixed API root. The API key is the only
+        // StreamHG publishes one fixed API root. The API key is the only
         // administrator-supplied connection setting.
-        if ($provider === 'earnvids') {
-            $baseUrl = self::EARNVIDS_API_ROOT;
+        if ($provider === 'streamhg') {
+            $baseUrl = self::STREAMHG_API_ROOT;
         } elseif ($provider === 'upnshare') {
             $baseUrl = self::UPNSHARE_API_ROOT;
         }
 
         if (mb_strlen($baseUrl) > 255 || $this->getSafeHostConfig($baseUrl) === null) {
-            $this->addError($provider === 'earnvids'
-                ? 'The official EarnVids API endpoint is unavailable from this server.'
+            $this->addError($provider === 'streamhg'
+                ? 'The official StreamHG API endpoint is unavailable from this server.'
                 : 'Enter a public HTTP(S) API base URL before testing the connection.');
 
             return $this->jsonResponse();
@@ -79,7 +79,7 @@ class HostApiConnectionTest extends BaseAjax
             log_message('warning', 'Video-host API connection test failed: {message}', [
                 'message' => $exception->getMessage(),
             ]);
-            $hostLabel = $provider === 'upnshare' ? 'UPNShare' : ($provider === 'earnvids' ? 'EarnVids' : 'the provider');
+            $hostLabel = $provider === 'upnshare' ? 'UPNShare' : ($provider === 'streamhg' ? 'StreamHG' : 'the provider');
             $this->addError('The connection test could not reach ' . $hostLabel . '. Check the API key and this server\'s outbound network access.');
         }
 
@@ -167,15 +167,15 @@ class HostApiConnectionTest extends BaseAjax
             }
 
             if ($list['status'] < 200 || $list['status'] >= 300) {
-                $this->lastFailure = $provider === 'earnvids'
-                    ? 'EarnVids returned HTTP ' . $list['status'] . '. Verify the API key.'
+                $this->lastFailure = $provider === 'streamhg'
+                    ? 'StreamHG returned HTTP ' . $list['status'] . '. Verify the API key.'
                     : 'The video host returned HTTP ' . $list['status'] . '. Verify the API token and base URL.';
                 continue;
             }
 
             if (! is_array($list['payload'])) {
-                $this->lastFailure = $provider === 'earnvids'
-                    ? 'EarnVids returned a non-JSON response. Try the API key again.'
+                $this->lastFailure = $provider === 'streamhg'
+                    ? 'StreamHG returned a non-JSON response. Try the API key again.'
                     : 'The video host returned a non-JSON response. Verify the API base URL.';
                 continue;
             }
@@ -186,15 +186,15 @@ class HostApiConnectionTest extends BaseAjax
                 ?? $list['payload']['data']['items']
                 ?? [];
             $sample = is_array($files) && ! empty($files) && is_array($files[0]) ? $files[0] : [];
-            $apiResponses = $provider === 'earnvids'
+            $apiResponses = $provider === 'streamhg'
                 ? ['file_list' => $this->redactSensitivePayload($list['payload'])]
                 : [];
 
-            // A File List record confirms the key works. For EarnVids, fetch
+            // A File List record confirms the key works. For StreamHG, fetch
             // the matching File Info record as well so the connection screen
             // can show its authoritative playback state and host artwork.
             $endpoint = $apiRoot . '/file/list';
-            if ($provider === 'earnvids' && $sample !== []) {
+            if ($provider === 'streamhg' && $sample !== []) {
                 $fileCode = $this->firstString($sample, ['file_code', 'filecode', 'id']);
                 if ($fileCode !== '') {
                     $info = $this->requestJson($apiRoot . '/file/info', [
@@ -274,10 +274,10 @@ class HostApiConnectionTest extends BaseAjax
             $headers['X-Api-Key'] = $token;
         }
 
-        // EarnVids is a fixed, trusted host. Let cURL resolve its CDN/TLS
+        // StreamHG is a fixed, trusted host. Let cURL resolve its CDN/TLS
         // route normally: forcing a single DNS address can fail when its edge
         // network rotates addresses between validation and the HTTPS request.
-        $response = $this->httpClient($host, $host['host'] !== 'earnvidsapi.com')->get($url, [
+        $response = $this->httpClient($host, $host['host'] !== 'streamhgapi.com')->get($url, [
             'query' => $query,
             'headers' => $headers,
         ]);
@@ -391,6 +391,6 @@ class HostApiConnectionTest extends BaseAjax
             $options['curl'] = [CURLOPT_RESOLVE => ["{$host['host']}:{$host['port']}:{$host['ip']}"]];
         }
 
-        return service('curlrequest', $options, false);
+        return \Config\Services::curlrequest($options, null, null, false);
     }
 }

@@ -13,7 +13,7 @@ require dirname(__DIR__) . '/app/Config/Paths.php'; $paths = new Config\Paths();
 require dirname(__DIR__) . '/system/bootstrap.php';
 error_reporting(E_ALL & ~E_DEPRECATED);
 function check($ok,$message) { if (!$ok) throw new RuntimeException($message); }
-foreach (['upnshare','vidhide'] as $provider) {
+foreach (['upnshare','streamhg'] as $provider) {
  $api=(object)['provider'=>$provider,'status'=>'active','api_token'=>'private-test-token'];
  foreach ([
   [['http'=>200,'body'=>$provider==='upnshare' ? ['data'=>[]] : ['status'=>200,'result'=>['login'=>'test']]],'connected'],

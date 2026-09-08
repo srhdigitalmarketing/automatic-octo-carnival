@@ -10,7 +10,7 @@ use Throwable;
 /**
  * Searches the enabled video-host accounts without exposing API tokens to the
  * browser. It supports the standard XVideoSharing File List response used by
- * Vidhide and compatible hosts.
+ * StreamHG and compatible hosts.
  */
 class HostVideoSearch extends BaseAjax
 {
@@ -18,7 +18,7 @@ class HostVideoSearch extends BaseAjax
     private const MAX_RESULTS = 12;
     private const MAX_UPNSHARE_LOCAL_PAGES = 5;
     private $searchFailure = '';
-    private const EARNVIDS_API_ROOT = 'https://earnvidsapi.com/api';
+    private const STREAMHG_API_ROOT = 'https://streamhgapi.com/api';
 
     public function index()
     {
@@ -32,7 +32,7 @@ class HostVideoSearch extends BaseAjax
 
         $apis = [];
         foreach ((new ThirdPartyApi())->where('status', 'active')->findAll() as $api) {
-            if (in_array((string) $api->provider, ['upnshare', 'vidhide', 'earnvids'], true) && trim((string) $api->api_token) !== '') {
+            if (in_array((string) $api->provider, ['upnshare', 'streamhg'], true) && trim((string) $api->api_token) !== '') {
                 $apis[] = $api;
             }
         }
@@ -78,7 +78,7 @@ class HostVideoSearch extends BaseAjax
                     // File List normally includes thumbnail. File Info is used
                     // only as a small fallback for hosts that expose player_img
                     // separately (such as some XVideoSharing installations).
-                    if (!in_array((string) $api->provider, ['upnshare', 'vidhide', 'earnvids'], true) && $posterUrl === null && $fileCode !== '') {
+                    if (!in_array((string) $api->provider, ['upnshare', 'streamhg'], true) && $posterUrl === null && $fileCode !== '') {
                         $posterUrl = $this->posterFromFileInfo($api, $search['api_root'], $fileCode);
                     }
 
@@ -163,7 +163,18 @@ class HostVideoSearch extends BaseAjax
                 $this->searchFailure = 'File Info gagal (HTTP ' . (int) $info->getStatusCode() . ', status API ' . (int) ($body['status'] ?? 0) . '). Periksa API key dan izin akun.';
                 return null;
             }
-            return ['files' => $this->vidHideInfoFiles($body, $codes, $api), 'api_root' => $apiRoot];
+            // File Info provides status; File List provides the documented player link.
+            foreach ($body['result'] as &$record) {
+                if (!is_array($record)) continue;
+                foreach ($this->filesFromPayload($payload) as $listed) {
+                    if (is_array($listed) && (string) ($listed['file_code'] ?? '') === (string) ($record['file_code'] ?? '')) {
+                        $record['link'] = $listed['embed_url'] ?? $listed['player_url'] ?? $listed['link'] ?? '';
+                        break;
+                    }
+                }
+            }
+            unset($record);
+            return ['files' => $this->streamHgInfoFiles($body, $codes, $api), 'api_root' => $apiRoot];
         }
 
         return null;
@@ -456,8 +467,8 @@ class HostVideoSearch extends BaseAjax
      */
     private function apiRoots(object $api): array
     {
-        if (in_array((string) $api->provider, ['earnvids', 'vidhide'], true)) {
-            return [self::EARNVIDS_API_ROOT];
+        if (in_array((string) $api->provider, ['streamhg'], true)) {
+            return [self::STREAMHG_API_ROOT];
         }
 
         $base = rtrim((string) $api->api_base_url, '/');
@@ -479,26 +490,22 @@ class HostVideoSearch extends BaseAjax
         return array_values(array_unique($roots));
     }
 
-    private function vidHideInfoFiles(array $payload, array $codes, object $api): array
+    private function streamHgInfoFiles(array $payload, array $codes, object $api): array
     {
         $files = [];
         foreach ($payload['result'] ?? [] as $record) {
             if (!is_array($record) || !in_array((string) ($record['file_code'] ?? ''), $codes, true)
                 || (int) ($record['status'] ?? 0) !== 200 || !filter_var($record['canplay'] ?? false, FILTER_VALIDATE_BOOLEAN)) continue;
             $record['title'] = (string) ($record['file_title'] ?? $record['title'] ?? '');
-            $files[] = $this->normaliseVidHideFile($record, $api);
+            $files[] = $this->normaliseStreamHgFile($record, $api);
         }
         return $files;
     }
 
-    private function normaliseVidHideFile(array $file, object $api): array
+    private function normaliseStreamHgFile(array $file, object $api): array
     {
-        $code = trim((string) ($file['file_code'] ?? $file['filecode'] ?? ''));
-        $domains = preg_split('/[\s,]+/', strtolower(trim((string) $api->embed_domains)), -1, PREG_SPLIT_NO_EMPTY);
-        $host = $domains[0] ?? '';
-        if (preg_match('/^[A-Za-z0-9_-]{3,128}$/', $code) && filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) && strpos($host, '.') !== false) {
-            $file['link'] = 'https://' . $host . '/embed/' . rawurlencode($code);
-        }
+        // Use the provider URL; do not invent an embed path for StreamHG.
+        $file['link'] = $this->safeExternalUrl($file['embed_url'] ?? $file['player_url'] ?? $file['link'] ?? '') ?: '';
         return $file;
     }
 

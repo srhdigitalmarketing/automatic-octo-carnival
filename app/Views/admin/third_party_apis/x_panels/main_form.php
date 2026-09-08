@@ -1,7 +1,7 @@
 <?php if (($tpAPI->provider ?? '') === 'vod_catalog') { echo view('admin/third_party_apis/x_panels/vod_form', ['tpAPI'=>$tpAPI]); return; } ?>
 <?php
 if ($tpAPI->provider === 'custom_http') { echo view('admin/third_party_apis/x_panels/custom_http_form', ['tpAPI'=>$tpAPI]); return; }
-if (in_array($tpAPI->provider, ['upnshare','vidhide'], true)) { echo view('admin/third_party_apis/x_panels/upnshare_form', ['tpAPI'=>$tpAPI]); return; }
+if (in_array($tpAPI->provider, ['upnshare','streamhg'], true)) { echo view('admin/third_party_apis/x_panels/upnshare_form', ['tpAPI'=>$tpAPI]); return; }
 $isExisting = ! empty($tpAPI->id);
 ?>
 

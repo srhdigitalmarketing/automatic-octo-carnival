@@ -18,7 +18,7 @@ use Throwable;
  */
 class StreamPoster extends BaseAjax
 {
-    private const EARNVIDS_API_ROOT = 'https://earnvidsapi.com/api';
+    private const STREAMHG_API_ROOT = 'https://streamhgapi.com/api';
     public function index()
     {
         $movieId = (int) $this->request->getGet('movie_id');
@@ -205,8 +205,8 @@ class StreamPoster extends BaseAjax
     /** @return array<int, string> */
     private function apiRoots(string $baseUrl, string $provider): array
     {
-        if ($provider === 'earnvids') {
-            return [self::EARNVIDS_API_ROOT];
+        if ($provider === 'streamhg') {
+            return [self::STREAMHG_API_ROOT];
         }
 
         $baseUrl = rtrim($baseUrl, '/');
@@ -328,11 +328,11 @@ class StreamPoster extends BaseAjax
 
     private function httpClient(array $host): CURLRequest
     {
-        return service('curlrequest', [
+        return \Config\Services::curlrequest([
             'timeout' => 8,
             'http_errors' => false,
             'allow_redirects' => false,
             'curl' => [CURLOPT_RESOLVE => ["{$host['host']}:{$host['port']}:{$host['ip']}"]],
-        ], false);
+        ], null, null, false);
     }
 }
