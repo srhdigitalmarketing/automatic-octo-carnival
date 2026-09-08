@@ -36,16 +36,16 @@ class General extends BaseSettings
                 //save media files
                 $this->saveDefaultMediaFiles();
 
-                return $this->save( $data );
+                return $this->save( $data )->to(admin_url('/settings/general'));
 
             }
 
-            return redirect()->back()
+            return redirect()->to(admin_url('/settings/general'))
                              ->with('errors', $this->validator->getErrors());
 
         }
 
-        return redirect()->back();
+        return redirect()->to(admin_url('/settings/general'));
 
     }
 

@@ -87,7 +87,7 @@ class ThirdPartyApis extends BaseController
         $data = $this->providerData($data);
         $errors = array_merge($this->providerErrors($data), $this->hostnameErrors($data));
         if (! empty($errors)) {
-            return redirect()->back()->with('errors', $errors);
+            return redirect()->to(admin_url('/third-party-apis/new?provider=' . rawurlencode($data['provider'])))->withInput()->with('errors', $errors);
         }
 
         $tpAPI = new \App\Entities\ThirdPartyApi($data);
@@ -99,7 +99,7 @@ class ThirdPartyApis extends BaseController
 
         }
 
-        return redirect()->back()
+        return redirect()->to(admin_url('/third-party-apis/new?provider=' . rawurlencode($data['provider'])))->withInput()
                          ->with('errors', $this->model->errors());
     }
 
@@ -117,7 +117,7 @@ class ThirdPartyApis extends BaseController
         $merged = array_merge($tpAPI->toRawArray(), $data);
         $errors = array_merge($this->providerErrors($merged), $this->hostnameErrors($merged, (int)$tpAPI->id));
         if (! empty($errors)) {
-            return redirect()->back()->with('errors', $errors);
+            return redirect()->to(admin_url('/third-party-apis/edit?id=' . (int)$tpAPI->id))->withInput()->with('errors', $errors);
         }
 
         $tpAPI->fill($data);
@@ -128,7 +128,7 @@ class ThirdPartyApis extends BaseController
                 return redirect()->to(admin_url( '/third-party-apis' ))
                                   ->with('success', $tpAPI->name . ' API access updated successfully');
             }else{
-                return redirect()->back()
+                return redirect()->to(admin_url('/third-party-apis/edit?id=' . (int)$tpAPI->id))->withInput()
                                  ->with('errors', $this->model->errors());
             }
         }

@@ -65,7 +65,7 @@
     if (! count || ! window.fetch) return;
 
     function refreshLiveTraffic() {
-        fetch(endpoint, {credentials: 'same-origin'})
+        fetch(endpoint, {credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest'}})
             .then(function (response) { return response.ok ? response.json() : null; })
             .then(function (data) {
                 if (! data) return;
@@ -87,7 +87,7 @@
     var updated = document.querySelector('.js-revenue-updated');
     if (! total || ! window.fetch) return;
 
-    fetch(endpoint, {credentials: 'same-origin'})
+    fetch(endpoint, {credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest'}})
         .then(function (response) { return response.ok ? response.json() : null; })
         .then(function (data) {
             if (! data) return;
