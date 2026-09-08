@@ -88,10 +88,6 @@ class Ajax extends BaseAjax
                     //save in watch history
                     service('watch_history')->add( $movie->id )->save();
 
-                    //save in recommend
-                    if( is_web_page_cache_enabled() ){
-                        service('recommend')->detect( $movie );
-                    }
 
                 }
 

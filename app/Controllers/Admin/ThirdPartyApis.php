@@ -23,7 +23,7 @@ class ThirdPartyApis extends BaseController
         $apis = $this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http', 'vod_catalog'])->findAll();
 
         $topBtnGroup = create_top_btn_group([
-            'admin/settings/cache#cdn-settings' => 'Add CDN Hostname',
+            'admin/settings/cdn#cdn-settings' => 'Add CDN Hostname',
             'admin/third-party-apis/new' => 'Add R2 Storage',
             'admin/third-party-apis/new?provider=upnshare' => 'Add UPNShare',
             'admin/third-party-apis/new?provider=vidhide' => 'Add VidHide',

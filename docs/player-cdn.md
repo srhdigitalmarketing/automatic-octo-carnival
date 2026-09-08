@@ -1,13 +1,19 @@
-# Player assets via Bunny
+# Player CDN
 
-Embed uses https://oktostream.b-cdn.net for local theme JavaScript, CSS and the empty-state image. Keep the Pull Zone origin pointed at the website root so /themes/pirate/... resolves. Existing third-party libraries keep their current CDN URLs. Relative assets inside theme CSS resolve through Bunny as well.
+API & R2 Storage → Add CDN Hostname opens Settings → CDN. Enter a hostname such as a.cdn.com without scheme, port or path, select Aktif, and save. The default hostname is oktostream.b-cdn.net. Configure HTTPS and the website root as origin in your CDN service so /themes/pirate/... resolves.
 
-HTML, BASE_URL, AJAX, captcha, video host iframes, and R2 poster URLs remain unchanged. CDN script/CSS/image load errors retry the corresponding origin URL once. This does not detect a successful but stale CDN response. Preserve query strings in the cache key for asset versions, or purge Bunny after deployment when changing these files. Clearing php spark cache:clear clears application cache, not Bunny edge cache.
+Only local player JavaScript, CSS and the empty-state image use the configured CDN. Nonaktif returns these assets to the website origin. HTML, AJAX, video host iframes and R2 poster URLs keep their existing URLs. Failed CDN asset loads retry the origin once. Preserve query strings in CDN cache keys for asset versions, or purge your CDN after asset updates.
 
-JavaScript and main CSS responded HTTP 200 from Bunny during setup. Live traffic latency and geographic performance have not been benchmarked.
+Page caching and clear-cache controls have been removed. Saving CDN settings does not clear internal application data or purge the CDN. The framework writable/cache directory remains necessary for login throttling, API checks and temporary import jobs; do not delete it.
 
-Settings → Cache menyediakan Status Bunny CDN: Aktif atau Nonaktif. Default tetap aktif untuk mempertahankan perilaku sebelumnya. Nonaktif mengembalikan URL aset ke origin dan menghilangkan preconnect Bunny. Save membersihkan cache aplikasi (termasuk cache job grab/migrasi); tidak melakukan purge Bunny.
+## Upgrade from page cache settings
 
-## Custom hostname
+Finish any running grab/migration jobs before this one-time upgrade cleanup:
 
-API & R2 Storage → Add CDN Hostname opens Settings → Cache at CDN Hostname. Enter a hostname such as a.cdn.com (without scheme, port or path), select Aktif, then Save changes. Player theme asset URLs and preconnect use https://a.cdn.com; the default is oktostream.b-cdn.net. Nonaktif uses origin assets. Configure the hostname, HTTPS certificate and origin in your CDN service first; this setting changes asset URLs only. No database migration is required. Saving clears application page caches so cached embeds receive the new hostname.
+```sh
+git pull origin main
+php spark migrate
+php spark cache:clear
+```
+
+The migration deletes only the three obsolete page-cache settings. The final command removes previously generated cached HTML and temporary cache entries once, so old embed pages no longer contain old asset URLs. CDN settings are preserved. No page HTML is cached by the application after this update.

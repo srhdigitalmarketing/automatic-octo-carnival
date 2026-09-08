@@ -39,8 +39,8 @@ $routes->setAutoRoute(true);
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
-$routes->post('/admin/settings/cache/video', 'Admin/Settings/Cache::video');
-$routes->post('/admin/settings/cache/clean', 'Admin/Settings/Cache::clean');
+$routes->get('/admin/settings/cdn', 'Admin/Settings/Cdn::index');
+$routes->post('/admin/settings/cdn/update', 'Admin/Settings/Cdn::update');
 $routes->get('/admin/settings/homepage', 'Admin/Settings/Homepage::index');
 $routes->post('/admin/settings/homepage/update', 'Admin/Settings/Homepage::update');
 $routes->get('/lang', 'Language::index');

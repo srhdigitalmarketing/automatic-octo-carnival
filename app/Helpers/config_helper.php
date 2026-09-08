@@ -105,13 +105,6 @@ if(! function_exists('library_slug'))
 }
 
 
-if(! function_exists('is_web_page_cache_enabled'))
-{
-    function is_web_page_cache_enabled()
-    {
-        return get_config( 'web_page_cache' );
-    }
-}
 
 if(! function_exists('is_countdown_timer_enabled'))
 {
@@ -180,13 +173,6 @@ if(! function_exists('is_request_captcha_enabled'))
 }
 
 
-if(! function_exists('web_page_cache_time'))
-{
-    function web_page_cache_time()
-    {
-        return get_config( 'web_page_cache_duration' );
-    }
-}
 
 if(! function_exists('footer_custom_codes'))
 {

@@ -39,10 +39,6 @@
                     <li><a href="<?= admin_url('/series') ?>" class="ve-sub--link"> TV Shows </a></li>
                 </ul>
             </li>
-            <li>
-                <a href="<?= admin_url('/settings/cache/clean') ?>" class="ve-link d-none d-lg-inline-block ">
-                    <img src="<?= admin_assets('/images/svg-icons/clear.svg') ?>" height="18" alt="">&nbsp;
-                    Purge Cache </a> </li>
 
         </ul>
         <ul class="ve-right">
