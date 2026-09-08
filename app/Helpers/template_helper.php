@@ -530,11 +530,19 @@ if (!function_exists('player_cdn_enabled')) {
     }
 }
 
+if (!function_exists('player_cdn_hostname')) {
+    function player_cdn_hostname(): string
+    {
+        $host = strtolower(trim((string)get_config('player_cdn_hostname')));
+        return filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) && strpos($host, '.') !== false ? $host : 'oktostream.b-cdn.net';
+    }
+}
+
 if (!function_exists('player_cdn_asset')) {
     /** Static player assets only; application endpoints remain on the origin. */
     function player_cdn_asset(string $path): string
     {
         if (!player_cdn_enabled()) { return theme_assets($path); }
-        return 'https://oktostream.b-cdn.net/themes/' . rawurlencode(default_theme_name()) . '/' . ltrim($path, '/');
+        return 'https://' . player_cdn_hostname() . '/themes/' . rawurlencode(default_theme_name()) . '/' . ltrim($path, '/');
     }
 }

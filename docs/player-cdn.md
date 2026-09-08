@@ -7,3 +7,7 @@ HTML, BASE_URL, AJAX, captcha, video host iframes, and R2 poster URLs remain unc
 JavaScript and main CSS responded HTTP 200 from Bunny during setup. Live traffic latency and geographic performance have not been benchmarked.
 
 Settings → Cache menyediakan Status Bunny CDN: Aktif atau Nonaktif. Default tetap aktif untuk mempertahankan perilaku sebelumnya. Nonaktif mengembalikan URL aset ke origin dan menghilangkan preconnect Bunny. Save membersihkan cache aplikasi (termasuk cache job grab/migrasi); tidak melakukan purge Bunny.
+
+## Custom hostname
+
+API & R2 Storage → Add CDN Hostname opens Settings → Cache at CDN Hostname. Enter a hostname such as a.cdn.com (without scheme, port or path), select Aktif, then Save changes. Player theme asset URLs and preconnect use https://a.cdn.com; the default is oktostream.b-cdn.net. Nonaktif uses origin assets. Configure the hostname, HTTPS certificate and origin in your CDN service first; this setting changes asset URLs only. No database migration is required. Saving clears application page caches so cached embeds receive the new hostname.

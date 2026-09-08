@@ -6,10 +6,14 @@ class Cache extends BaseSettings
     public function update()
     {
         if (!$this->validate(['web_page_cache_duration'=>'required|integer|greater_than[59]|less_than_equal_to[86400]'])) return redirect()->to(admin_url('/settings/cache'))->with('errors',$this->validator->getErrors());
+        $host = strtolower(trim((string)$this->request->getPost('player_cdn_hostname')));
+        if (!filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) || strpos($host, '.') === false || strlen($host) > 253) {
+            return redirect()->to(admin_url('/settings/cache#cdn-settings'))->withInput()->with('errors',['Masukkan hostname CDN saja, tanpa https://, port atau path.']);
+        }
         $pages=$this->request->getPost('cache_pages');
         $pages=is_array($pages)?array_values(array_intersect(['embed','view','download'],$pages)):[];
         $db=db_connect();
-        foreach (['player_bunny_cdn_enabled'=>[$this->request->getPost('player_bunny_cdn_enabled') === '1' ? '1' : '0','bool'], 'web_page_cache'=>[empty($pages)?'0':'1','bool'], 'web_page_cache_types'=>[json_encode($pages),'array'], 'web_page_cache_duration'=>[(string)$this->request->getPost('web_page_cache_duration'),'int']] as $name=>$entry) {
+        foreach (['player_cdn_hostname'=>[$host,'string'], 'player_bunny_cdn_enabled'=>[$this->request->getPost('player_bunny_cdn_enabled') === '1' ? '1' : '0','bool'], 'web_page_cache'=>[empty($pages)?'0':'1','bool'], 'web_page_cache_types'=>[json_encode($pages),'array'], 'web_page_cache_duration'=>[(string)$this->request->getPost('web_page_cache_duration'),'int']] as $name=>$entry) {
             if ($db->table('settings')->where('name',$name)->countAllResults()) $db->table('settings')->where('name',$name)->update(['value'=>$entry[0],'data_type'=>$entry[1]]);
             else $db->table('settings')->insert(['name'=>$name,'value'=>$entry[0],'data_type'=>$entry[1]]);
         }

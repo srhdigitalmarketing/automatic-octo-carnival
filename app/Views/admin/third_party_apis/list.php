@@ -8,6 +8,7 @@
         <span class="host-api-guide__eyebrow">API & R2 STORAGE</span>
         <h4>API & R2 storage</h4>
         <p>Manage banner storage and video host health checks.</p>
+        <a href="<?= admin_url('/settings/cache#cdn-settings') ?>" class="btn btn-primary">Add CDN Hostname</a>
         <a href="<?= admin_url('/third-party-apis/new') ?>" class="btn btn-primary"><i class="fa fa-plus"></i> Add R2 storage</a>
     <a href="<?= admin_url('/third-party-apis/new?provider=upnshare') ?>" class="btn btn-primary">Add UPNShare</a>
         <a href="<?= admin_url('/third-party-apis/new?provider=vidhide') ?>" class="btn btn-primary">Add VidHide</a>
