@@ -1225,6 +1225,29 @@
                 return;
             }
 
+            if (item.provider === 'upnshare') {
+                let message = 'UPNShare tidak mengembalikan link player.';
+                const inputs = () => $('input[name^="st_links"][name$="[url]"]');
+                if (item.player_url && inputs().filter(function () { return $.trim($(this).val()) === item.player_url; }).length) {
+                    message = 'Link UPNShare sudah ada di Stream Links.';
+                } else if (item.player_url) {
+                    let target = inputs().filter(function () { return !this.readOnly && $.trim($(this).val()) === ''; }).first();
+                    if (!target.length) {
+                        $('.clone-st-group').last().trigger('click');
+                        target = inputs().filter(function () { return !this.readOnly && $.trim($(this).val()) === ''; }).last();
+                    }
+                    if (target.length) {
+                        target.val(item.player_url).trigger('change');
+                        message = 'Link UPNShare ditambahkan. Judul, gambar, dan data lainnya tetap. Klik Save untuk menyimpan.';
+                    } else {
+                        message = 'Tidak dapat menambahkan Stream Link. Tambahkan kolom link terlebih dahulu.';
+                    }
+                }
+                hostResultsContent.find('.host-search-selected').remove();
+                hostResultsContent.prepend($('<div>', {class: 'host-search-selected', text: message}));
+                return;
+            }
+
             $('input[name="title"]').val(item.title);
 
             if(item.poster_url){
@@ -1370,7 +1393,7 @@
             let section = $('<section>', {class: 'host-search-results'});
             section.append($('<div>', {class: 'host-search-results__heading'}).append(
                 $('<span>').text('Video host results'),
-                $('<small>').text('Choose a result to fill the title, poster URL, and stream link.')
+                $('<small>').text('UPNShare: pilih judul untuk menambahkan Stream Link saja. Host lain dapat mengisi metadata.')
             ));
 
             if(items.length === 0){

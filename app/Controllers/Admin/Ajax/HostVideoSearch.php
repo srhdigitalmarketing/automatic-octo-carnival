@@ -31,7 +31,7 @@ class HostVideoSearch extends BaseAjax
 
         $apis = [];
         foreach ((new ThirdPartyApi())->where('status', 'active')->findAll() as $api) {
-            if (trim((string) $api->api_token) !== '') {
+            if (in_array((string) $api->provider, ['upnshare', 'vidhide', 'earnvids'], true) && trim((string) $api->api_token) !== '') {
                 $apis[] = $api;
             }
         }
@@ -61,10 +61,8 @@ class HostVideoSearch extends BaseAjax
                     $playerUrl = $this->safeExternalUrl(
                         $file['link'] ?? $file['player_url'] ?? $file['video_url'] ?? $file['embed_url'] ?? $file['url'] ?? ''
                     );
-                    // Keep a UPNShare title result visible even when that host
-                    // omits the player field from both list and manage data.
-                    // The administrator can still fill its title and poster.
-                    if ($playerUrl === null && (string) $api->provider !== 'upnshare') {
+                    // Only entries with a usable player URL may be selected.
+                    if ($playerUrl === null) {
                         continue;
                     }
 
@@ -76,7 +74,7 @@ class HostVideoSearch extends BaseAjax
                     // File List normally includes thumbnail. File Info is used
                     // only as a small fallback for hosts that expose player_img
                     // separately (such as some XVideoSharing installations).
-                    if ($posterUrl === null && $fileCode !== '') {
+                    if ((string) $api->provider !== 'upnshare' && $posterUrl === null && $fileCode !== '') {
                         $posterUrl = $this->posterFromFileInfo($api, $search['api_root'], $fileCode);
                     }
 
@@ -86,7 +84,7 @@ class HostVideoSearch extends BaseAjax
                         'provider' => (string) $api->provider,
                         'title' => trim((string) ($file['title'] ?? $file['file_title'] ?? $file['name'] ?? $title)),
                         'player_url' => $playerUrl ?: '',
-                        'poster_url' => $posterUrl,
+                        'poster_url' => (string) $api->provider === 'upnshare' ? null : $posterUrl,
                         'file_code' => $fileCode,
                     ];
                 }
@@ -164,7 +162,7 @@ class HostVideoSearch extends BaseAjax
         $cache = cache();
         // Version the key so empty responses saved by the former summary
         // endpoint never hide a result after this catalogue-search update.
-        $cacheKey = 'upnshare-title-v2-' . sha1((string) $api->id . '|' . $this->normaliseTitle($title));
+        $cacheKey = 'upnshare-title-v3-' . sha1((string) $api->id . '|' . $this->normaliseTitle($title));
         $cached = $cache->get($cacheKey);
         if (is_array($cached) && isset($cached['files'], $cached['api_root'])) {
             return $cached;
@@ -219,12 +217,18 @@ class HostVideoSearch extends BaseAjax
                 $videoId = $this->firstString($video, ['id', 'video_id', 'videoId', 'uuid', 'file_code', 'filecode', 'code']);
                 $details = $videoId === '' ? [] : $this->upnShareVideoDetails($api, $apiRoot, $videoId);
                 $file = $this->normaliseUpnShareVideo($video, $details, $videoId);
+                if ($file['link'] === '' && preg_match('/^[A-Za-z0-9_-]{3,128}$/', $videoId)) {
+                    $hostname = strtolower(trim(explode(',', (string) $api->embed_domains)[0]));
+                    if (filter_var($hostname, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) && strpos($hostname, '.') !== false) {
+                        $file['link'] = 'https://' . $hostname . '/#' . rawurlencode($videoId);
+                    }
+                }
 
                 // The management list always contains a title and poster, but
                 // an installation can restrict playback URLs to its detail
                 // endpoint. Keep that result visible so the admin can still
-                // choose the matching file instead of seeing a false miss.
-                if ($file['link'] !== '' || (string) $file['title'] !== '') {
+                // choose the matching file using its configured embed hostname.
+                if ($file['link'] !== '' && $file['canplay']) {
                     $files[] = $file;
                 }
             }
@@ -371,10 +375,10 @@ class HostVideoSearch extends BaseAjax
 
         return [
             'title' => $this->firstString($record, ['title', 'video_title', 'videoTitle', 'file_title', 'fileTitle', 'name', 'original_name', 'originalName']),
-            'link' => $this->firstString($record, ['player_url', 'playerUrl', 'play_url', 'playUrl', 'video_url', 'videoUrl', 'embed_url', 'embedUrl', 'watch_url', 'watchUrl', 'stream_url', 'streamUrl', 'download_url', 'downloadUrl', 'public_url', 'publicUrl', 'file_url', 'fileUrl', 'video_link', 'videoLink', 'link', 'url']),
+            'link' => $this->firstString($record, ['player_url', 'playerUrl', 'play_url', 'playUrl', 'video_url', 'videoUrl', 'embed_url', 'embedUrl', 'watch_url', 'watchUrl', 'public_url', 'publicUrl', 'video_link', 'videoLink', 'link', 'url']),
             'thumbnail' => $this->firstString($record, ['poster_url', 'posterUrl', 'poster', 'thumbnail', 'thumbnail_url', 'thumbnailUrl', 'player_img', 'preview_url', 'previewUrl', 'preview', 'image_url', 'imageUrl', 'image']),
             'file_code' => $videoId,
-            'canplay' => $record['canplay'] ?? $record['playable'] ?? true,
+            'canplay' => !in_array(strtolower((string) ($record['status'] ?? '')), ['deleted', 'removed', 'error', 'failed', 'processing', 'pending', 'encoding'], true) && filter_var($record['canplay'] ?? $record['playable'] ?? true, FILTER_VALIDATE_BOOLEAN),
         ];
     }
 
