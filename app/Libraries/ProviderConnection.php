@@ -13,6 +13,10 @@ class ProviderConnection
             return array_merge($result, ['state'=>'paused','label'=>'Tidak diperiksa','message'=>'Konfigurasi sedang Paused.']);
         }
         try {
+            if ($api->provider === 'vod_catalog') {
+                (new VodCatalog())->search((string)$api->api_base_url, 'ab-123');
+                return array_merge($result, ['state'=>'connected','label'=>'Terhubung','message'=>'Endpoint VOD mengembalikan JSON list yang valid.']);
+            }
             if ($api->provider === 'custom_http') {
                 return array_merge($result, ['state'=>'paused','label'=>'Tanpa API','message'=>'Pemeriksaan HTTP per link. Gunakan Cek file pada Stream Links atau cron.']);
             }

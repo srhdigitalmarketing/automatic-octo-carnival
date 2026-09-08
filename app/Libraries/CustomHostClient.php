@@ -38,7 +38,7 @@ class CustomHostClient
             'message'=>'Custom hostname check failed (HTTP '.$status.'). Redirect tidak diikuti; gunakan URL embed langsung.'];
     }
 
-    private function publicTarget(string $url): array
+    public function publicTarget(string $url): array
     {
         if (strlen($url)>4096 || !filter_var($url,FILTER_VALIDATE_URL)) { throw new RuntimeException('Invalid URL'); }
         $parts=parse_url($url); $scheme=strtolower($parts['scheme'] ?? ''); $host=strtolower($parts['host'] ?? '');

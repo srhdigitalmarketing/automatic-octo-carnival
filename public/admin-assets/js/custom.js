@@ -1184,7 +1184,15 @@
             }
         });
 
-        $(document).on('click', '#suggest-results .movie-item.new', function (){
+        $(document).on('click', '.vod-catalog-result', function () {
+            let item = $(this).data('vodItem');
+            $('input[name="title"]').val(item.title);
+            if(item.description) $('textarea[name="description"]').val(item.description);
+            if(item.poster_url) $('[data-source-image-url]').val(item.poster_url).trigger('input');
+            cleanResults();
+        });
+
+        $(document).on('click', '#suggest-results .movie-item.new' , function (){
 
             let tmdbId = $(this).attr('data-tmdb');
             $('input[name="tmdb_id"]').val( tmdbId );
@@ -1261,6 +1269,7 @@
 
         function load_results()
         {
+            const requestedTerm = term;
             $.ajax({
                 url : BASE_URL + '/ajax/suggest',
                 type: "GET",
@@ -1279,6 +1288,16 @@
                 {
 
                     if(data.success){
+                        if ($.trim($('.title-suggest').val()) !== requestedTerm) return;
+                        if (Array.isArray(data.data.vod_items)) {
+                            resultsContent.empty();
+                            data.data.vod_items.forEach(function(item) {
+                                resultsContent.append($('<button>', {type:'button', class:'btn btn-light vod-catalog-result text-left', text:item.title}).data('vodItem',item));
+                            });
+                            if (!data.data.vod_items.length) resultsContent.append($('<p>', {text:'No results found'}));
+                            (data.data.vod_errors || []).forEach(function(message) { resultsContent.append($('<p>', {class:'text-warning',text:message})); });
+                            return;
+                        }
                         let results = data.data.results;
                         addResults( results );
                     }

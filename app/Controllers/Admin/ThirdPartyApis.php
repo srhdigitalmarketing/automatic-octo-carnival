@@ -20,13 +20,14 @@ class ThirdPartyApis extends BaseController
     {
         $title = 'API & R2 Storage';
 
-        $apis = $this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http'])->findAll();
+        $apis = $this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http', 'vod_catalog'])->findAll();
 
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis/new' => 'Add R2 Storage',
             'admin/third-party-apis/new?provider=upnshare' => 'Add UPNShare',
             'admin/third-party-apis/new?provider=vidhide' => 'Add VidHide',
-            'admin/third-party-apis/new?provider=custom_http' => 'Add Custom hostname'
+            'admin/third-party-apis/new?provider=custom_http' => 'Add Custom hostname',
+            'admin/third-party-apis/new?provider=vod_catalog' => 'Add VOD API'
         ]);
 
         return view('admin/third_party_apis/list', compact('title', 'apis', 'topBtnGroup'));
@@ -52,7 +53,7 @@ class ThirdPartyApis extends BaseController
 
         $title = 'Add R2 Storage';
         $tpAPI = new \App\Entities\ThirdPartyApi();
-        $tpAPI->provider = in_array($this->request->getGet('provider'), ['upnshare','vidhide','custom_http'], true) ? $this->request->getGet('provider') : 'cloudflare_r2';
+        $tpAPI->provider = in_array($this->request->getGet('provider'), ['upnshare','vidhide','custom_http','vod_catalog'], true) ? $this->request->getGet('provider') : 'cloudflare_r2';
         $title = $tpAPI->provider === 'vidhide' ? 'Add VidHide' : ($tpAPI->provider === 'upnshare' ? 'Add UPNShare' : $title);
 
         $topBtnGroup = create_top_btn_group([
@@ -60,6 +61,7 @@ class ThirdPartyApis extends BaseController
         ]);
 
         if ($tpAPI->provider === 'custom_http') { $title = 'Add Custom hostname'; }
+        if ($tpAPI->provider === 'vod_catalog') { $title = 'Add VOD API'; }
         return view('admin/third_party_apis/new', compact('title', 'tpAPI', 'topBtnGroup'));
 
     }
@@ -73,6 +75,7 @@ class ThirdPartyApis extends BaseController
             'admin/third-party-apis' => 'Back to API & R2 Storage'
         ]);
         if ($tpAPI->provider === 'custom_http') { $title = 'Edit Custom hostname'; }
+        if ($tpAPI->provider === 'vod_catalog') { $title = 'Edit VOD API'; }
         return view('admin/third_party_apis/edit', compact('title', 'tpAPI', 'topBtnGroup'));
 
     }
@@ -80,7 +83,7 @@ class ThirdPartyApis extends BaseController
     public function create(): \CodeIgniter\HTTP\RedirectResponse
     {
         $data = $this->request->getPost();
-        $data['provider'] = in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true) ? $data['provider'] : 'cloudflare_r2';
+        $data['provider'] = in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http','vod_catalog'], true) ? $data['provider'] : 'cloudflare_r2';
         $data = $this->providerData($data);
         $errors = array_merge($this->providerErrors($data), $this->hostnameErrors($data));
         if (! empty($errors)) {
@@ -150,7 +153,7 @@ class ThirdPartyApis extends BaseController
 
     protected function getApi($id)
     {
-        $api = $this->model->where('id', $id)->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http'])->first();
+        $api = $this->model->where('id', $id)->whereIn('provider', ['cloudflare_r2', 'upnshare', 'vidhide', 'custom_http', 'vod_catalog'])->first();
 
         if($api === null){
             throw new PageNotFoundException('Third party API not found');
@@ -161,6 +164,9 @@ class ThirdPartyApis extends BaseController
 
     private function providerData(array $data): array
     {
+        if ($data['provider'] === 'vod_catalog') {
+            return ['name'=>$data['name'] ?? '', 'provider'=>'vod_catalog', 'status'=>$data['status'] ?? 'active', 'api_base_url'=>strtolower(trim((string)($data['api_base_url'] ?? '')))];
+        }
         $fields = in_array($data['provider'], ['upnshare','vidhide','custom_http'], true)
             ? ['name', 'provider', 'status', 'api_token', 'embed_domains']
             : ['name', 'provider', 'status', 'r2_account_id', 'r2_access_key_id', 'r2_secret_access_key', 'r2_bucket', 'r2_public_url'];
@@ -188,6 +194,10 @@ class ThirdPartyApis extends BaseController
 
     private function providerErrors(array $data): array
     {
+        if (($data['provider'] ?? '') === 'vod_catalog') {
+            try { \App\Libraries\VodCatalog::hostname((string)($data['api_base_url'] ?? '')); return []; }
+            catch (\InvalidArgumentException $e) { return [$e->getMessage()]; }
+        }
         if (!in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true)) { return $this->r2Errors($data); }
         $errors = [];
         $token = trim((string) ($data['api_token'] ?? ''));
