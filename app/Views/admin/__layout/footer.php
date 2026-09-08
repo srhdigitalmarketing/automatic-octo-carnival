@@ -50,5 +50,6 @@
 
 </script>
 
+<script src="<?= site_url('/admin-assets/js/admin-bootstrap-controls.js?v=1') ?>"></script>
 </body>
 </html>

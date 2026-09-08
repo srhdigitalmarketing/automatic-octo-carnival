@@ -1,0 +1,10 @@
+const {chromium}=require('playwright');const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage();
+await page.setContent('<form><input type="file" name="banner"><button type="reset">Reset</button></form><button id="demo-start">Start</button><button id="demo-stop">Stop</button><progress id="demo-progress" value="0" max="10"></progress>');
+await page.addScriptTag({path:'public/admin-assets/js/admin-bootstrap-controls.js'});
+await page.locator('input[type=file]').setInputFiles({name:'banner.jpg',mimeType:'image/jpeg',buffer:Buffer.from('fixture')});assert.equal(await page.locator('.custom-file-label').textContent(),'banner.jpg');
+await page.evaluate(()=>{document.getElementById('demo-progress').value=5;document.getElementById('demo-start').disabled=true;});
+await page.waitForFunction(()=>document.querySelector('.progress-bar').getAttribute('aria-valuenow')==='50');assert.equal(await page.locator('.progress-bar-animated').count(),1);assert.equal(await page.locator('.spinner-border').evaluate(node=>node.hidden),false);
+await page.evaluate(()=>{document.getElementById('demo-start').disabled=false;document.body.insertAdjacentHTML('beforeend','<input type="file" name="extra">');});await page.waitForFunction(()=>document.querySelectorAll('.custom-file').length===2);assert.equal(await page.locator('.progress-bar-animated').count(),0);
+await page.locator('[type=reset]').click();await page.waitForFunction(()=>document.querySelector('.custom-file-label').textContent==='Belum ada file dipilih');
+console.log('PASS: file selection/reset, dynamic inputs and animated progress lifecycle');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
