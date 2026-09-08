@@ -31,7 +31,12 @@
         </div>
 
         <?php if(! empty( $movie->id )): ?>
-        <div class="text-right">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>
+            <?php if (\App\Libraries\SelectedPageCache::enabled('embed') || \App\Libraries\SelectedPageCache::enabled('view') || \App\Libraries\SelectedPageCache::enabled('download')): ?>
+                <a href="#" class="clear-video-cache" data-id="<?= (int)$movie->id ?>" data-url="<?= admin_url('/settings/cache/video') ?>" aria-live="polite">Clear cache</a>
+            <?php endif ?>
+            </span>
             <a href="javascript:void(0)" data-url="<?= admin_url("/movies/delete/{$movie->id}") ?>" class="text-danger del-item">Delete</a>
         </div>
         <?php endif; ?>
