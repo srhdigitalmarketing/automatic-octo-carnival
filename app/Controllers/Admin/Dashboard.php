@@ -27,10 +27,9 @@ class Dashboard extends BaseController
                                 ->findAll(10);
 
         $liveTraffic = $this->liveTrafficSummary();
-        $visitorStats = $this->visitorStatistics();
         $revenueSummary = (new AdRevenueToday())->cachedSummary();
 
-        $data = compact('title', 'hidePageTitle', 'anytc', 'topMovies', 'liveTraffic', 'visitorStats', 'revenueSummary');
+        $data = compact('title', 'hidePageTitle', 'anytc', 'topMovies', 'liveTraffic', 'revenueSummary');
 
         return view('admin/dashboard/index', $data);
     }
@@ -63,16 +62,6 @@ class Dashboard extends BaseController
 
             return ['active_now' => 0, 'tracking_ready' => false];
         }
-    }
-
-    private function visitorStatistics(): array
-    {
-        return [
-            'labels' => [], 'dates' => [], 'daily' => [], 'total' => 0,
-            'platforms' => ['desktop' => 0, 'mobile' => 0, 'tablet' => 0, 'other' => 0],
-            'tracking_ready' => false,
-            'notice' => 'Pencatatan statistik harian dinonaktifkan untuk mengurangi penggunaan database.',
-        ];
     }
 
 }

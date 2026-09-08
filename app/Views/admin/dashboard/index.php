@@ -32,16 +32,10 @@
         <?= $this->include('admin/dashboard/x_panel/top_tiles') ?>
     </div>
 
-    <div class="dashboard-visitor-grid">
-        <?= $this->include('admin/dashboard/x_panel/charts/visitor_statistics') ?>
-    </div>
 
     <div class="dashboard-tables-grid">
-        <div class="dashboard-table-cell">
+        <div class="dashboard-table-cell" style="grid-column:1 / -1">
             <?= $this->include('admin/dashboard/x_panel/most_viewed_movies') ?>
-        </div>
-        <div class="dashboard-table-cell">
-
         </div>
     </div>
 </div>
@@ -53,9 +47,9 @@
 
 <?php $this->section('scripts'); ?>
 
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-<?= $this->include('admin/dashboard/charts_js') ?>
+
+
 
 <script>
 (function () {
