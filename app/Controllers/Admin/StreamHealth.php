@@ -8,6 +8,7 @@ class StreamHealth extends BaseController
 {
     public function check()
     {
+        if (strtolower($this->request->getMethod()) !== 'post') return $this->response->setStatusCode(405)->setJSON(['message'=>'Gunakan tombol Cek file.']);
         $links = new LinkModel();
         $link = $links->find((int)$this->request->getGet('id'));
         if ($link === null || $link->type !== 'stream') {
@@ -27,6 +28,8 @@ class StreamHealth extends BaseController
                 cache()->save($key, $result, 15);
             }
         }
+        $result = (new \App\Libraries\UpnShareReplacement())->replace($link, $result);
+        if (isset($result['replacement_url'])) cache()->delete($key);
         return $this->response->setHeader('Cache-Control','no-store')->setJSON($result);
     }
 }

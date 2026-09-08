@@ -39,6 +39,29 @@ class UpnShareClient
         }
     }
 
+    public function replacementId(string $title, string $oldId): ?string
+    {
+        if (!$this->isConfigured() || trim($title) === '') return null;
+        $response = $this->request('/video/manage?' . http_build_query(['search'=>$title, 'page'=>1, 'perPage'=>100]));
+        $body = $response['body'] ?? null;
+        if (($response['http'] ?? 0) !== 200 || !is_array($body) || !is_array($body['data'] ?? null)
+            || (int) ($body['metadata']['maxPage'] ?? 1) > 1) return null;
+        $records = isset($body['data']['id']) ? [$body['data']] : $body['data'];
+        $normalize = static fn($value) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', (string) $value)), 'UTF-8');
+        $matches = [];
+        foreach ($records as $record) {
+            if (!is_array($record)) continue;
+            $id = (string) ($record['id'] ?? '');
+            if ($id === $oldId || !preg_match('/^[A-Za-z0-9_-]{3,128}$/', $id)
+                || $normalize($record['name'] ?? $record['title'] ?? '') !== $normalize($title)) continue;
+            if (in_array(strtolower((string) ($record['status'] ?? '')), ['deleted','removed','error','failed'], true)) continue;
+            $matches[$id] = true;
+        }
+        if (count($matches) !== 1) return null;
+        $id = (string) array_key_first($matches);
+        return $this->videoStatus($id)['status'] === 'available' ? $id : null;
+    }
+
     public function videoStatus(string $id): array
     {
         if (! $this->isConfigured()) { return ['status' => 'unknown', 'message' => 'UPNShare API token is not configured']; }

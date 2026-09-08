@@ -12,6 +12,13 @@
    const response = await fetch(button.dataset.url, {method:'POST',credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest'}});
    const result = await response.json();
    if (!response.ok) throw new Error(result.message || 'Pemeriksaan gagal.');
+   if (result.replacement_url) {
+    group.querySelector('input[name$="[url]"]').value = result.replacement_url;
+    const idField = group.querySelector('input[name$="[upnshare_video_id]"]');
+    if (idField) idField.value = result.replacement_id;
+    const apiField = group.querySelector('input[name$="[api_id]"]');
+    if (apiField) apiField.value = result.api_id;
+   }
    const labels = {reachable:'HTTP reachable',available:'Healthy',deleted:'Deleted',error:'Error',processing:'Processing',unknown:'Check failed'};
    badge.textContent = labels[result.status] || 'Check failed';
    badge.className = 'stream-server-badge ' + (result.status === 'available' ? 'is-healthy' : ['deleted','error'].includes(result.status) ? 'is-broken' : 'is-unchecked');
