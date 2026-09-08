@@ -50,7 +50,6 @@
                         <ul class="nav child_menu">
                             <li><a href="<?= admin_url('/settings/site') ?>">Site</a></li>
                             <li><a href="<?= admin_url('/settings/profile') ?>">Profile</a></li>
-                            <li><a href="<?= admin_url('/settings/homepage') ?>">Index Homepage</a></li>
 <li><a href="<?= admin_url('/settings/general') ?>">General</a></li>
                             <li><a href="<?= admin_url('/settings/player') ?>">Player</a></li>
                             <li><a href="<?= admin_url('/settings/servers') ?>">Servers</a></li>
