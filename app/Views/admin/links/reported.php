@@ -23,13 +23,21 @@
     <button type="submit" class="btn btn-primary">Filter</button>
     <button type="button" id="bulk-link-fix" class="btn btn-primary" data-url="<?= esc(admin_url('/bulk-link-fix/run'), 'attr') ?>">Bulk Fix Broken Links</button>
 </form>
-<div id="bulk-fix-progress" class="x_panel" hidden>
-    <strong>Bulk Fix Broken Links</strong><p>Memproses seluruh link terhapus/404 pada hostname terpilih, termasuk halaman tabel lainnya. Biarkan halaman ini terbuka.</p>
-    <progress id="bulk-fix-bar" max="1" value="0" style="width:100%"></progress>
-    <p id="bulk-fix-status" role="status"></p><button type="button" id="bulk-fix-stop" class="btn btn-light">Stop</button>
-    <ul id="bulk-fix-log" style="max-height:240px;overflow:auto"></ul>
+<div id="bulk-fix-progress" class="x_panel p-4" hidden>
+    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+        <div class="d-flex align-items-center mb-2">
+            <span id="bulk-fix-spinner" class="spinner-border spinner-border-sm text-primary mr-3" aria-hidden="true" hidden></span>
+            <div><h5 class="mb-1 font-weight-bold">Bulk Fix Broken Links</h5><small class="text-muted">Semua link terhapus/404 pada hostname terpilih. Biarkan halaman tetap terbuka.</small></div>
+        </div>
+        <button type="button" id="bulk-fix-stop" class="btn btn-outline-secondary btn-sm mb-2" hidden>Hentikan proses</button>
+    </div>
+    <div class="progress mb-3" style="height:10px;border-radius:8px">
+        <div id="bulk-fix-bar" class="progress-bar bg-primary" role="progressbar" aria-label="Progres perbaikan link" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width:0%"></div>
+    </div>
+    <p id="bulk-fix-status" class="small mb-3" role="status" aria-live="polite"></p>
+    <ul id="bulk-fix-log" class="list-group list-group-flush mb-0" style="max-height:240px;overflow:auto"></ul>
 </div>
-<script defer src="<?= site_url('/admin-assets/js/bulk-link-fix.js?v=2') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/js/bulk-link-fix.js?v=3') ?>"></script>
 <div class="x_panel link-table-panel">
     <div class="card-box table-responsive">
 
