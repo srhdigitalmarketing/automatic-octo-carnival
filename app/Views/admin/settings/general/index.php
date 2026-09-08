@@ -12,8 +12,8 @@
 
 
         <?= form_close() ?>
-        <?= $this->include('admin/settings/general/form_x_panels/auto_grab') ?>
         <?= $this->include('admin/settings/general/form_x_panels/latest_grab') ?>
+        <?= $this->include('admin/settings/general/form_x_panels/auto_grab') ?>
         <?= $this->include('/admin/settings/general/form_x_panels/others') ?>
 
     </div>
