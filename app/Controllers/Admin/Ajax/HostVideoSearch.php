@@ -17,6 +17,7 @@ class HostVideoSearch extends BaseAjax
     private const RESULTS_PER_HOST = 6;
     private const MAX_RESULTS = 12;
     private const MAX_UPNSHARE_LOCAL_PAGES = 5;
+    private $searchFailure = '';
     private const EARNVIDS_API_ROOT = 'https://earnvidsapi.com/api';
 
     public function index()
@@ -45,9 +46,10 @@ class HostVideoSearch extends BaseAjax
             }
 
             try {
+                $this->searchFailure = '';
                 $search = $this->searchHostFiles($api, $title);
                 if ($search === null) {
-                    $errors[] = (string) $api->name . ': pencarian API gagal. Periksa Result pada API & R2 Storage, token, dan koneksi server.';
+                    $errors[] = (string) $api->name . ': ' . ($this->searchFailure ?: 'Pencarian API gagal. Periksa token dan koneksi server.');
                     continue;
                 }
 
@@ -76,7 +78,7 @@ class HostVideoSearch extends BaseAjax
                     // File List normally includes thumbnail. File Info is used
                     // only as a small fallback for hosts that expose player_img
                     // separately (such as some XVideoSharing installations).
-                    if ((string) $api->provider !== 'upnshare' && $posterUrl === null && $fileCode !== '') {
+                    if (!in_array((string) $api->provider, ['upnshare', 'vidhide', 'earnvids'], true) && $posterUrl === null && $fileCode !== '') {
                         $posterUrl = $this->posterFromFileInfo($api, $search['api_root'], $fileCode);
                     }
 
@@ -86,7 +88,7 @@ class HostVideoSearch extends BaseAjax
                         'provider' => (string) $api->provider,
                         'title' => trim((string) ($file['title'] ?? $file['file_title'] ?? $file['name'] ?? $title)),
                         'player_url' => $playerUrl ?: '',
-                        'poster_url' => (string) $api->provider === 'upnshare' ? null : $posterUrl,
+                        'poster_url' => null,
                         'file_code' => $fileCode,
                     ];
                 }
@@ -131,22 +133,22 @@ class HostVideoSearch extends BaseAjax
                 ],
                 'headers' => [
                     'Accept' => 'application/json',
-                    // UPNShare-compatible servers may use the token header.
-                    'api-token' => (string) $api->api_token,
                 ],
             ]);
 
             if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
+                $this->searchFailure = 'File List ditolak (HTTP ' . (int) $response->getStatusCode() . '). Periksa API key dan izin akun.';
                 continue;
             }
 
             $payload = json_decode($response->getBody(), true);
             if (! is_array($payload) || ! $this->isFileListPayload($payload)) {
+                $this->searchFailure = 'Respons File List tidak valid (status API ' . (int) ($payload['status'] ?? 0) . '). Periksa API key dan izin akun.';
                 continue;
             }
 
             return [
-                'files' => $this->filesFromPayload($payload),
+                'files' => array_map(fn($file) => is_array($file) ? $this->normaliseVidHideFile($file, $api) : $file, $this->filesFromPayload($payload)),
                 'api_root' => $apiRoot,
             ];
         }
@@ -441,7 +443,7 @@ class HostVideoSearch extends BaseAjax
      */
     private function apiRoots(object $api): array
     {
-        if ((string) $api->provider === 'earnvids') {
+        if (in_array((string) $api->provider, ['earnvids', 'vidhide'], true)) {
             return [self::EARNVIDS_API_ROOT];
         }
 
@@ -462,6 +464,17 @@ class HostVideoSearch extends BaseAjax
         }
 
         return array_values(array_unique($roots));
+    }
+
+    private function normaliseVidHideFile(array $file, object $api): array
+    {
+        $code = trim((string) ($file['file_code'] ?? $file['filecode'] ?? ''));
+        $domains = preg_split('/[\s,]+/', strtolower(trim((string) $api->embed_domains)), -1, PREG_SPLIT_NO_EMPTY);
+        $host = $domains[0] ?? '';
+        if (preg_match('/^[A-Za-z0-9_-]{3,128}$/', $code) && filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) && strpos($host, '.') !== false) {
+            $file['link'] = 'https://' . $host . '/embed/' . rawurlencode($code);
+        }
+        return $file;
     }
 
     private function isFileListPayload(array $payload): bool
