@@ -9,7 +9,7 @@
         <h4>Reported links</h4>
         <p>Reported stream links are rechecked automatically; healthy links clear “Not working” reports without manual review.</p>
     </div>
-    <span class="reported-links-summary"><i class="fa fa-exclamation-circle"></i> <?= number_format($linksCount) ?> need review</span>
+    <span class="reported-links-summary"><i class="fa fa-exclamation-circle"></i> <span id="reported-review-count"><?= number_format($linksCount) ?></span> need review</span>
 </div>
 
 <form method="get" id="reported-host-filter" class="reported-host-filter">
@@ -29,7 +29,7 @@
     <p id="bulk-fix-status" role="status"></p><button type="button" id="bulk-fix-stop" class="btn btn-light">Stop</button>
     <ul id="bulk-fix-log" style="max-height:240px;overflow:auto"></ul>
 </div>
-<script defer src="<?= site_url('/admin-assets/js/bulk-link-fix.js?v=1') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/js/bulk-link-fix.js?v=2') ?>"></script>
 <div class="x_panel link-table-panel">
     <div class="card-box table-responsive">
 

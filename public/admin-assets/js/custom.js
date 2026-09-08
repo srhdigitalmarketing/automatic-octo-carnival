@@ -1622,7 +1622,11 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: $('#reported-links-datatable').data('source')
+                url: $('#reported-links-datatable').data('source'),
+                dataSrc: function (json) {
+                    $('#reported-review-count').text(Number(json.recordsTotal || 0).toLocaleString('id-ID'));
+                    return json.data || [];
+                }
             },
             order: [[4, 'desc']],
             pageLength: 25,

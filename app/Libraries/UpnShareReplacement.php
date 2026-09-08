@@ -31,7 +31,7 @@ class UpnShareReplacement
             'link'=>$url,'upnshare_video_id'=>$id,'api_id'=>$matches[0]->id,
             'provider_status'=>'available','provider_message'=>'Link UPNShare diganti otomatis sesuai judul.',
             'provider_checked_at'=>$now,'last_checked_at'=>$now,'last_success_at'=>$now,
-            'is_broken'=>0,'failure_count'=>0,'last_error'=>null,'reports_not_working'=>0,
+            'is_broken'=>0,'failure_count'=>0,'last_error'=>null,'reports_not_working'=>0,'reports_wrong_link'=>0,
         ]);
         if (!$ok || $db->affectedRows() !== 1) {
             $result['message'] .= ' Link berubah saat pemeriksaan; muat ulang halaman.'; return $result;

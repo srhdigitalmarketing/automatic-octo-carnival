@@ -15,6 +15,7 @@ document.addEventListener('click',async event=>{
   while(!stop&&processed<job.total){status.textContent=`Memproses ${processed}/${job.total} — Berhasil ${counts.success}, dilewati ${counts.skipped}, gagal ${counts.failed}`;
    const result=await request({action:'next',cursor,max_id:job.max_id});if(result.done)break;
    cursor=result.id;processed++;counts[result.state]++;bar.value=processed;
+   if(processed%10===0&&window.jQuery&&jQuery.fn.dataTable.isDataTable('#reported-links-datatable'))jQuery('#reported-links-datatable').DataTable().ajax.reload(null,false);
    const li=document.createElement('li');li.textContent=`#${result.id} [${result.state}] ${result.message}`;log.prepend(li);if(log.children.length>200)log.lastChild.remove();
   }
   status.textContent=`${stop?'Dihentikan':'Selesai'} — ${processed} diproses. Berhasil ${counts.success}, dilewati ${counts.skipped}, gagal ${counts.failed}.`;
