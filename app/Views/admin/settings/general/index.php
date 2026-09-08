@@ -13,8 +13,13 @@
 
 
         <?= form_close() ?>
+        <?= $this->include('admin/settings/general/form_x_panels/auto_grab') ?>
 
     </div>
 </div>
 
+<?php $this->endSection() ?>
+
+<?php $this->section('scripts') ?>
+<script src="<?= site_url('/admin-assets/js/auto-grab.js?v=20260908-1') ?>"></script>
 <?php $this->endSection() ?>

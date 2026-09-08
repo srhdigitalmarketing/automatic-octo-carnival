@@ -55,6 +55,8 @@ class VodCatalog
             }
             $items[] = ['title'=>mb_substr(strip_tags($title),0,500), 'poster_url'=>$poster,
                 'description'=>mb_substr(strip_tags(is_string($description) ? $description : ''),0,10000),
+                'auto_poster_url'=>self::httpUrl($row['poster_url'] ?? ''),
+                'movie_code'=>is_string($row['movie_code'] ?? null) ? $row['movie_code'] : '',
                 'stream_urls'=>array_values($streams)];
         }
         return $items;
