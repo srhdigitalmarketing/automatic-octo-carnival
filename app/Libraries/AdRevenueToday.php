@@ -200,23 +200,36 @@ class AdRevenueToday
                 'placement' => $identifiers[1],
                 'start_date' => $date,
                 'finish_date' => $date,
-                'group_by' => 'placement',
+                'group_by' => 'date',
             ],
             ['Accept' => 'application/json', 'X-API-Key' => (string) $unit['api_token']]
         );
 
-        return $this->metricsFromPayload($payload, ['revenue', 'money']);
+        return $this->adsterraMetrics($payload, $date);
+    }
+
+    private function adsterraMetrics(array $payload, string $date): array
+    {
+        if (!isset($payload['items']) || !is_array($payload['items'])) throw new RuntimeException('Adsterra returned no items list.');
+        $revenue = 0.0;
+        foreach ($payload['items'] as $item) {
+            if (!is_array($item)) throw new RuntimeException('Invalid Adsterra item.');
+            if (isset($item['date']) && $item['date'] !== $date) continue;
+            if (!isset($item['revenue']) || !is_numeric($item['revenue']) || !is_finite((float)$item['revenue'])) throw new RuntimeException('Invalid Adsterra revenue.');
+            $revenue += (float)$item['revenue'];
+        }
+        return ['revenue'=>round($revenue, 6), 'impressions'=>0, 'ecpm'=>0.0];
     }
 
     private function requestJson(string $url, array $query, array $headers = []): array
     {
-        $client = service('curlrequest', [
+        $client = \Config\Services::curlrequest([
             'timeout' => 6,
             'connect_timeout' => 4,
             'http_errors' => false,
             'allow_redirects' => false,
             'headers' => $headers,
-        ]);
+        ], null, null, false);
         $response = $client->get($url, ['query' => $query]);
         $status = $response->getStatusCode();
         if ($status < 200 || $status >= 300) {
