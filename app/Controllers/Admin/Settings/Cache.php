@@ -9,7 +9,7 @@ class Cache extends BaseSettings
         $pages=$this->request->getPost('cache_pages');
         $pages=is_array($pages)?array_values(array_intersect(['embed','view','download'],$pages)):[];
         $db=db_connect();
-        foreach (['web_page_cache'=>[empty($pages)?'0':'1','bool'], 'web_page_cache_types'=>[json_encode($pages),'array'], 'web_page_cache_duration'=>[(string)$this->request->getPost('web_page_cache_duration'),'int']] as $name=>$entry) {
+        foreach (['player_bunny_cdn_enabled'=>[$this->request->getPost('player_bunny_cdn_enabled') === '1' ? '1' : '0','bool'], 'web_page_cache'=>[empty($pages)?'0':'1','bool'], 'web_page_cache_types'=>[json_encode($pages),'array'], 'web_page_cache_duration'=>[(string)$this->request->getPost('web_page_cache_duration'),'int']] as $name=>$entry) {
             if ($db->table('settings')->where('name',$name)->countAllResults()) $db->table('settings')->where('name',$name)->update(['value'=>$entry[0],'data_type'=>$entry[1]]);
             else $db->table('settings')->insert(['name'=>$name,'value'=>$entry[0],'data_type'=>$entry[1]]);
         }
