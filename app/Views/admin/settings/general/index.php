@@ -6,15 +6,15 @@
 <div class="row">
     <div class="col-lg-9">
 
-        <?= form_open_multipart('/admin/settings/general/update', [ 'method' => 'post', 'class' => 'form-horizontal form-label-left' ] ) ?>
+        <?= form_open_multipart('/admin/settings/general/update', [ 'id' => 'general-settings-form', 'method' => 'post', 'class' => 'form-horizontal form-label-left' ] ) ?>
 
         <?= $this->include('/admin/settings/general/form_x_panels/media_files') ?>
-        <?= $this->include('/admin/settings/general/form_x_panels/others') ?>
 
 
         <?= form_close() ?>
         <?= $this->include('admin/settings/general/form_x_panels/auto_grab') ?>
         <?= $this->include('admin/settings/general/form_x_panels/latest_grab') ?>
+        <?= $this->include('/admin/settings/general/form_x_panels/others') ?>
 
     </div>
 </div>

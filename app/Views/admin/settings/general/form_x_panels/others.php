@@ -16,7 +16,7 @@
                 <p>Show a report option to help your team identify unavailable or incorrect links.</p>
             </div>
             <label class="general-report-toggle" for="is_links_report">
-                <input id="is_links_report" type="checkbox" name="is_links_report" value="1" <?= get_config('is_links_report') ? 'checked' : '' ?>>
+                <input form="general-settings-form" id="is_links_report" type="checkbox" name="is_links_report" value="1" <?= get_config('is_links_report') ? 'checked' : '' ?>>
                 <span>Enable reporting</span>
                 <small><?= get_config('is_links_report') ? 'Active' : 'Inactive' ?></small>
             </label>
@@ -25,6 +25,7 @@
         <div class="text-right general-report-actions">
             <?= form_button([
                 'type' => 'submit',
+                'form' => 'general-settings-form',
                 'class' => 'btn btn-primary'
             ], 'Save changes') ?>
         </div>
