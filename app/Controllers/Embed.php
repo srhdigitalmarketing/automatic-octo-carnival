@@ -104,7 +104,8 @@ class Embed extends BaseController
             // The legacy single-code ad remains available until the migration is run.
         }
 
-        if(is_web_page_cache_enabled()){
+        if(\App\Libraries\SelectedPageCache::enabled('embed') && !service('auth')->isLogged()){
+            \App\Libraries\SelectedPageCache::register((int)($movie->id ?? 0), $this->request);
             $this->cachePage( web_page_cache_time() );
         }
 

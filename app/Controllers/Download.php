@@ -102,7 +102,8 @@ class Download extends Embed
 
 
 
-        if(is_web_page_cache_enabled()){
+        if(\App\Libraries\SelectedPageCache::enabled('download') && !service('auth')->isLogged()){
+            \App\Libraries\SelectedPageCache::register((int)($activeMovie->id ?? 0), $this->request);
             $this->cachePage( web_page_cache_time() );
         }
 

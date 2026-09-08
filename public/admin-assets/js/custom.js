@@ -1716,3 +1716,12 @@ function get_short_embed_link( movieId )
 {
     return SITE_URL + EMBED_SLUG + '/' + movieId;
 }
+
+$(document).on('click', '.clear-video-cache', function () {
+    const button = $(this);
+    button.prop('disabled', true).text('Clearing…');
+    $.ajax({url:button.data('url'),method:'POST',data:{id:button.data('id')},dataType:'json'})
+        .done(function(data){button.text(data.ok ? 'Cache cleared' : 'Try again');})
+        .fail(function(){button.text('Failed — retry');})
+        .always(function(){button.prop('disabled',false);});
+});

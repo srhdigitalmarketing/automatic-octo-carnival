@@ -1,81 +1,16 @@
-<?php $this->extend( 'admin/__layout/default' ) ?>
-
-
+<?php $this->extend('admin/__layout/default') ?>
 <?php $this->section('content') ?>
-
-<div class="row">
-    <div class="col-lg-9">
-
-        <?= form_open('/admin/settings/cache/update', [ 'method' => 'post', 'class' => 'form-horizontal form-label-left' ] ) ?>
-
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>Web pages</h2>
-                <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                </ul>
-                <div class="clearfix"></div>
-            </div>
-            <div class="x_content">
-
-                <div class="form-group row">
-                    <label class="control-label col-md-3">Web pages cache</label>
-                    <div class="col-md-9">
-                        <div class="checkbox">
-                            <label>
-                                <?= form_checkbox('web_page_cache','', get_config('web_page_cache')) ?>
-                                Enable/ Disable
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label class="control-label col-md-3">Cache duration</label>
-                    <div class="col-md-9">
-
-                        <div class="input-group mb-3">
-                            <?= form_input([
-                                'type' => 'number',
-                                'name' => 'web_page_cache_duration',
-                                'class' => 'form-control',
-                                'value' => get_config('web_page_cache_duration'),
-                                'min' => 300
-                            ]) ?>
-                            <div class="input-group-append">
-                                <span class="input-group-text" >seconds</span>
-                            </div>
-                        </div>
-                        <small>Min: 60, &nbsp;&nbsp;default: 86400 (1 day)</small>
-                    </div>
-                </div>
-
-                <div>
-                    <b>Supported Pages:</b>
-                    <ul>
-                        <li> <i>Embed page</i> </li>
-                        <li> <i>View page</i> </li>
-                        <li> <i>Download page</i> </li>
-                        <li> <i>Library page</i> </li>
-                    </ul>
-                </div>
-
-                <div class="text-right">
-                    <?= form_button([
-                        'type' => 'submit',
-                        'class' => 'btn btn-primary'
-                    ], 'update') ?>
-                </div>
-
-
-
-            </div>
-        </div>
-
-
-        <?= form_close() ?>
-
-    </div>
-</div>
-
+<div class="row"><div class="col-lg-9"><div class="x_panel"><div class="x_title"><h2>Page Cache</h2><div class="clearfix"></div></div><div class="x_content">
+<?= form_open(admin_url('/settings/cache/update')) ?>
+<p>Pilih halaman yang dicache. Kosongkan semua pilihan untuk menonaktifkan cache halaman.</p>
+<?php foreach (['embed'=>'Embed player','view'=>'View page','download'=>'Download page'] as $key=>$label): ?>
+<label style="display:block;margin:12px 0"><input type="checkbox" name="cache_pages[]" value="<?= $key ?>" <?= \App\Libraries\SelectedPageCache::enabled($key)?'checked':'' ?>> <?= $label ?></label>
+<?php endforeach ?>
+<label for="cache-duration">Cache duration (seconds)</label><input id="cache-duration" class="form-control" name="web_page_cache_duration" type="number" min="60" max="86400" required value="<?= (int)(get_config('web_page_cache_duration') ?: 300) ?>">
+<p>60–86400 detik. Cache disimpan di writable/cache menggunakan konfigurasi file bawaan.</p>
+<button type="submit" class="btn btn-primary">Save cache settings</button>
+<?= form_close() ?>
+<hr><p>Clear All Cache juga menghapus cache sementara grab/migrasi. Selesaikan proses tersebut sebelum membersihkan cache.</p>
+<?= form_open(admin_url('/settings/cache/clean')) ?><button type="submit" class="btn btn-danger">Clear All Cache</button><?= form_close() ?>
+</div></div></div></div>
 <?php $this->endSection() ?>

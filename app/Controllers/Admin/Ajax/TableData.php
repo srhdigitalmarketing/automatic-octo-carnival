@@ -60,6 +60,7 @@ class TableData extends BaseController
                 number_format((int) $movie['views']),
                 '<div class="table-actions">'
                     . '<a href="' . admin_url("/movies/edit/{$id}") . '" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i> Edit</a>'
+                    . '<button type="button" class="btn btn-sm btn-default clear-video-cache" data-id="' . $id . '" data-url="' . admin_url('/settings/cache/video') . '">Clear cache</button>'
                     . '<a href="javascript:void(0)" data-url="' . admin_url("/movies/delete/{$id}") . '" class="btn btn-sm btn-danger del-item"><i class="fa fa-trash"></i> Delete</a>'
                     . '</div>',
             ];
