@@ -21,3 +21,10 @@ Kode diambil dari judul kode tunggal atau kode dalam kurung siku di awal judul, 
 Edit VOD API dan isi Embed hostnames dengan domain URL stream (contoh upload18.org). API hostname tetap hostname layanan katalog; endpoint GET /api.php/provide/vod?ac=detail&wd=KODE. Cek file dan cron mingguan memilih konfigurasi berdasarkan embed hostname. Lepaskan hostname dari provider lain atau pause provider tersebut sebelum memetakannya ke VOD.
 
 Link embed dicocokkan persis. Hasil yang ditemukan maupun kosong tetap Unknown dengan keterangan karena JSON katalog tidak memuat status kesehatan file. Status Release tidak dianggap Healthy. HTTP endpoint 404/410/522 dilewati untuk rotasi; 404 masuk Broken link, tanpa klaim Deleted. Status Deleted/Error sebelumnya tidak dipulihkan hanya karena link terdaftar di katalog.
+
+
+## Grab Latest Video
+
+General memiliki panel Grab Latest Video. Pilih API, masukkan 1–100 (default 5), lalu mulai. Permintaan daftar adalah GET /api.php/provide/vod?ac=detail tanpa wd. Urutan terbaru mengikuti urutan API; maksimal 1000 entri dari respons pertama (batas respons tetap 2 MiB). Jika API memberi kurang dari jumlah target, proses selesai dengan jumlah yang tersedia. Tidak ada pagination otomatis karena kontrak pagination belum diberikan.
+
+Satu video diimpor per request sampai target berhasil tercapai atau daftar habis. Video duplikat berdasarkan ID internal deterministik dari movie_code atau URL stream dilewati. Kode wajib, English-Subtitle ditolak, poster_url dan stream wajib tersedia. Impor mengisi judul berkode, deskripsi, tahun, kualitas, negara, durasi, banner R2 dan link stream. Video ID tt... adalah ID internal yang dibuat sistem, bukan klaim ID IMDb asli. Status video baru Public. Metadata aktor/director/kategori dari API belum dipetakan ke tabel relasi aplikasi. Daftar proses disimpan di cache selama 2 jam dan dibatasi sesi admin. Halaman harus terbuka, tombol Berhenti menyelesaikan request aktif dahulu. Kegagalan transaksi membersihkan upload poster baru.

@@ -12,9 +12,9 @@ class VodCatalog
         return $host;
     }
 
-    public function search(string $host, string $term): array
+    public function search(string $host, string $term, bool $latest = false): array
     {
-        $url = 'https://' . self::hostname($host) . '/api.php/provide/vod?' . http_build_query(['ac'=>'detail', 'wd'=>mb_substr($term, 0, 150)]);
+        $url = 'https://' . self::hostname($host) . '/api.php/provide/vod?' . http_build_query($latest ? ['ac'=>'detail'] : ['ac'=>'detail', 'wd'=>mb_substr($term, 0, 150)]);
         $target = (new CustomHostClient())->publicTarget($url);
         $body = ''; $curl = curl_init($url);
         curl_setopt_array($curl, [CURLOPT_FOLLOWLOCATION=>false, CURLOPT_CONNECTTIMEOUT=>3, CURLOPT_TIMEOUT=>7,
@@ -26,15 +26,15 @@ class VodCatalog
             }]);
         $ok = curl_exec($curl); $status = curl_getinfo($curl, CURLINFO_HTTP_CODE); curl_close($curl);
         if (!$ok || $status !== 200) { throw new \RuntimeException('API VOD tidak dapat dihubungi (HTTP ' . $status . ').', (int)$status); }
-        return self::normalize(json_decode($body, true));
+        return self::normalize(json_decode($body, true), $latest ? 1000 : 20);
     }
 
-    public static function normalize($body): array
+    public static function normalize($body, int $limit = 20): array
     {
         if (!is_array($body) || !isset($body['list']) || !is_array($body['list'])) { throw new \RuntimeException('Format respons API VOD tidak valid.'); }
         if (isset($body['code']) && (int)$body['code'] !== 1) { throw new \RuntimeException('API VOD melaporkan kegagalan.'); }
         $items = [];
-        foreach (array_slice($body['list'], 0, 20) as $row) {
+        foreach (array_slice($body['list'], 0, min(1000, max(1, $limit))) as $row) {
             if (!is_array($row)) { continue; }
             $title = $row['name'] ?? $row['vod_name'] ?? null;
             if (!is_string($title) || trim($title) === '') { continue; }
@@ -57,6 +57,10 @@ class VodCatalog
                 'description'=>mb_substr(strip_tags(is_string($description) ? $description : ''),0,10000),
                 'auto_poster_url'=>self::httpUrl($row['poster_url'] ?? ''),
                 'movie_code'=>is_string($row['movie_code'] ?? null) ? $row['movie_code'] : '',
+                'year'=>is_scalar($row['year'] ?? null) ? (int)$row['year'] : 0,
+                'quality'=>is_string($row['quality'] ?? null) ? mb_substr($row['quality'],0,20) : '',
+                'country'=>is_array($row['country'] ?? null) ? implode(', ',array_filter($row['country'],'is_string')) : '',
+                'time'=>is_string($row['time'] ?? null) ? $row['time'] : '',
                 'stream_urls'=>array_values($streams)];
         }
         return $items;
