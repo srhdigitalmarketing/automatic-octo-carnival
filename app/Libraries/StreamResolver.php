@@ -114,6 +114,7 @@ class StreamResolver
         }
 
         $api = (new ThirdPartyApi())->find((int) $link->api_id);
+        if ($api !== null && $api->provider === 'streamhg') { return (string) $link->link; }
         $videoId = trim((string) $link->upnshare_video_id) ?: $this->videoIdFromUrl((string) $link->link);
         if ($api === null || $api->provider !== 'streamhg' || $api->status !== 'active' || $videoId === '') {
             return (string) $link->link;

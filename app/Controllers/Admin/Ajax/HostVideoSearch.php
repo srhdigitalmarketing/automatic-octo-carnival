@@ -32,7 +32,7 @@ class HostVideoSearch extends BaseAjax
 
         $apis = [];
         foreach ((new ThirdPartyApi())->where('status', 'active')->findAll() as $api) {
-            if (in_array((string) $api->provider, ['upnshare', 'streamhg'], true) && trim((string) $api->api_token) !== '') {
+            if (in_array((string) $api->provider, ['upnshare'], true) && trim((string) $api->api_token) !== '') {
                 $apis[] = $api;
             }
         }
@@ -78,7 +78,7 @@ class HostVideoSearch extends BaseAjax
                     // File List normally includes thumbnail. File Info is used
                     // only as a small fallback for hosts that expose player_img
                     // separately (such as some XVideoSharing installations).
-                    if (!in_array((string) $api->provider, ['upnshare', 'streamhg'], true) && $posterUrl === null && $fileCode !== '') {
+                    if (!in_array((string) $api->provider, ['upnshare'], true) && $posterUrl === null && $fileCode !== '') {
                         $posterUrl = $this->posterFromFileInfo($api, $search['api_root'], $fileCode);
                     }
 
@@ -115,6 +115,7 @@ class HostVideoSearch extends BaseAjax
     /** @return array{files: array<int, array<string, mixed>>, api_root: string}|null */
     private function searchHostFiles(object $api, string $title): ?array
     {
+        if ($api->provider === 'streamhg') return null;
         if ((string) $api->provider === 'upnshare') {
             return $this->searchUpnShareFiles($api, $title);
         }

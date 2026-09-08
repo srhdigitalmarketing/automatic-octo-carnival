@@ -11,7 +11,6 @@
         <a href="<?= admin_url('/settings/cdn#cdn-settings') ?>" class="btn btn-primary">Add CDN Hostname</a>
         <a href="<?= admin_url('/third-party-apis/new') ?>" class="btn btn-primary"><i class="fa fa-plus"></i> Add R2 storage</a>
     <a href="<?= admin_url('/third-party-apis/new?provider=upnshare') ?>" class="btn btn-primary">Add UPNShare</a>
-        <a href="<?= admin_url('/third-party-apis/new?provider=streamhg') ?>" class="btn btn-primary">Add StreamHG</a>
         <a href="<?= admin_url('/third-party-apis/new?provider=custom_http') ?>" class="btn btn-primary">Add Custom hostname</a>
     </section>
     <section class="host-api-overview__docs">
@@ -40,10 +39,10 @@
             <tr>
                 <td>
                     <strong><?= esc($api->name) ?></strong>
-                    <small><?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','streamhg','custom_http'], true) ? 'Video availability checks' : 'Banner uploads are stored in R2') ?></small>
+                    <small><?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? 'Video availability checks' : 'Banner uploads are stored in R2') ?></small>
                 </td>
-                <td><span class="host-api-provider-badge"><?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','streamhg','custom_http'], true) ? ($api->provider === 'custom_http' ? 'Custom hostname' : ($api->provider === 'streamhg' ? 'StreamHG' : 'UPNShare')) : 'Cloudflare R2') ?></span></td>
-                <td><span class="host-api-scope"><i class="fa fa-cloud-upload"></i> <?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','streamhg','custom_http'], true) ? 'Read video status' : 'Banner storage') ?></span></td>
+                <td><span class="host-api-provider-badge"><?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? ($api->provider === 'custom_http' ? 'Custom hostname' : ($api->provider === 'streamhg' ? 'StreamHG' : 'UPNShare')) : 'Cloudflare R2') ?></span></td>
+                <td><span class="host-api-scope"><i class="fa fa-cloud-upload"></i> <?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? 'Read video status' : 'Banner storage') ?></span></td>
                 <td><?= format_date_time($api->created_at) ?></td>
                 <td>
                     <span class="host-api-status-badge <?= $api->status == 'active' ? 'is-active' : 'is-paused' ?>">

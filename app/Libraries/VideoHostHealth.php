@@ -30,7 +30,7 @@ class VideoHostHealth
     public function check(Link $link): ?array
     {
         if (! $this->links->supportsProviderStatus()) { return null; }
-        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'streamhg', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
+        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
             if (self::matchesHost((string)$link->link, (string)$api->embed_domains)) { $matches[] = $api; }
@@ -48,7 +48,7 @@ class VideoHostHealth
             $api = $matches[0]; $key = 'api-' . $api->id;
             if (! isset($this->clients[$key])) {
                 $config = new \Config\UpnShare(); $config->apiToken = (string)$api->api_token;
-                $this->clients[$key] = $api->provider === 'streamhg' ? new StreamHgClient((string)$api->api_token) : new UpnShareClient($config);
+                $this->clients[$key] = new UpnShareClient($config);
             }
         } else {
             $config = config('UpnShare');

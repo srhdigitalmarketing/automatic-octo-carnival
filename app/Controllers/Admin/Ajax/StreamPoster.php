@@ -69,7 +69,7 @@ class StreamPoster extends BaseAjax
         if ($videoId === '') {
             return null;
         }
-        if ($api === null || $api->status !== 'active' || trim((string) $api->api_token) === '') {
+        if ($api === null || $api->provider === 'streamhg' || $api->status !== 'active' || trim((string) $api->api_token) === '') {
             return null;
         }
 
