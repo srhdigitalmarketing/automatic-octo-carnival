@@ -45,5 +45,14 @@
 
 
 
+        <section id="banner-migration-panel" data-url="<?= esc(admin_url('/banner-migration/run'),'attr') ?>" style="border-top:1px solid #e9edf4;padding-top:20px;margin-top:20px">
+            <h4>Migrasi Banner Lokal → R2 Storage</h4>
+            <p>Pindahkan referensi banner video dan series dari <code>/public/uploads/banners</code> ke R2. File lokal tetap disimpan. File yang tidak digunakan di database tidak diproses.</p>
+            <button type="button" id="banner-migration-start" class="btn btn-primary">Mulai migrasi</button>
+            <button type="button" id="banner-migration-stop" class="btn btn-default" disabled>Berhenti</button>
+            <progress id="banner-migration-progress" value="0" max="1" style="width:100%;height:16px" aria-label="Progres migrasi"></progress>
+            <p id="banner-migration-status" role="status" aria-live="polite">Siap. Pastikan R2 aktif dan biarkan halaman terbuka selama proses.</p>
+            <ul id="banner-migration-log" style="max-height:280px;overflow:auto;padding-left:20px"></ul>
+        </section>
     </div>
 </div>

@@ -51,6 +51,7 @@ $routes->get('/admin/next-for-you', 'Admin/FailedMovies::index');
 $routes->get('/admin/reported-links', 'Admin/ReportedLinks::index');
 
 $routes->get('/admin/third-party-apis', 'Admin/ThirdPartyApis::index');
+$routes->post('/admin/banner-migration/run', 'Admin/BannerMigration::run');
 $routes->post('/admin/latest-grab/run', 'Admin/LatestGrab::run');
 $routes->post('/admin/auto-grab/run', 'Admin/AutoGrab::run');
 $routes->post('/admin/stream-health/check', 'Admin/StreamHealth::check');
