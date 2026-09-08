@@ -30,13 +30,16 @@ class VideoHostHealth
     public function check(Link $link): ?array
     {
         if (! $this->links->supportsProviderStatus()) { return null; }
-        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'vidhide', 'custom_http'])->where('status', 'active')->findAll(); }
+        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'vidhide', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
             if (self::matchesHost((string)$link->link, (string)$api->embed_domains)) { $matches[] = $api; }
         }
         if (count($matches) > 1) {
             return $this->persist($link, ['status'=>'unknown','message'=>'Multiple active APIs match this hostname; keep this hostname on only one active provider configuration']);
+        }
+        if ($matches && $matches[0]->provider === 'vod_catalog') {
+            return $this->persist($link, (new VodFileHealth())->check((string)$matches[0]->api_base_url, (string)$link->link));
         }
         if ($matches && $matches[0]->provider === 'custom_http') {
             return $this->persist($link, (new CustomHostClient())->videoStatus((string)$link->link));

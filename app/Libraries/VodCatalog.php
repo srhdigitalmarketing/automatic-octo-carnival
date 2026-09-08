@@ -25,7 +25,7 @@ class VodCatalog
                 $body .= $chunk; return strlen($chunk);
             }]);
         $ok = curl_exec($curl); $status = curl_getinfo($curl, CURLINFO_HTTP_CODE); curl_close($curl);
-        if (!$ok || $status !== 200) { throw new \RuntimeException('API VOD tidak dapat dihubungi (HTTP ' . $status . ').'); }
+        if (!$ok || $status !== 200) { throw new \RuntimeException('API VOD tidak dapat dihubungi (HTTP ' . $status . ').', (int)$status); }
         return self::normalize(json_decode($body, true));
     }
 

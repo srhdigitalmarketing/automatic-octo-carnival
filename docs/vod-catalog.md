@@ -14,3 +14,10 @@ Parser diuji dengan sampel JSON pengguna. Koneksi hostname produksi tetap perlu 
 Panel Auto Grab ada di bawah Link reporting. Pilih katalog aktif lalu Mulai Auto Grab. Hanya film dengan status No Image yang diproses (aturan yang sama dengan filter All Videos). Satu request memproses satu film; halaman harus tetap terbuka. Tidak ada cron baru. Tombol Berhenti menghentikan setelah request berjalan selesai. Menjalankan ulang akan melewati film yang kini memiliki image; item gagal/dilewati dapat dicoba lagi.
 
 Kode diambil dari judul kode tunggal atau kode dalam kurung siku di awal judul, dibandingkan persis tanpa membedakan huruf besar. Hasil memakai movie_code, atau kode judul bila movie_code kosong. English-Subtitle ditolak, hasil ambigu dilewati. Hanya poster_url yang dipakai untuk upload R2. Stream embed unik ditambahkan tanpa mengubah link sebelumnya. Banner dan link disimpan dalam transaksi; upload baru dibersihkan bila penyimpanan gagal. Proses memakai lock lokal untuk mencegah dua request auto grab bersamaan pada server yang sama. Panel menampilkan total berhasil/dilewati/gagal dan 200 hasil terakhir, tidak menyimpan log permanen ke database.
+
+
+## Cek file menggunakan VOD
+
+Edit VOD API dan isi Embed hostnames dengan domain URL stream (contoh upload18.org). API hostname tetap hostname layanan katalog; endpoint GET /api.php/provide/vod?ac=detail&wd=KODE. Cek file dan cron mingguan memilih konfigurasi berdasarkan embed hostname. Lepaskan hostname dari provider lain atau pause provider tersebut sebelum memetakannya ke VOD.
+
+Link embed dicocokkan persis. Hasil yang ditemukan maupun kosong tetap Unknown dengan keterangan karena JSON katalog tidak memuat status kesehatan file. Status Release tidak dianggap Healthy. HTTP endpoint 404/410/522 dilewati untuk rotasi; 404 masuk Broken link, tanpa klaim Deleted. Status Deleted/Error sebelumnya tidak dipulihkan hanya karena link terdaftar di katalog.

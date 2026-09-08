@@ -28,3 +28,8 @@ $example['list'][0]['episodes'] = [
 ];
 check(VodCatalog::normalize($example)[0]['stream_urls'] === ['https://example.com/e/1','https://example.com/e/2'], 'Multiple servers deduplicate and reject unsafe embed URLs');
 echo "PASS: supplied JSON fields and nested episode URLs.\n";
+
+$catalogStatus = App\Libraries\VodFileHealth::classify('https://example.com/e/abc', [['stream_urls'=>['https://example.com/e/abc']]]);
+check($catalogStatus['status'] === 'unknown' && strpos($catalogStatus['message'], 'persis') !== false, 'Catalog presence does not prove playback');
+check(App\Libraries\VodFileHealth::classify('https://example.com/e/abc', [['stream_urls'=>['https://other.example/e/abc']]])['status'] === 'unknown', 'Same ID on another hostname does not prove presence');
+check(App\Libraries\VodFileHealth::classify('https://example.com/e/abc', [])['status'] === 'unknown', 'Empty catalog cannot prove deletion');

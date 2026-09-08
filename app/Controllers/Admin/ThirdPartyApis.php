@@ -165,7 +165,7 @@ class ThirdPartyApis extends BaseController
     private function providerData(array $data): array
     {
         if ($data['provider'] === 'vod_catalog') {
-            return ['name'=>$data['name'] ?? '', 'provider'=>'vod_catalog', 'status'=>$data['status'] ?? 'active', 'api_base_url'=>strtolower(trim((string)($data['api_base_url'] ?? '')))];
+            return ['name'=>$data['name'] ?? '', 'provider'=>'vod_catalog', 'status'=>$data['status'] ?? 'active', 'api_base_url'=>strtolower(trim((string)($data['api_base_url'] ?? ''))), 'embed_domains'=>strtolower(trim((string)($data['embed_domains'] ?? '')))];
         }
         $fields = in_array($data['provider'], ['upnshare','vidhide','custom_http'], true)
             ? ['name', 'provider', 'status', 'api_token', 'embed_domains']
@@ -182,9 +182,9 @@ class ThirdPartyApis extends BaseController
 
     private function hostnameErrors(array $data, int $currentId = 0): array
     {
-        if (!in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true) || ($data['status'] ?? 'active') !== 'active') { return []; }
+        if (!in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http','vod_catalog'], true) || ($data['status'] ?? 'active') !== 'active') { return []; }
         $domains = preg_split('/[\s,]+/', strtolower(trim((string)($data['embed_domains'] ?? ''))), -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($this->model->whereIn('provider', ['upnshare','vidhide','custom_http'])->where('status', 'active')->findAll() as $api) {
+        foreach ($this->model->whereIn('provider', ['upnshare','vidhide','custom_http','vod_catalog'])->where('status', 'active')->findAll() as $api) {
             if ((int)$api->id === $currentId) { continue; }
             $existing = preg_split('/[\s,]+/', strtolower(trim((string)$api->embed_domains)), -1, PREG_SPLIT_NO_EMPTY);
             if (array_intersect($domains, $existing)) { return ['An embed hostname is already assigned to another active API. Remove it there or pause that configuration first.']; }
@@ -195,7 +195,13 @@ class ThirdPartyApis extends BaseController
     private function providerErrors(array $data): array
     {
         if (($data['provider'] ?? '') === 'vod_catalog') {
-            try { \App\Libraries\VodCatalog::hostname((string)($data['api_base_url'] ?? '')); return []; }
+            try {
+                \App\Libraries\VodCatalog::hostname((string)($data['api_base_url'] ?? ''));
+                $domains = (string)($data['embed_domains'] ?? '');
+                if (strlen($domains) > 1000) { return ['Embed hostnames maksimal 1000 karakter.']; }
+                foreach (preg_split('/[\s,]+/', $domains, -1, PREG_SPLIT_NO_EMPTY) as $domain) { \App\Libraries\VodCatalog::hostname($domain); }
+                return [];
+            }
             catch (\InvalidArgumentException $e) { return [$e->getMessage()]; }
         }
         if (!in_array($data['provider'] ?? '', ['upnshare','vidhide','custom_http'], true)) { return $this->r2Errors($data); }
