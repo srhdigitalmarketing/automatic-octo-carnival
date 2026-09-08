@@ -39,6 +39,8 @@ $routes->setAutoRoute(true);
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
+$routes->get('/admin/settings/homepage', 'Admin/Settings/Homepage::index');
+$routes->post('/admin/settings/homepage/update', 'Admin/Settings/Homepage::update');
 $routes->get('/lang', 'Language::index');
 $routes->get('/sitemap\.xml', 'Sitemap::index');
 
