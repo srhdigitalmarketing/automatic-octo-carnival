@@ -111,9 +111,6 @@ const Player = {
         //player loaded link in first time
         if(! self.isPlayed){
             self.isPlayed = true;
-            if(window.StreamPlayerAnalytics && typeof window.StreamPlayerAnalytics.recordPlay === 'function'){
-                window.StreamPlayerAnalytics.recordPlay();
-            }
         }
 
         //check link

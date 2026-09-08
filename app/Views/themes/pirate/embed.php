@@ -119,7 +119,7 @@
 
 <script src="<?= theme_assets('js/template.min.js?v=1.2') ?>"></script>
 <script src="<?= theme_assets('js/custom.min.js?v=1.2') ?>"></script>
-<script src="<?= theme_assets('js/player.js?v=20260908-3') ?>"></script>
+<script src="<?= theme_assets('js/player.js?v=20260908-4') ?>"></script>
 <script src="<?= theme_assets('js/player-guard.js?v=20260908-1') ?>"></script>
 
 <?php if (! empty($links)): ?>
@@ -129,7 +129,6 @@
 
     var storageKey = 'streamapi:embed-visitor';
     var visitorKey;
-    var shouldRecordDaily = true;
 
     function isValidVisitorKey(value) {
         return typeof value === 'string' && /^[a-zA-Z0-9_-]{16,64}$/.test(value);
@@ -165,12 +164,6 @@
         if (! visitorKey) return;
 
         var body = 'visitor_key=' + encodeURIComponent(visitorKey);
-        if (eventName === 'play') {
-            body += '&event=play';
-        } else {
-            body += '&record_impression=' + (shouldRecordDaily ? '1' : '0');
-        }
-
         return fetch('<?= site_url('/traffic/embed') ?>', {
             method: 'POST',
             headers: {
@@ -184,12 +177,6 @@
         });
     }
 
-    window.StreamPlayerAnalytics = {
-        recordPlay: function () {
-            sendAnalytics('play').catch(function () {});
-        }
-    };
-
     var analyticsPingPending = false;
     function pingLiveTraffic() {
         if (analyticsPingPending) return;
@@ -199,7 +186,7 @@
         sendAnalytics('impression').then(function (response) {
             return response.ok ? response.json() : null;
         }).then(function (data) {
-            if (data && data.ok) shouldRecordDaily = false;
+            // Heartbeat only; no daily analytics are recorded.
         }).catch(function () {}).then(function () { analyticsPingPending = false; });
     }
 

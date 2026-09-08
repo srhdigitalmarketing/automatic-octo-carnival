@@ -3,8 +3,6 @@
 namespace App\Controllers;
 
 use App\Libraries\PopupAdSelector;
-use App\Libraries\MysqlAudience;
-use App\Models\DailyPlayerAnalyticsModel;
 use App\Models\LiveTrafficModel;
 
 class Traffic extends BaseController
@@ -46,20 +44,6 @@ class Traffic extends BaseController
             $traffic = new LiveTrafficModel();
             $traffic->touchEmbedVisitor($visitorKey);
 
-            try {
-                (new MysqlAudience())->record($visitorKey, (string) $this->request->getUserAgent());
-            } catch (\Throwable $exception) {
-                log_message('warning', 'Audience tracking unavailable: {message}', ['message' => $exception->getMessage()]);
-            }
-
-            $analytics = new DailyPlayerAnalyticsModel();
-            if ($this->request->getPost('record_impression') === '1') {
-                $analytics->recordImpression();
-            }
-
-            if ($this->request->getPost('event') === 'play') {
-                $analytics->recordPlayClick();
-            }
         } catch (\Throwable $exception) {
             log_message('error', 'Live traffic heartbeat could not be saved: {message}', [
                 'message' => $exception->getMessage(),
