@@ -119,7 +119,7 @@
 
 <script src="<?= theme_assets('js/template.min.js?v=1.2') ?>"></script>
 <script src="<?= theme_assets('js/custom.min.js?v=1.2') ?>"></script>
-<script src="<?= theme_assets('js/player.js?v=20260908-4') ?>"></script>
+<script src="<?= theme_assets('js/player.js?v=20260908-5') ?>"></script>
 <script src="<?= theme_assets('js/player-guard.js?v=20260908-1') ?>"></script>
 
 <?php if (! empty($links)): ?>
@@ -160,10 +160,12 @@
         return;
     }
 
+    var shouldRecordDaily = true;
     function sendAnalytics(eventName) {
         if (! visitorKey) return;
 
         var body = 'visitor_key=' + encodeURIComponent(visitorKey);
+        body += eventName === 'play' ? '&event=play' : '&record_impression=' + (shouldRecordDaily ? '1' : '0');
         return fetch('<?= site_url('/traffic/embed') ?>', {
             method: 'POST',
             headers: {
@@ -177,6 +179,7 @@
         });
     }
 
+    window.StreamPlayerAnalytics = {recordPlay: function () { sendAnalytics('play').catch(function () {}); }};
     var analyticsPingPending = false;
     function pingLiveTraffic() {
         if (analyticsPingPending) return;
@@ -186,7 +189,7 @@
         sendAnalytics('impression').then(function (response) {
             return response.ok ? response.json() : null;
         }).then(function (data) {
-            // Heartbeat only; no daily analytics are recorded.
+            if (data && data.ok) shouldRecordDaily = false;
         }).catch(function () {}).then(function () { analyticsPingPending = false; });
     }
 
