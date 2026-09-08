@@ -3,6 +3,7 @@
 <head>
 <meta name="robots" content="noindex, nofollow, noimageindex, nosnippet">
     <meta charset="UTF-8">
+    <link rel="preconnect" href="https://oktostream.b-cdn.net" crossorigin>
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -12,8 +13,8 @@
         <link rel="icon" href="<?= site_favicon() ?>" type="image/x-icon">
     <?php endif; ?>
 
-    <link href="<?= theme_assets('/css/template.min.css?v=1.2') ?>" rel="stylesheet" />
-    <link rel="stylesheet" href="<?= theme_assets('/css/custom.css?v=20260906-2') ?>">
+    <link href="<?= player_cdn_asset('/css/template.min.css?v=1.2') ?>" onerror="this.onerror=null;this.href='<?= esc(theme_assets('/css/template.min.css?v=1.2'), 'attr') ?>';" rel="stylesheet" />
+    <link rel="stylesheet" href="<?= player_cdn_asset('/css/custom.css?v=20260906-2') ?>" onerror="this.onerror=null;this.href='<?= esc(theme_assets('/css/custom.css?v=20260906-2'), 'attr') ?>';">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
     
@@ -87,7 +88,7 @@
 
     <div class="movie-not-found">
         <div class="img-wrap text-center">
-            <img src="<?= theme_assets('/images/icons/cat.png') ?>" class="w-100" alt="">
+            <img src="<?= player_cdn_asset('/images/icons/cat.png') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('/images/icons/cat.png'), 'attr') ?>';" class="w-100" alt="">
             <h3 class="font-size-24 text-muted">
                 <?php if( $serverNotFound ){
                     echo lang('Embed.server_not_found');
@@ -117,10 +118,10 @@
     <script  src="https://www.google.com/recaptcha/api.js" async defer></script>
 <?php endif; ?>
 
-<script src="<?= theme_assets('js/template.min.js?v=1.2') ?>"></script>
-<script src="<?= theme_assets('js/custom.min.js?v=1.2') ?>"></script>
-<script src="<?= theme_assets('js/player.js?v=20260908-5') ?>"></script>
-<script src="<?= theme_assets('js/player-guard.js?v=20260908-1') ?>"></script>
+<script src="<?= player_cdn_asset('js/template.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/template.min.js?v=1.2'), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/custom.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/custom.min.js?v=1.2'), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/player.js?v=20260908-5') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/player.js?v=20260908-5'), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/player-guard.js?v=20260908-1') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/player-guard.js?v=20260908-1'), 'attr') ?>';"></script>
 
 <?php if (! empty($links)): ?>
 <script>
