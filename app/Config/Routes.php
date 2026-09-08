@@ -56,6 +56,7 @@ $routes->get('/admin/third-party-apis', 'Admin/ThirdPartyApis::index');
 $routes->post('/admin/banner-migration/run', 'Admin/BannerMigration::run');
 $routes->post('/admin/latest-grab/run', 'Admin/LatestGrab::run');
 $routes->post('/admin/auto-grab/run', 'Admin/AutoGrab::run');
+$routes->post('/admin/bulk-link-fix/run', 'Admin/BulkLinkFix::run');
 $routes->post('/admin/stream-health/check', 'Admin/StreamHealth::check');
 $routes->get('/admin/third-party-apis/result', 'Admin/ThirdPartyApis::result');
 $routes->get('/admin/third-party-apis/new', 'Admin/ThirdPartyApis::new');

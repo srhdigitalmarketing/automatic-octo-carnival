@@ -1,0 +1,7 @@
+const {chromium}=require('playwright');const assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{const page=await browser.newPage();
+await page.setContent(`<form id="reported-host-filter"><select id="reported-host"><option value="ustreamplay.online">Host</option></select><button type="submit">Filter</button><button type="button" id="bulk-link-fix" data-url="/bulk">Bulk</button></form><div id="bulk-fix-progress" hidden><p id="bulk-fix-status"></p><progress id="bulk-fix-bar"></progress><button id="bulk-fix-stop">Stop</button><ul id="bulk-fix-log"></ul></div>`);
+await page.evaluate(()=>{let i=0;window.fetch=async(url,opt)=>{const action=opt.body.get('action');return {ok:true,json:async()=>action==='start'?{total:3,max_id:3}:{id:++i,state:['success','skipped','failed'][i-1],message:'Test result'}};};});
+await page.addScriptTag({path:'public/admin-assets/js/bulk-link-fix.js'});await page.locator('#bulk-link-fix').click();await page.waitForFunction(()=>document.getElementById('bulk-fix-status').textContent.startsWith('Selesai'));
+assert.match(await page.locator('#bulk-fix-status').textContent(),/Berhasil 1, dilewati 1, gagal 1/);assert.equal(await page.locator('#bulk-fix-log li').count(),3);assert.equal(await page.locator('#bulk-link-fix').isEnabled(),true);
+console.log('PASS: bulk loop, counters, progress and control restoration');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

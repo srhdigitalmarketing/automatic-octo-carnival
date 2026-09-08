@@ -21,7 +21,15 @@
         <?php endforeach ?>
     </select>
     <button type="submit" class="btn btn-primary">Filter</button>
+    <button type="button" id="bulk-link-fix" class="btn btn-primary" data-url="<?= esc(admin_url('/bulk-link-fix/run'), 'attr') ?>">Bulk Fix Broken Links</button>
 </form>
+<div id="bulk-fix-progress" class="x_panel" hidden>
+    <strong>Bulk Fix Broken Links</strong><p>Memproses seluruh link terhapus/404 pada hostname terpilih, termasuk halaman tabel lainnya. Biarkan halaman ini terbuka.</p>
+    <progress id="bulk-fix-bar" max="1" value="0" style="width:100%"></progress>
+    <p id="bulk-fix-status" role="status"></p><button type="button" id="bulk-fix-stop" class="btn btn-light">Stop</button>
+    <ul id="bulk-fix-log" style="max-height:240px;overflow:auto"></ul>
+</div>
+<script defer src="<?= site_url('/admin-assets/js/bulk-link-fix.js?v=1') ?>"></script>
 <div class="x_panel link-table-panel">
     <div class="card-box table-responsive">
 
