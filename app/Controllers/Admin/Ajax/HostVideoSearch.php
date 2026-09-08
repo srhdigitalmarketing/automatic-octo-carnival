@@ -37,6 +37,7 @@ class HostVideoSearch extends BaseAjax
         }
 
         $items = [];
+        $errors = [];
 
         foreach ($apis as $api) {
             if (count($items) >= self::MAX_RESULTS) {
@@ -46,6 +47,7 @@ class HostVideoSearch extends BaseAjax
             try {
                 $search = $this->searchHostFiles($api, $title);
                 if ($search === null) {
+                    $errors[] = (string) $api->name . ': pencarian API gagal. Periksa Result pada API & R2 Storage, token, dan koneksi server.';
                     continue;
                 }
 
@@ -90,9 +92,11 @@ class HostVideoSearch extends BaseAjax
                 }
             } catch (Throwable $exception) {
                 // A single unavailable host must not break the Add/Edit form.
-                log_message('warning', 'Video-host search failed for API access {api}: {message}', [
+                $errors[] = (string) $api->name . ': koneksi pencarian gagal. Coba kembali atau periksa koneksi API.';
+                // Exception messages may contain credentials; only record the error class.
+                log_message('warning', 'Video-host search failed for API access {api}: {error}', [
                     'api' => (string) $api->id,
-                    'message' => $exception->getMessage(),
+                    'error' => get_class($exception),
                 ]);
             }
         }
@@ -100,6 +104,7 @@ class HostVideoSearch extends BaseAjax
         $this->addData([
             'items' => $items,
             'configured_hosts' => count($apis),
+            'errors' => $errors,
         ]);
 
         return $this->jsonResponse();
@@ -504,14 +509,14 @@ class HostVideoSearch extends BaseAjax
 
     private function httpClient(array $host): CURLRequest
     {
-        return service('curlrequest', [
+        return \Config\Services::curlrequest([
             'timeout' => 8,
             'http_errors' => false,
             'allow_redirects' => false,
             // Pin the verified public address for this request. This prevents a
             // configured host from resolving to an internal address mid-request.
             'curl' => [CURLOPT_RESOLVE => ["{$host['host']}:{$host['port']}:{$host['ip']}"]],
-        ], false);
+        ], null, null, false);
     }
 
     private function posterFromFileInfo(object $api, string $apiRoot, string $fileCode): ?string

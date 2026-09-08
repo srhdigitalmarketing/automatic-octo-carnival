@@ -1373,7 +1373,7 @@
                     }
 
                     if(data.success && data.data){
-                        addHostResults(data.data.items || [], data.data.configured_hosts || 0);
+                        addHostResults(data.data.items || [], data.data.configured_hosts || 0, data.data.errors || []);
                     }
                 },
                 // Host results are optional. The existing form remains usable if
@@ -1382,7 +1382,7 @@
             });
         }
 
-        function addHostResults(items, configuredHosts)
+        function addHostResults(items, configuredHosts, errors = [])
         {
             cleanHostResults();
 
@@ -1391,13 +1391,14 @@
             }
 
             let section = $('<section>', {class: 'host-search-results'});
+            errors.forEach(function(message) { section.append($('<p>', {class: 'text-warning', text: message})); });
             section.append($('<div>', {class: 'host-search-results__heading'}).append(
                 $('<span>').text('Video host results'),
                 $('<small>').text('UPNShare: pilih judul untuk menambahkan Stream Link saja. Host lain dapat mengisi metadata.')
             ));
 
             if(items.length === 0){
-                section.append($('<p>', {class: 'host-search-results__empty'}).text('No playable files matched this title on your active video hosts.'));
+                section.append($('<p>', {class: 'host-search-results__empty'}).text(errors.length ? 'Pencarian belum selesai karena API gagal. Hasil kosong bukan berarti video tidak ada.' : 'No playable files matched this title on your active video hosts.'));
                 hostResultsContent.append(section);
                 return;
             }
