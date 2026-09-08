@@ -13,7 +13,7 @@ require dirname(__DIR__) . '/app/Config/Paths.php'; $paths = new Config\Paths();
 require dirname(__DIR__) . '/system/bootstrap.php';
 error_reporting(E_ALL & ~E_DEPRECATED);
 function check($ok,$message) { if (!$ok) throw new RuntimeException($message); }
-foreach (['upnshare','streamhg'] as $provider) {
+foreach (['upnshare'] as $provider) {
  $api=(object)['provider'=>$provider,'status'=>'active','api_token'=>'private-test-token'];
  foreach ([
   [['http'=>200,'body'=>$provider==='upnshare' ? ['data'=>[]] : ['status'=>200,'result'=>['login'=>'test']]],'connected'],
@@ -32,6 +32,13 @@ foreach (['upnshare','streamhg'] as $provider) {
  $api->status='paused';
  check($service->check($api)['state']==='paused','Paused provider not requested');
 }
+$contacted=false;$removed=(object)['provider'=>'streamhg','status'=>'active','api_token'=>'unused'];
+$result=(new App\Libraries\ProviderConnection(static function()use(&$contacted){$contacted=true;return ['http'=>200,'body'=>[]];}))->check($removed);
+check($result['state']==='disconnected'&&!$contacted,'Removed provider must not make a request');
+$resolver=(new ReflectionClass(App\Libraries\StreamResolver::class))->newInstanceWithoutConstructor();
+$link=new App\Entities\Link(['link'=>'https://example.com/video','api_id'=>42]);
+check($resolver->frameLoadTimeout($link)===15000,'Iframe timeout queried API database');
+check($resolver->deliveryUrl($link,'127.0.0.1')==='https://example.com/video','Original link changed or API database queried');
 $api=(object)['provider'=>'cloudflare_r2','status'=>'active','r2_account_id'=>str_repeat('a',32),'r2_access_key_id'=>'key','r2_secret_access_key'=>'secret','r2_bucket'=>'test-bucket','r2_public_url'=>'https://media.example'];
 check((new App\Libraries\ProviderConnection())->check($api)['state']==='connected','R2 head success');
 check($GLOBALS['r2_options'][CURLOPT_CUSTOMREQUEST]==='HEAD' && $GLOBALS['r2_options'][CURLOPT_NOBODY]===true,'R2 uses read-only HEAD');

@@ -12,8 +12,12 @@
 
 
         <?= form_close() ?>
+        <?php if (!empty($apiSchemaError)): ?>
+        <div class="alert alert-warning" role="alert"><?= esc($apiSchemaError) ?></div>
+        <?php else: ?>
         <?= $this->include('admin/settings/general/form_x_panels/latest_grab') ?>
         <?= $this->include('admin/settings/general/form_x_panels/auto_grab') ?>
+        <?php endif ?>
         <?= $this->include('/admin/settings/general/form_x_panels/others') ?>
 
     </div>

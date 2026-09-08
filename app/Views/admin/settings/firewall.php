@@ -25,7 +25,7 @@
                     <div class="col-md-9">
                         <div class="checkbox">
                             <label>
-                                <?= form_checkbox('is_referer_blocked','', get_config('is_referer_blocked')) ?>
+                                <?= form_checkbox('is_referer_blocked','', (bool) get_config('is_referer_blocked')) ?>
                                Enable/ Disable
                             </label>
                         </div>

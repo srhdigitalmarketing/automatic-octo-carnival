@@ -5,7 +5,7 @@
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0">
             <label for="latest-grab-api" style="margin:0">API katalog</label>
             <select id="latest-grab-api" class="form-control" style="width:260px;max-width:100%">
-            <?php foreach ((new \App\Models\ThirdPartyApi())->where('provider','vod_catalog')->where('status','active')->findAll() as $api): ?>
+            <?php foreach (($vodApis ?? []) as $api): ?>
                 <option value="<?= (int)$api->id ?>"><?= esc($api->name) ?></option>
             <?php endforeach ?>
             </select>

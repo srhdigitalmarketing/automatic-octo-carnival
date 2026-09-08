@@ -20,7 +20,8 @@ class ThirdPartyApis extends BaseController
     {
         $title = 'API & R2 Storage';
 
-        $apis = $this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'custom_http', 'vod_catalog'])->findAll();
+        $apiSchemaError=$this->model->schemaError();
+        $apis = $apiSchemaError!==''?[]:$this->model->whereIn('provider', ['cloudflare_r2', 'upnshare', 'custom_http', 'vod_catalog'])->findAll();
 
         $topBtnGroup = create_top_btn_group([
             'admin/settings/cdn#cdn-settings' => 'Add CDN Hostname',
@@ -30,13 +31,14 @@ class ThirdPartyApis extends BaseController
             'admin/third-party-apis/new?provider=vod_catalog' => 'Add VOD API'
         ]);
 
-        return view('admin/third_party_apis/list', compact('title', 'apis', 'topBtnGroup'));
+        return view('admin/third_party_apis/list', compact('title', 'apis', 'topBtnGroup','apiSchemaError'));
     }
 
 
 
     public function result()
     {
+        if($error=$this->model->schemaError())return $this->response->setStatusCode(409)->setJSON(['state'=>'disconnected','label'=>'Skema API belum siap','message'=>$error]);
         $api = $this->getApi((int)$this->request->getGet('id'));
         // Credential changes invalidate cached results without storing secrets in cache keys.
         $key = 'provider_connection_' . hash('sha256', json_encode($api->toRawArray()));
@@ -50,11 +52,14 @@ class ThirdPartyApis extends BaseController
 
     public function new()
     {
+        if ($error = $this->model->schemaError()) {
+            return redirect()->to(admin_url('/third-party-apis'))->with('errors', [$error]);
+        }
 
         $title = 'Add R2 Storage';
         $tpAPI = new \App\Entities\ThirdPartyApi();
         $tpAPI->provider = in_array($this->request->getGet('provider'), ['upnshare','custom_http','vod_catalog'], true) ? $this->request->getGet('provider') : 'cloudflare_r2';
-        $title = $tpAPI->provider === 'streamhg' ? 'Add StreamHG' : ($tpAPI->provider === 'upnshare' ? 'Add UPNShare' : $title);
+        $title = $tpAPI->provider === 'upnshare' ? 'Add UPNShare' : $title;
 
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis' => 'Back to API & R2 Storage'
@@ -68,9 +73,12 @@ class ThirdPartyApis extends BaseController
 
     public function edit()
     {
+        if ($error = $this->model->schemaError()) {
+            return redirect()->to(admin_url('/third-party-apis'))->with('errors', [$error]);
+        }
         $title = 'Edit R2 Storage';
         $tpAPI = $this->getApi( $this->request->getGet('id') );
-        $title = $tpAPI->provider === 'streamhg' ? 'Edit StreamHG' : ($tpAPI->provider === 'upnshare' ? 'Edit UPNShare' : 'Edit R2 Storage');
+        $title = $tpAPI->provider === 'upnshare' ? 'Edit UPNShare' : 'Edit R2 Storage';
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis' => 'Back to API & R2 Storage'
         ]);
@@ -82,6 +90,9 @@ class ThirdPartyApis extends BaseController
 
     public function create(): \CodeIgniter\HTTP\RedirectResponse
     {
+        if ($error = $this->model->schemaError()) {
+            return redirect()->to(admin_url('/third-party-apis'))->with('errors', [$error]);
+        }
         $data = $this->request->getPost();
         $data['provider'] = in_array($data['provider'] ?? '', ['upnshare','custom_http','vod_catalog'], true) ? $data['provider'] : 'cloudflare_r2';
         $data = $this->providerData($data);
@@ -105,6 +116,9 @@ class ThirdPartyApis extends BaseController
 
     public function update()
     {
+        if ($error = $this->model->schemaError()) {
+            return redirect()->to(admin_url('/third-party-apis'))->with('errors', [$error]);
+        }
         $tpAPI = $this->getApi( $this->request->getGet('id') );
         $data = $this->request->getPost();
         $data['provider'] = $tpAPI->provider;
@@ -139,6 +153,9 @@ class ThirdPartyApis extends BaseController
 
     public function delete()
     {
+        if ($error = $this->model->schemaError()) {
+            return redirect()->to(admin_url('/third-party-apis'))->with('errors', [$error]);
+        }
         $tpAPI = $this->getApi( $this->request->getGet('id') );
 
         if($this->model->delete( $tpAPI->id )){
@@ -172,7 +189,7 @@ class ThirdPartyApis extends BaseController
             : ['name', 'provider', 'status', 'r2_account_id', 'r2_access_key_id', 'r2_secret_access_key', 'r2_bucket', 'r2_public_url'];
         $data = array_intersect_key($data, array_flip($fields));
         if (in_array($data['provider'], ['upnshare','custom_http'], true)) {
-            $data['api_base_url'] = $data['provider'] === 'streamhg' ? 'https://streamhgapi.com/api' : 'https://upnshare.com/api/v1';
+            $data['api_base_url'] = 'https://upnshare.com/api/v1';
             $data['api_token'] = trim((string) ($data['api_token'] ?? ''));
             $data['embed_domains'] = strtolower(trim((string) ($data['embed_domains'] ?? '')));
         }

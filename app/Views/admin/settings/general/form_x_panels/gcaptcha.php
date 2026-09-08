@@ -15,7 +15,7 @@
             <div class="col-md-9">
                 <div class="checkbox">
                     <label>
-                        <?= form_checkbox('is_stream_gcaptcha_enabled','', get_config('is_stream_gcaptcha_enabled')) ?>
+                        <?= form_checkbox('is_stream_gcaptcha_enabled','', (bool) get_config('is_stream_gcaptcha_enabled')) ?>
                         Enable/ Disable
                     </label>
                 </div>

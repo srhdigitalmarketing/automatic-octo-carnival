@@ -10,7 +10,9 @@ class General extends BaseSettings
     {
         $title = 'General Settings';
 
-        return view('admin/settings/general/index', compact('title'));
+        $apis=new \App\Models\ThirdPartyApi();$apiSchemaError=$apis->schemaError();
+        $vodApis=$apiSchemaError===''?$apis->where('provider','vod_catalog')->where('status','active')->findAll():[];
+        return view('admin/settings/general/index', compact('title','apiSchemaError','vodApis'));
     }
 
 

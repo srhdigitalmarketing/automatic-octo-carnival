@@ -88,49 +88,16 @@ class StreamResolver
         ]);
     }
 
-    /**
-     * StreamHG direct links are generated for the current viewer IP, so they
-     * must be requested only when playback starts and must never be stored.
-     */
-    /** Page-load deadline only: cross-origin iframe playback is not observable. */
+    /** Iframe timeout must not query optional API configuration on player requests. */
     public function frameLoadTimeout(Link $link): int
     {
-        if (VideoHostHealth::matchesHost((string) $link->link, 'streamhg.com,streamhg.com,streamhg.com')) {
-            return 5000;
-        }
-        $providers = (new ThirdPartyApi())->whereIn('provider', ['streamhg'])->where('status', 'active')->findAll();
-        foreach ($providers as $provider) {
-            if (VideoHostHealth::matchesHost((string) $link->link, (string) $provider->embed_domains)) {
-                return 5000;
-            }
-        }
         return 15000;
     }
 
+    /** Removed providers cannot rewrite or request a new delivery URL. */
     public function deliveryUrl(Link $link, string $endUserIp): string
     {
-        if (! filter_var($endUserIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) || empty($link->api_id)) {
-            return (string) $link->link;
-        }
-
-        $api = (new ThirdPartyApi())->find((int) $link->api_id);
-        if ($api !== null && $api->provider === 'streamhg') { return (string) $link->link; }
-        $videoId = trim((string) $link->upnshare_video_id) ?: $this->videoIdFromUrl((string) $link->link);
-        if ($api === null || $api->provider !== 'streamhg' || $api->status !== 'active' || $videoId === '') {
-            return (string) $link->link;
-        }
-
-        $response = $this->providerRequest(self::STREAMHG_API_ROOT . '/file/direct_link', [
-            'key' => (string) $api->api_token,
-            'file_code' => $videoId,
-            'ip' => $endUserIp,
-        ], (string) $api->api_token);
-
-        if ($response === null || $response['status'] < 200 || $response['status'] >= 300 || ! is_array($response['payload'])) {
-            return (string) $link->link;
-        }
-
-        return $this->directUrlFromPayload($response['payload']) ?: (string) $link->link;
+        return (string) $link->link;
     }
 
     /** Run one explicit availability check, used by the scheduled health job. */
@@ -355,33 +322,6 @@ class StreamResolver
         }
 
         return array_values(array_unique($roots));
-    }
-
-    /** @param array<string, mixed> $payload */
-    private function directUrlFromPayload(array $payload): ?string
-    {
-        $values = [
-            $payload['result'] ?? null,
-            $payload['data'] ?? null,
-            $payload['direct_link'] ?? null,
-            $payload['link'] ?? null,
-            $payload['url'] ?? null,
-        ];
-
-        foreach ($values as $value) {
-            if (is_string($value) && $this->isSafePublicUrl($value)) {
-                return $value;
-            }
-            if (is_array($value)) {
-                foreach (['direct_link', 'link', 'url', 'file_url'] as $key) {
-                    if (! empty($value[$key]) && is_string($value[$key]) && $this->isSafePublicUrl($value[$key])) {
-                        return $value[$key];
-                    }
-                }
-            }
-        }
-
-        return null;
     }
 
     /** @return array{status: int, payload: array<string, mixed>|null}|null */

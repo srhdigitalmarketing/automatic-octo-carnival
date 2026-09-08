@@ -24,6 +24,21 @@ class ThirdPartyApi extends Model
     ];
 
 
+    /** Read-only capability check for installations upgraded without column migrations. */
+    public function schemaError(): string
+    {
+        try {
+            if (!$this->db->tableExists($this->table)) {
+                return 'Tabel third_party_apis belum tersedia. Periksa database website.';
+            }
+            $required = array_merge($this->allowedFields, ['id', 'created_at', 'updated_at']);
+            $missing = array_diff($required, $this->db->getFieldNames($this->table));
+            return $missing ? 'Kolom API belum lengkap: '.implode(', ',$missing).'. Lengkapi struktur menggunakan database-update-api-schema.sql setelah backup database. Data lama tidak perlu dihapus.' : '';
+        } catch (\Throwable $e) {
+            return 'Struktur database API tidak dapat diperiksa. Periksa koneksi, izin database dan log server.';
+        }
+    }
+
     public function getApi($id)
     {
         return $this->where('id', $id)

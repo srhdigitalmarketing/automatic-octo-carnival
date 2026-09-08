@@ -14,7 +14,7 @@
             <div class="col-md-9">
                 <div class="checkbox  mt-2">
                     <label>
-                        <?= form_checkbox('request_system','', get_config('request_system')) ?>
+                        <?= form_checkbox('request_system','', (bool) get_config('request_system')) ?>
                         Enable/ Disable
                     </label>
                 </div>
@@ -26,7 +26,7 @@
             <div class="col-md-9">
                 <div class="checkbox mt-2">
                     <label>
-                        <?= form_checkbox('req_email_subscription','', get_config('req_email_subscription')) ?>
+                        <?= form_checkbox('req_email_subscription','', (bool) get_config('req_email_subscription')) ?>
                         Enable/ Disable
                     </label>
                 </div>
@@ -38,7 +38,7 @@
             <div class="col-md-9">
                 <div class="checkbox mt-2">
                     <label>
-                        <?= form_checkbox('is_request_captcha_enabled','', get_config('is_request_captcha_enabled')) ?>
+                        <?= form_checkbox('is_request_captcha_enabled','', (bool) get_config('is_request_captcha_enabled')) ?>
                         Enable/ Disable
                     </label>
                 </div>

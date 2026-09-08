@@ -67,12 +67,12 @@ try {
     $request->setGlobal('get', []);
     $admin = new App\Controllers\Admin\ThirdPartyApis();
     $hostErrors = new ReflectionMethod($admin, 'hostnameErrors'); $hostErrors->setAccessible(true);
-    check(count($hostErrors->invoke($admin, ['provider'=>'streamhg','status'=>'active','embed_domains'=>'EMBED.EXAMPLE'])) === 1, 'Reject hostname overlap across different providers');
-    $vidId = $apis->insert(['name'=>'StreamHg account','provider'=>'streamhg','api_token'=>'test-only-token','embed_domains'=>'vid.example','status'=>'active']);
-    check($vidId !== false, 'StreamHg provider accepted by model');
+    check(count($hostErrors->invoke($admin, ['provider'=>'custom_http','status'=>'active','embed_domains'=>'EMBED.EXAMPLE'])) === 1, 'Reject hostname overlap across different providers');
+    $vidId = $apis->insert(['name'=>'Custom account','provider'=>'custom_http','api_token'=>'test-only-token','embed_domains'=>'vid.example','status'=>'active']);
+    check($vidId !== false, 'Custom hostname provider accepted by model');
     helper(['form','template','general']);
     $vidHtml = view('admin/third_party_apis/x_panels/main_form', ['tpAPI'=>$apis->find($vidId)]);
-    check(strpos($vidHtml, 'StreamHg video health checks') !== false && strpos($vidHtml, 'test-only-token') === false, 'StreamHg settings render with token masked');
+    check(strpos($vidHtml, 'Custom hostname health checks') !== false && strpos($vidHtml, 'test-only-token') === false, 'Custom hostname settings render without token');
     $newHtml = view('admin/movies/form_x_panels/stream_links', ['streamLinks'=>[]]);
     check(strpos($newHtml, 'UPNShare account') === false && strpos($newHtml, '[api_id]') === false, 'New link form contains no account selector');
     $apis->update($vidId,['status'=>'paused']);

@@ -14,7 +14,7 @@
             <div class="col-md-9">
                 <div class="checkbox  mt-2">
                     <label>
-                        <?= form_checkbox('is_count_down_timer','', get_config('is_count_down_timer')) ?>
+                        <?= form_checkbox('is_count_down_timer','', (bool) get_config('is_count_down_timer')) ?>
                         Enable/ Disable
                     </label>
                 </div>
@@ -48,7 +48,7 @@
             <div class="col-md-9">
                 <div class="checkbox mt-2">
                     <label>
-                        <?= form_checkbox('is_download_link_captcha','', get_config('is_download_link_captcha')) ?>
+                        <?= form_checkbox('is_download_link_captcha','', (bool) get_config('is_download_link_captcha')) ?>
                         Enable/ Disable
                     </label>
                 </div>

@@ -51,7 +51,7 @@
                     <div class="col-md-9">
                         <div class="checkbox">
                             <label>
-                                <?= form_checkbox('is_multi_lang','1', get_config('is_multi_lang')) ?>
+                                <?= form_checkbox('is_multi_lang','1', (bool) get_config('is_multi_lang')) ?>
                                 Enable/ Disable
                             </label>
                         </div>

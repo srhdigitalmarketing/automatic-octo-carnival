@@ -3,6 +3,9 @@
 
 <?php $this->section('content') ?>
 
+<?php if (!empty($apiSchemaError)): ?>
+<div class="alert alert-warning" role="alert"><?= esc($apiSchemaError) ?></div>
+<?php else: ?>
 <div class="host-api-overview">
     <section>
         <span class="host-api-guide__eyebrow">API & R2 STORAGE</span>
@@ -70,6 +73,7 @@
     </div>
 </div>
 
+<?php endif ?>
 <?php $this->endSection() ?>
 
 <?php $this->section('scripts') ?>

@@ -72,7 +72,7 @@
             <div class="col-md-9">
                 <div class="checkbox">
                     <label>
-                        <?= form_checkbox('ad_block_detector','1', get_config('ad_block_detector')) ?>
+                        <?= form_checkbox('ad_block_detector','1', (bool) get_config('ad_block_detector')) ?>
                         Enable/ Disable
                     </label>
                 </div>

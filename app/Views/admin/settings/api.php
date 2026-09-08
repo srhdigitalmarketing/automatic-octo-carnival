@@ -17,7 +17,7 @@
                     <div class="col-md-9">
                         <div class="checkbox">
                             <label>
-                                <?= form_checkbox('dev_api','1', get_config('dev_api')) ?>
+                                <?= form_checkbox('dev_api','1', (bool) get_config('dev_api')) ?>
                                 Enable/ Disable
                             </label>
                         </div>
