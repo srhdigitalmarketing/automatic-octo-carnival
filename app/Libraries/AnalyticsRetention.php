@@ -13,7 +13,7 @@ class AnalyticsRetention
     {
         $result = [];
         // Explicit allowlist: never delete movies, links, settings, or other business data.
-        foreach (['traffic_daily_visitors', 'traffic_daily_player_metrics', 'analytics_daily'] as $table) {
+        foreach (['traffic_daily_visitors', 'traffic_daily_player_metrics', 'analytics_daily', 'video_daily_views'] as $table) {
             if (! $db->tableExists($table)) { continue; }
             $result[$table] = ['deleted' => 0, 'more' => false];
             for ($batch = 0; $batch < 100; $batch++) {
