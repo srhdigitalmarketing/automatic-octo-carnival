@@ -29,4 +29,13 @@ $file = invoke('normaliseVidHideFile', invoke('filesFromPayload', $payload)[0], 
 if ($file['link'] !== 'https://vidplayerpro.online/embed/2p5k0u8gnyj1') throw new \RuntimeException('Wrong embed URL');
 echo "PASS: VidHide endpoint, documented File List and example embed URL\n";
 
+$info = ['status'=>200, 'result'=>[
+ ['file_code'=>'2p5k0u8gnyj1','file_title'=>'No Copyright Drone Shots','status'=>200,'canplay'=>1],
+ ['file_code'=>'deleted123','status'=>404,'canplay'=>0],
+ ['file_code'=>'unrequested','status'=>200,'canplay'=>1]
+]];
+$files = invoke('vidHideInfoFiles', $info, ['2p5k0u8gnyj1','deleted123'], $api);
+if (count($files) !== 1 || $files[0]['title'] !== 'No Copyright Drone Shots' || $files[0]['link'] !== 'https://vidplayerpro.online/embed/2p5k0u8gnyj1') throw new \RuntimeException('File Info filtering failed');
+echo "PASS: File Info title, playable status, deleted and unsolicited records\n";
+
 }

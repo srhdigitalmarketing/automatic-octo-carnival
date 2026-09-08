@@ -147,10 +147,23 @@ class HostVideoSearch extends BaseAjax
                 continue;
             }
 
-            return [
-                'files' => array_map(fn($file) => is_array($file) ? $this->normaliseVidHideFile($file, $api) : $file, $this->filesFromPayload($payload)),
-                'api_root' => $apiRoot,
-            ];
+            $codes = [];
+            foreach ($this->filesFromPayload($payload) as $file) {
+                $code = is_array($file) ? (string) ($file['file_code'] ?? $file['filecode'] ?? '') : '';
+                if (preg_match('/^[A-Za-z0-9_-]{3,128}$/', $code)) $codes[] = $code;
+            }
+            $codes = array_slice(array_values(array_unique($codes)), 0, self::RESULTS_PER_HOST);
+            if (!$codes) return ['files' => [], 'api_root' => $apiRoot];
+            $info = $this->httpClient($host)->get($apiRoot . '/file/info', [
+                'query' => ['key' => (string) $api->api_token, 'file_code' => implode(',', $codes)],
+                'headers' => ['Accept' => 'application/json'],
+            ]);
+            $body = json_decode((string) $info->getBody(), true);
+            if ((int) $info->getStatusCode() !== 200 || !is_array($body) || (int) ($body['status'] ?? 0) !== 200 || !is_array($body['result'] ?? null)) {
+                $this->searchFailure = 'File Info gagal (HTTP ' . (int) $info->getStatusCode() . ', status API ' . (int) ($body['status'] ?? 0) . '). Periksa API key dan izin akun.';
+                return null;
+            }
+            return ['files' => $this->vidHideInfoFiles($body, $codes, $api), 'api_root' => $apiRoot];
         }
 
         return null;
@@ -464,6 +477,18 @@ class HostVideoSearch extends BaseAjax
         }
 
         return array_values(array_unique($roots));
+    }
+
+    private function vidHideInfoFiles(array $payload, array $codes, object $api): array
+    {
+        $files = [];
+        foreach ($payload['result'] ?? [] as $record) {
+            if (!is_array($record) || !in_array((string) ($record['file_code'] ?? ''), $codes, true)
+                || (int) ($record['status'] ?? 0) !== 200 || !filter_var($record['canplay'] ?? false, FILTER_VALIDATE_BOOLEAN)) continue;
+            $record['title'] = (string) ($record['file_title'] ?? $record['title'] ?? '');
+            $files[] = $this->normaliseVidHideFile($record, $api);
+        }
+        return $files;
     }
 
     private function normaliseVidHideFile(array $file, object $api): array
