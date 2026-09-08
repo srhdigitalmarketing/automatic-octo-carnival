@@ -588,10 +588,9 @@ class MovieModel extends Model
     public function updateViews( $movieId )
     {
         try{
-            $saved = $this->set('views', 'views + 1', FALSE)
+            $this->set('views', 'views + 1', FALSE)
                  ->protect(false)
                  ->update($movieId);
-            if ($saved) { \App\Libraries\VideoPopularity::record((int)$movieId); }
         }catch (\ReflectionException $e){}
     }
 

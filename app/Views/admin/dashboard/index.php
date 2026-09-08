@@ -4,7 +4,7 @@
 <?php $this->section('content') ?>
 
 
-<style>.dashboard-popular-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.dashboard-popular-grid .x_panel{min-width:0;margin:0}.dashboard-popular-grid h2{font-size:15px}.dashboard-popular-grid h2 small{display:block;margin:5px 0 0}.dashboard-popular-grid td:first-child{overflow-wrap:anywhere}.dashboard-popular-grid td:last-child{white-space:nowrap}@media(max-width:1199px){.dashboard-popular-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.dashboard-popular-grid{grid-template-columns:1fr}}</style>
+
 <div class="dashboard-page">
     <div class="dashboard-rizz-welcome">
         <div class="dashboard-rizz-welcome__copy">
@@ -34,11 +34,7 @@
     </div>
 
 
-    <div class="dashboard-popular-grid">
-        <?php foreach ($popularCards as $card): ?>
-        <?= view('admin/dashboard/x_panel/most_viewed_movies', ['topMovies'=>$card['movies'], 'cardTitle'=>$card['title'], 'cardPeriod'=>$card['period']]) ?>
-        <?php endforeach ?>
-    </div>
+    <?= $this->include('admin/dashboard/x_panel/most_viewed_movies') ?>
 </div>
 
 

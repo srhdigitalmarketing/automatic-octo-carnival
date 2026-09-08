@@ -26,16 +26,10 @@ class Dashboard extends BaseController
                                 ->orderBy('views', 'DESC')
                                 ->findAll(10);
 
-        $popularCards = [
-            ['title'=>'Popular Videos','period'=>'All time','movies'=>$topMovies],
-            ['title'=>'Today Popular Videos','period'=>'Today','movies'=>\App\Libraries\VideoPopularity::top(1)],
-            ['title'=>'Weekly Popular Videos','period'=>'Last 7 days','movies'=>\App\Libraries\VideoPopularity::top(7)],
-            ['title'=>'Monthly Popular Videos','period'=>'Last 30 days','movies'=>\App\Libraries\VideoPopularity::top(30)],
-        ];
         $liveTraffic = $this->liveTrafficSummary();
         $revenueSummary = (new AdRevenueToday())->cachedSummary();
 
-        $data = compact('title', 'hidePageTitle', 'anytc', 'topMovies', 'popularCards', 'liveTraffic', 'revenueSummary');
+        $data = compact('title', 'hidePageTitle', 'anytc', 'topMovies', 'liveTraffic', 'revenueSummary');
 
         return view('admin/dashboard/index', $data);
     }
