@@ -39,6 +39,9 @@ $routes->setAutoRoute(true);
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
+$routes->get('/admin/settings/secure', 'Admin/Settings/Secure::index');
+$routes->post('/admin/settings/secure/run', 'Admin/Settings/Secure::run');
+$routes->get('/admin/settings/secure/download', 'Admin/Settings/Secure::download');
 $routes->get('/admin/settings/cdn', 'Admin/Settings/Cdn::index');
 $routes->post('/admin/settings/cdn/update', 'Admin/Settings/Cdn::update');
 $routes->get('/admin/settings/homepage', 'Admin/Settings/Homepage::index');
