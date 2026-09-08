@@ -162,7 +162,7 @@ class HostVideoSearch extends BaseAjax
         $cache = cache();
         // Version the key so empty responses saved by the former summary
         // endpoint never hide a result after this catalogue-search update.
-        $cacheKey = 'upnshare-title-v3-' . sha1((string) $api->id . '|' . $this->normaliseTitle($title));
+        $cacheKey = 'upnshare-title-v4-' . sha1((string) $api->id . '|' . $this->normaliseTitle($title));
         $cached = $cache->get($cacheKey);
         if (is_array($cached) && isset($cached['files'], $cached['api_root'])) {
             return $cached;
@@ -215,10 +215,11 @@ class HostVideoSearch extends BaseAjax
             $files = [];
             foreach (array_slice($matches, 0, self::RESULTS_PER_HOST) as $video) {
                 $videoId = $this->firstString($video, ['id', 'video_id', 'videoId', 'uuid', 'file_code', 'filecode', 'code']);
-                $details = $videoId === '' ? [] : $this->upnShareVideoDetails($api, $apiRoot, $videoId);
-                $file = $this->normaliseUpnShareVideo($video, $details, $videoId);
+                // The inventory already supplies id/name; a detail failure must not hide it.
+                $file = $this->normaliseUpnShareVideo($video, [], $videoId);
                 if ($file['link'] === '' && preg_match('/^[A-Za-z0-9_-]{3,128}$/', $videoId)) {
-                    $hostname = strtolower(trim(explode(',', (string) $api->embed_domains)[0]));
+                    $hostnames = preg_split('/[\s,]+/', strtolower(trim((string) $api->embed_domains)), -1, PREG_SPLIT_NO_EMPTY);
+                    $hostname = $hostnames[0] ?? '';
                     if (filter_var($hostname, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) && strpos($hostname, '.') !== false) {
                         $file['link'] = 'https://' . $hostname . '/#' . rawurlencode($videoId);
                     }
@@ -296,7 +297,9 @@ class HostVideoSearch extends BaseAjax
         }
 
         $videos = null;
-        if ($this->isListArray($container)) {
+        if (isset($container['id']) && (isset($container['name']) || isset($container['title']))) {
+            $videos = [$container];
+        } elseif ($this->isListArray($container)) {
             $videos = $container;
         } else {
             foreach (['data', 'videos', 'items', 'results'] as $key) {
