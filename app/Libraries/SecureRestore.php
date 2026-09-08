@@ -20,6 +20,12 @@ class SecureRestore
         }
         $result = ['id'=>$id, 'sha256'=>$hash, 'name'=>$item['name'], 'extension'=>$item['extension']];
         if ($item['extension'] === 'zip') {
+            if (!class_exists(ZipArchive::class)) throw new RuntimeException('Aktifkan ekstensi PHP zip.');
+            $container=new ZipArchive();
+            if ($container->open($path,ZipArchive::CHECKCONS)!==true) throw new RuntimeException('ZIP tidak valid.');
+            try { $fullPackage=$container->locateName('secure-backup.json')!==false && $container->locateName('files.zip')!==false && $container->locateName('database.sql')!==false; }
+            finally { $container->close(); }
+            if ($fullPackage) throw new RuntimeException('Ini paket Full Backup. Download dan ekstrak di komputer pribadi, lalu upload files.zip dan database.sql secara terpisah ke Secure untuk Restore. Jangan ekstrak paket ini ke folder public.');
             $entries = $this->zipEntries($path);
             $result['count'] = count($entries);
             $result['scope'] = 'uploads';

@@ -5,8 +5,8 @@
 <?php if ($error): ?><div class="alert alert-danger"><?= esc($error) ?></div><?php endif ?>
 <div class="row">
  <div class="col-lg-6"><div class="x_panel p-4"><h5 class="font-weight-bold">Backup Files</h5><p class="text-muted">Buat arsip ZIP untuk disimpan atau dipindahkan.</p>
- <label for="secure-scope">Cakupan file</label><select id="secure-scope" class="form-control mb-3"><option value="uploads">public/uploads — banner dan media lokal</option><option value="application">File aplikasi dan uploads</option></select>
- <small class="d-block text-muted mb-3">Backup aplikasi menyertakan konfigurasi .env jika ada; tidak menyertakan .git, node_modules, atau writable. File di R2 tidak ikut diunduh.</small>
+ <label for="secure-scope">Cakupan file</label><select id="secure-scope" class="form-control mb-3"><option value="uploads">public/uploads — banner dan media lokal</option><option value="application">File aplikasi dan uploads</option><option value="full">Full Backup - Files dan Database</option></select>
+ <small class="d-block text-muted mb-3">Backup aplikasi menyertakan konfigurasi .env jika ada; tidak menyertakan .git, node_modules, atau writable. File di R2 tidak ikut diunduh. <strong>Full Backup</strong> menggabungkan files.zip dan database.sql dalam satu ZIP. Hentikan perubahan website selama proses. Untuk restore, ekstrak paket di komputer pribadi lalu upload kedua komponen secara terpisah.</small>
  <button type="button" class="btn btn-primary" data-secure-action="files"><i class="fa fa-file-archive-o mr-1"></i> Backup Files</button></div></div>
  <div class="col-lg-6"><div class="x_panel p-4"><h5 class="font-weight-bold">Backup Database</h5><p class="text-muted">Ekspor seluruh database MySQL/MariaDB ke file SQL.</p><p class="small">Mencakup tabel, data, view, trigger, routine dan event. Menggunakan mysqldump yang terpasang di aaPanel.</p>
  <button type="button" class="btn btn-primary" data-secure-action="database"><i class="fa fa-database mr-1"></i> Backup Database</button></div></div>
@@ -28,5 +28,5 @@
 <div class="x_panel p-4"><h5 class="font-weight-bold mb-3">Daftar Backup</h5><div class="table-responsive"><table class="table"><thead><tr><th>File</th><th>Jenis</th><th>Dibuat</th><th>Ukuran</th><th>Aksi</th></tr></thead><tbody id="secure-list"></tbody></table></div></div>
 <script type="application/json" id="secure-initial"><?= json_encode($entries,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
 </div>
-<script defer src="<?= site_url('/admin-assets/js/secure-backups.js?v=2') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/js/secure-backups.js?v=3') ?>"></script>
 <?php $this->endSection() ?>

@@ -54,6 +54,7 @@
         busy = true; controls(); panel.hidden = false; spinner.hidden = false;
         status.textContent = action === 'restore' ? 'Membuat backup pengaman, lalu memulihkan data…' :
             action === 'restore-preview' ? 'Memeriksa arsip dan tujuan restore…' :
+            action === 'files' && data.get('scope') === 'full' ? 'Membuat backup database dan files, lalu mengemas Full Backup...' :
             action === 'upload' ? 'Mengunggah backup…' : 'Memproses backup…';
         bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
         try {

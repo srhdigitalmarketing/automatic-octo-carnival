@@ -35,3 +35,12 @@ No database migration is required. Backup credentials use a private temporary op
 - Keep this page open. A browser/proxy disconnect does not prove that restore stopped; check the website and backups before retrying. After application or SQL restore, reload the page and sign in again if required.
 
 Validation: PHP fixture tests restore real temporary ZIPs and verify archive rejection and backup preservation. SQL tests simulate the Linux process boundary and verify flags, backup ordering, error handling and credential cleanup; they do not replace a staging restore against your actual aaPanel MySQL/MariaDB version.
+
+
+## Full Backup
+
+Select **Full Backup - Files dan Database** in the Backup Files scope selector. The result is one `full-backup-*.zip` download containing `files.zip` (the existing application backup scope), `database.sql`, `secure-backup.json` with component sizes and SHA-256 hashes, and `README.txt` with recovery instructions. Application files include local uploads and `.env`; the existing exclusions (writable, development metadata, node_modules, symlinks and remote R2 objects) still apply.
+
+Database and files are captured sequentially, not as an atomic snapshot. Pause content changes, uploads and scheduled writes while creating the backup. Full Backup requires both PHP ZIP support and the database export prerequisites described above. Allow disk space for the temporary components plus the final package. Intermediate archives live in a private `full-work-*` directory and are cleaned on success or a caught failure; no incomplete package appears in the normal backup list. After an interrupted/killed worker, confirm that no backup operation is active before removing orphaned staging files.
+
+To restore, download and unpack the full package on a private computer. Upload its `files.zip` and `database.sql` components to Secure and restore them separately, verifying the destination configuration/database first. The existing Restore action explicitly rejects the outer package with these instructions so it cannot accidentally copy the SQL dump into the application. Never unpack the outer package in the website's public directory. The existing 512 MB upload limit still applies when uploading archives.

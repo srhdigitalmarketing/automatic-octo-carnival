@@ -69,6 +69,7 @@ class SecureBackups
     }
     public function files(string $scope): void
     {
+        if ($scope==='full') { $this->full(); return; }
         if (!class_exists(ZipArchive::class)) throw new RuntimeException('Aktifkan ekstensi PHP zip di aaPanel.');
         if (!in_array($scope,['uploads','application'],true)) throw new RuntimeException('Pilihan file tidak valid.');
         $root=realpath($scope==='uploads'?FCPATH.'uploads':ROOTPATH);
@@ -92,6 +93,53 @@ class SecureBackups
             if (!$zip->close()) throw new RuntimeException('Penyimpanan ZIP gagal. Periksa ruang disk.');
             $this->register($id,'zip',$scope.'-'.date('Ymd-His').'.zip',$scope);
         } catch (\Throwable $error) { try { $zip->close(); } catch (\Throwable $ignored) {} @unlink($path); throw $error; }
+    }
+    public function full(): void
+    {
+        if (!class_exists(ZipArchive::class)) throw new RuntimeException('Aktifkan ekstensi PHP zip di aaPanel.');
+        $id=bin2hex(random_bytes(16));
+        $work=$this->directory.'full-work-'.$id;
+        $path=$this->directory.$id.'.zip';
+        $temporary=new self($work);
+        $zip=new ZipArchive();
+        try {
+            // Private staging keeps intermediate archives out of the normal backup list.
+            $temporary->database();
+            $temporary->files('application');
+            $items=$temporary->entries();
+            $parts=[];
+            foreach ($items as $item) $parts[$item['kind']]=$item;
+            if (!isset($parts['database'],$parts['application'])) throw new RuntimeException('Full Backup belum lengkap.');
+            if ($zip->open($path,ZipArchive::CREATE|ZipArchive::EXCL)!==true) throw new RuntimeException('Arsip Full Backup tidak dapat dibuat.');
+            $manifest=['format'=>'secure-full-backup','version'=>1,'created_at'=>date('c'),'files'=>[]];
+            foreach (['application'=>'files.zip','database'=>'database.sql'] as $kind=>$name) {
+                $source=$temporary->path($parts[$kind]['id']);
+                if (!$zip->addFile($source,$name)) throw new RuntimeException('Komponen Full Backup gagal ditambahkan.');
+                // The inner file archive is already compressed.
+                if ($kind==='application') $zip->setCompressionName($name,ZipArchive::CM_STORE);
+                $manifest['files'][$name]=['sha256'=>hash_file('sha256',$source),'size'=>filesize($source)];
+            }
+            $readme="FULL BACKUP - FILES DAN DATABASE\n\n".
+                "files.zip: file aplikasi, konfigurasi .env dan public/uploads.\n".
+                "database.sql: database MySQL/MariaDB website.\n".
+                "Tidak termasuk writable, .git, .codex, .agents, node_modules, symlink dan objek R2.\n\n".
+                "RESTORE: ekstrak paket ini di komputer pribadi. Upload files.zip dan database.sql secara terpisah ke Settings > Secure, lalu gunakan Restore untuk masing-masing komponen.\n".
+                "Pastikan konfigurasi .env dan nama database sesuai server tujuan. Hentikan perubahan website selama backup dan restore.\n".
+                "Jangan ekstrak paket ini ke public/ karena database.sql berisi data privat. Simpan salinan di perangkat lain.\n".
+                "Backup files dan SQL dibuat berurutan, bukan snapshot atomik.\n";
+            if (!$zip->addFromString('secure-backup.json',json_encode($manifest,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)) || !$zip->addFromString('README.txt',$readme)) throw new RuntimeException('Metadata Full Backup gagal dibuat.');
+            if (!$zip->close()) throw new RuntimeException('Penyimpanan Full Backup gagal. Periksa ruang disk.');
+            $this->register($id,'zip','full-backup-'.date('Ymd-His').'.zip','full');
+        } catch (\Throwable $error) {
+            try { $zip->close(); } catch (\Throwable $ignored) {}
+            @unlink($path);
+            throw $error;
+        } finally {
+            // Only remove this operation's generated private staging files, never existing backups.
+            foreach (glob($work.DIRECTORY_SEPARATOR.'*') ?: [] as $file) if (is_file($file) && !is_link($file)) @unlink($file);
+            @unlink($work.DIRECTORY_SEPARATOR.'.htaccess');
+            @rmdir($work);
+        }
     }
     public function database(): void
     {
