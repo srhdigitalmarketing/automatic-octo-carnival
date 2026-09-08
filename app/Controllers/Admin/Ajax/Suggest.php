@@ -27,7 +27,7 @@ class Suggest extends BaseAjax
                 $items = []; $errors = [];
                 foreach ($apis as $api) {
                     try {
-                        $key = 'vod_search_' . hash('sha256', $api->api_base_url . ':' . mb_substr(trim($title), 0, 150));
+                        $key = 'vod_search_v2_' . hash('sha256', $api->api_base_url . ':' . mb_substr(trim($title), 0, 150));
                         $found = cache()->get($key);
                         if (!is_array($found)) { $found = (new \App\Libraries\VodCatalog())->search((string)$api->api_base_url, trim($title)); cache()->save($key, $found, 120); }
                         $items = array_merge($items, $found);

@@ -1189,6 +1189,16 @@
             $('input[name="title"]').val(item.title);
             if(item.description) $('textarea[name="description"]').val(item.description);
             if(item.poster_url) $('[data-source-image-url]').val(item.poster_url).trigger('input');
+            (item.stream_urls || []).forEach(function(url) {
+                let selector = 'input[name^="st_links"][name$="[url]"]:not([readonly])';
+                if ($(selector).filter(function(){ return $.trim($(this).val()) === url; }).length) return;
+                let empty = $(selector).filter(function(){ return $.trim($(this).val()) === ''; }).first();
+                if (!empty.length) {
+                    $('.clone-st-group').last().trigger('click');
+                    empty = $(selector).filter(function(){ return $.trim($(this).val()) === ''; }).first();
+                }
+                empty.val(url).trigger('change');
+            });
             cleanResults();
         });
 

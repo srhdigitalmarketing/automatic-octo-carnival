@@ -14,3 +14,17 @@ $method = new ReflectionMethod($admin, 'providerData'); $method->setAccessible(t
 $data = $method->invoke($admin, ['provider'=>'vod_catalog','name'=>'Catalog','api_base_url'=>'catalog.example','api_token'=>'must-not-save']);
 check($data['api_base_url'] === 'catalog.example' && !isset($data['api_token']), 'Catalog configuration has no token');
 echo "PASS: VOD normalization, hostname validation, empty results and configuration.\n";
+
+$example = ['code'=>1,'list'=>[['id'=>83,'name'=>'Video name','movie_code'=>'abc-123','description'=>'Movie description',
+    'poster_url'=>'[https://upload18.cc/v/abc-123/poster.jpg](https://upload18.cc/v/abc-123/poster.jpg)',
+    'episodes'=>['server_name'=>'VIP #1','server_data'=>['Full'=>['slug'=>'full','link_embed'=>'https://upload18.org/play/index/abc-123']]]]]];
+$actual = VodCatalog::normalize($example)[0];
+check($actual['title'] === 'Video name' && $actual['description'] === 'Movie description', 'User JSON title and description');
+check($actual['poster_url'] === 'https://upload18.cc/v/abc-123/poster.jpg', 'User JSON poster');
+check($actual['stream_urls'] === ['https://upload18.org/play/index/abc-123'], 'Nested Full embed');
+$example['list'][0]['episodes'] = [
+ ['server_data'=>[['link_embed'=>'https://example.com/e/1'],['link_embed'=>'javascript:alert(1)']]],
+ ['server_data'=>[['link_embed'=>'https://example.com/e/1'],['link_embed'=>'https://example.com/e/2']]]
+];
+check(VodCatalog::normalize($example)[0]['stream_urls'] === ['https://example.com/e/1','https://example.com/e/2'], 'Multiple servers deduplicate and reject unsafe embed URLs');
+echo "PASS: supplied JSON fields and nested episode URLs.\n";

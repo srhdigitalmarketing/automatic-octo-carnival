@@ -32,14 +32,40 @@ class VodCatalog
     public static function normalize($body): array
     {
         if (!is_array($body) || !isset($body['list']) || !is_array($body['list'])) { throw new \RuntimeException('Format respons API VOD tidak valid.'); }
+        if (isset($body['code']) && (int)$body['code'] !== 1) { throw new \RuntimeException('API VOD melaporkan kegagalan.'); }
         $items = [];
         foreach (array_slice($body['list'], 0, 20) as $row) {
-            if (!is_array($row) || !is_scalar($row['vod_name'] ?? null)) { continue; }
-            $poster = is_string($row['vod_pic'] ?? null) ? $row['vod_pic'] : '';
-            if (!preg_match('~^https?://~i', $poster) || !filter_var($poster, FILTER_VALIDATE_URL)) { $poster = ''; }
-            $items[] = ['title'=>mb_substr(strip_tags((string)$row['vod_name']),0,500), 'poster_url'=>$poster,
-                'description'=>mb_substr(strip_tags(is_string($row['vod_content'] ?? null) ? $row['vod_content'] : ''),0,10000)];
+            if (!is_array($row)) { continue; }
+            $title = $row['name'] ?? $row['vod_name'] ?? null;
+            if (!is_string($title) || trim($title) === '') { continue; }
+            $poster = self::httpUrl($row['poster_url'] ?? $row['vod_pic'] ?? '') ?: self::httpUrl($row['thumb_url'] ?? '');
+            $description = $row['description'] ?? $row['vod_content'] ?? '';
+            $streams = [];
+            $episodes = $row['episodes'] ?? [];
+            if (is_array($episodes)) {
+                $servers = isset($episodes['server_data']) ? [$episodes] : $episodes;
+                foreach ($servers as $server) {
+                    if (!is_array($server) || !is_array($server['server_data'] ?? null)) { continue; }
+                    foreach ($server['server_data'] as $episode) {
+                        $url = is_array($episode) ? self::httpUrl($episode['link_embed'] ?? '') : '';
+                        if ($url !== '') { $streams[$url] = $url; }
+                        if (count($streams) >= 20) { break 2; }
+                    }
+                }
+            }
+            $items[] = ['title'=>mb_substr(strip_tags($title),0,500), 'poster_url'=>$poster,
+                'description'=>mb_substr(strip_tags(is_string($description) ? $description : ''),0,10000),
+                'stream_urls'=>array_values($streams)];
         }
         return $items;
+    }
+
+    private static function httpUrl($value): string
+    {
+        if (!is_string($value)) { return ''; }
+        $value = trim($value);
+        // Accept Markdown-wrapped links copied from documentation or chat.
+        if (preg_match('~^\[[^\]]*\]\((https?://[^\s]+)\)$~i', $value, $match)) { $value = $match[1]; }
+        return preg_match('~^https?://~i', $value) && filter_var($value, FILTER_VALIDATE_URL) && !parse_url($value, PHP_URL_USER) && !parse_url($value, PHP_URL_PASS) ? $value : '';
     }
 }
