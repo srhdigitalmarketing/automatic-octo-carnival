@@ -26,7 +26,7 @@ class ThirdPartyApis extends BaseController
             'admin/settings/cdn#cdn-settings' => 'Add CDN Hostname',
             'admin/third-party-apis/new' => 'Add R2 Storage',
             'admin/third-party-apis/new?provider=upnshare' => 'Add UPNShare',
-            'admin/third-party-apis/new?provider=vidhide' => 'Add VidHide',
+            'admin/third-party-apis/new?provider=vidhide' => 'Add EarnVids',
             'admin/third-party-apis/new?provider=custom_http' => 'Add Custom hostname',
             'admin/third-party-apis/new?provider=vod_catalog' => 'Add VOD API'
         ]);
@@ -55,7 +55,7 @@ class ThirdPartyApis extends BaseController
         $title = 'Add R2 Storage';
         $tpAPI = new \App\Entities\ThirdPartyApi();
         $tpAPI->provider = in_array($this->request->getGet('provider'), ['upnshare','vidhide','custom_http','vod_catalog'], true) ? $this->request->getGet('provider') : 'cloudflare_r2';
-        $title = $tpAPI->provider === 'vidhide' ? 'Add VidHide' : ($tpAPI->provider === 'upnshare' ? 'Add UPNShare' : $title);
+        $title = $tpAPI->provider === 'vidhide' ? 'Add EarnVids' : ($tpAPI->provider === 'upnshare' ? 'Add UPNShare' : $title);
 
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis' => 'Back to API & R2 Storage'
@@ -71,7 +71,7 @@ class ThirdPartyApis extends BaseController
     {
         $title = 'Edit R2 Storage';
         $tpAPI = $this->getApi( $this->request->getGet('id') );
-        $title = $tpAPI->provider === 'vidhide' ? 'Edit VidHide' : ($tpAPI->provider === 'upnshare' ? 'Edit UPNShare' : 'Edit R2 Storage');
+        $title = $tpAPI->provider === 'vidhide' ? 'Edit EarnVids' : ($tpAPI->provider === 'upnshare' ? 'Edit UPNShare' : 'Edit R2 Storage');
         $topBtnGroup = create_top_btn_group([
             'admin/third-party-apis' => 'Back to API & R2 Storage'
         ]);
