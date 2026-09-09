@@ -137,7 +137,8 @@
                                     ]) ?>
                                 </div>
                             </div>
-                            <div class="col-md-8">
+                            <?php if ((string)old('link', $link->link) === (string)$link->link && \App\Libraries\RegisteredStreamHost::matches((string)$link->link)): ?>
+                            <div class="col-md-8 stream-health-status" data-saved-url="<?= esc($link->link, 'attr') ?>">
                                 <div class="form-group">
                                     <?php
                                     $serverHost = parse_url((string) $link->link, PHP_URL_HOST);
@@ -158,6 +159,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
 

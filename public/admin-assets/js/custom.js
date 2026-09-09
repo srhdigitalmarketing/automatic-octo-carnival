@@ -324,6 +324,7 @@
 
                 clonedGroup.find('input[type="hidden"]').remove();
                 clonedGroup.find('.stream-check-now, .stream-check-message').remove();
+                clonedGroup.find('.stream-health-status').remove();
                 clonedGroup.find('.link-meta-info').remove();
                 clonedGroup.find('label:first').text('Link ' + uniqId);
 

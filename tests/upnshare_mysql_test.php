@@ -80,6 +80,11 @@ try {
     helper(['form','template','general']);
     $html = view('admin/movies/form_x_panels/stream_links', ['streamLinks'=>[$links->find($id)]]);
     check(strpos($html, 'Check failed') !== false && strpos($html, '[api_id]') === false && strpos($html, 'UPNShare account') === false, 'Stream form renders badge without per-link account fields');
+    $unregistered = $links->find($id);
+    $unregistered->link = 'https://unregistered.example/play/test';
+    $hiddenHtml = view('admin/movies/form_x_panels/stream_links', ['streamLinks'=>[$unregistered]]);
+    check(strpos($hiddenHtml, 'Server status') === false && strpos($hiddenHtml, 'stream-check-now') === false, 'Unregistered domain has no status or check button');
+    check(strpos($newHtml, 'Server status') === false, 'Empty new links have no stale status');
     $html = view('admin/third_party_apis/x_panels/main_form', ['tpAPI'=>$apis->find($apiId)]);
     check(strpos($html, 'upn-token') !== false && strpos($html, 'test-only-token') === false, 'UPN form renders without stored token');
     $apis->where('provider','upnshare')->set(['status'=>'paused'])->update();

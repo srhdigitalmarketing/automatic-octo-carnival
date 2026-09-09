@@ -33,10 +33,10 @@
 <script src="<?= site_url('/admin-assets/js/template.min.js?v=1.2') ?>"></script>
 <script src="<?= site_url('/admin-assets/js/video-excel-export.js?v=20260907-02') ?>"></script>
 <script src="<?= site_url('/admin-assets/js/video-export-all.js?v=20260907-01') ?>"></script>
-<script src="<?= site_url('/admin-assets/js/custom.js?v=20260908-15') ?>"></script>
+<script src="<?= site_url('/admin-assets/js/custom.js?v=20260910-1') ?>"></script>
 
 
-<script src="<?= site_url('/admin-assets/js/stream-health-check.js?v=20260908-3') ?>"></script>
+<script src="<?= site_url('/admin-assets/js/stream-health-check.js?v=20260910-1') ?>"></script>
 <?php $this->renderSection('scripts'); ?>
 
 

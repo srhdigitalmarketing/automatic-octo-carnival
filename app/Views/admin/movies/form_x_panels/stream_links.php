@@ -12,7 +12,7 @@ $streamServerStatus = static function ($link): array {
         return [$host, 'is-broken', 'fa-times', 'Unavailable', 'The last availability check failed'];
     }
 
-    if ($link->provider_status === 'available') {
+    if (($link->provider_status ?? '') === 'available') {
         return [$host, 'is-healthy', 'fa-check', 'Healthy', 'Video availability confirmed by provider API'];
     }
     if (! empty($link->last_checked_at) && ! empty($link->last_success_at)) {
@@ -77,7 +77,8 @@ $streamServerStatus = static function ($link): array {
                             ]) ?>
                             <small class="form-text text-muted">Higher values are tried first; the next link is used automatically if playback fails.</small>
                         </div>
-                        <div class="col-md-8">
+                        <?php if ((string)old("st_links.{$key}.url", $link->link) === (string)$link->link && \App\Libraries\RegisteredStreamHost::matches((string)$link->link)): ?>
+                        <div class="col-md-8 stream-health-status" data-saved-url="<?= esc($link->link, 'attr') ?>">
                             <?php [$serverHost, $serverStatusClass, $serverStatusIcon, $serverStatusLabel, $serverStatusHelp] = $streamServerStatus($link); ?>
                             <?= form_label('Server status', '') ?>
                             <div class="stream-server-status">
@@ -89,6 +90,7 @@ $streamServerStatus = static function ($link): array {
                             <button type="button" class="btn btn-sm btn-light stream-check-now" data-url="<?= esc(admin_url('/stream-health/check?id=' . (int)$link->id), 'attr') ?>">Cek file</button>
                             <small class="stream-check-message d-block" aria-live="polite"></small>
                         </div>
+                        <?php endif; ?>
                     </div>
 
                     <?= form_hidden("st_links[{$key}][id]", $link->id); ?>
@@ -128,13 +130,6 @@ $streamServerStatus = static function ($link): array {
                                 'value' => old("st_links.{$i}.host_priority", 100)
                             ]) ?>
                             <small class="form-text text-muted">Higher values are tried first; the next link is used automatically if playback fails.</small>
-                        </div>
-                        <div class="col-md-8">
-                            <?= form_label('Server status', '') ?>
-                            <div class="stream-server-status">
-                                <span class="stream-server-host"><i class="fa fa-server"></i> Host detected after saving</span>
-                                <span class="stream-server-badge is-unchecked"><i class="fa fa-clock-o"></i> Not checked</span>
-                            </div>
                         </div>
                     </div>
 
