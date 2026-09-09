@@ -2987,3 +2987,35 @@ footer.admin-footer {
   .reported-host-filter { justify-content: flex-start; flex-wrap: wrap; }
   .reported-host-filter .form-control { flex: 1 1 120px; width: auto; }
 }
+
+/* Compact flyouts must override the legacy ul.nav.child_menu dark surface. */
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu {
+  background: #fff !important;
+  width: 220px;
+  max-width: calc(100vw - 86px);
+  border: 1px solid #dce3ef;
+}
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li {
+  background: transparent !important;
+}
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li > a {
+  color: #344054 !important;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 40px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-shadow: none !important;
+}
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li > a:hover,
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li > a:focus,
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li.active > a,
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li.current-page > a {
+  color: #1745b8 !important;
+  background: #edf2ff !important;
+}
+.nav-sm .left_col #sidebar-menu ul.nav.child_menu > li > a:focus-visible {
+  outline: 2px solid #2457d6;
+  outline-offset: -2px;
+}
