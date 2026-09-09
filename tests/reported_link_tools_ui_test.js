@@ -9,6 +9,8 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    HTMLAnchorElement.prototype.click=function(){window.downloaded=this.download;};
    window.fetch=async(url,options)=>{const data=Object.fromEntries(options.body);window.calls.push(data);return {ok:scenario!=='failure',json:async()=>scenario==='failure'?{message:'test failure'}:data.action==='start'?{total:2,max_id:3}:data.cursor==='0'?{cursor:1,count:1,done:false,rows:[{title:'=SUM(1,2)',link:'https://a.example/#1'}]}:{cursor:3,count:1,done:true,rows:[{title:'Title "two"\nnext',link:'https://a.example/#2'}]}};};
   },scenario);
+  await page.addScriptTag({path:'public/admin-assets/vendors/jszip/jszip.min.js'});
+  await page.addScriptTag({path:'public/admin-assets/js/reported-links-excel.js'});
   await page.addScriptTag({path:'public/admin-assets/js/reported-link-tools.js'});
   await page.click(scenario==='export'?'#export-error-links':'#bulk-report-clear');
   if(scenario==='cancel'){assert.equal(await page.evaluate(()=>calls.length),0);}
@@ -17,8 +19,9 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    assert.equal(await page.locator('#reported-host').isEnabled(),true);
    assert.equal(await page.locator('#bulk-link-fix').isEnabled(),true);
    if(scenario==='export'){
-    assert.equal(await page.evaluate(()=>downloaded),'error-links-a.example.csv');
-    const csv=await page.evaluate(()=>blob.text());assert(csv.includes('Judul,Link Error'));assert(csv.includes('"\'=SUM(1,2)"'));assert(csv.includes('"Title ""two""\nnext"'));assert.equal(await page.evaluate(()=>calls.some(c=>c.action==='clear')),false);
+    assert.equal(await page.evaluate(()=>downloaded),'error-links-a.example.xlsx');
+    const sheet=await page.evaluate(async()=>{const zip=await JSZip.loadAsync(await blob.arrayBuffer());return zip.file('xl/worksheets/sheet1.xml').async('string');});
+    assert(sheet.includes('Judul'));assert(sheet.includes('=SUM(1,2)'));assert(sheet.includes('Title &quot;two&quot;\nnext'));assert(!sheet.includes('<f>'));assert.equal(await page.evaluate(()=>calls.some(c=>c.action==='clear')),false);
    }else if(scenario==='clear'){assert.equal(await page.evaluate(()=>calls.filter(c=>c.action==='clear').length),2);assert.equal(await page.evaluate(()=>calls[0].host),'');}
   }
   await page.close();console.log('PASS reported tools '+scenario);

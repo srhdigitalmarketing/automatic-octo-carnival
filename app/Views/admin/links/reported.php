@@ -23,7 +23,13 @@
     <button type="submit" class="btn btn-primary">Filter</button>
     <button type="button" id="bulk-link-fix" class="btn btn-primary" data-url="<?= esc(admin_url('/bulk-link-fix/run'), 'attr') ?>">Bulk Fix Broken Links</button>
     <button type="button" id="bulk-report-clear" class="btn btn-outline-warning" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Bulk Clear Reports</button>
-    <button type="button" id="export-error-links" class="btn btn-outline-primary" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Export Error Links (CSV)</button>
+    <label for="reported-export-duplicates">Duplikat export</label>
+    <select id="reported-export-duplicates" class="form-control">
+        <option value="either">Satu per link / judul</option>
+        <option value="link">Satu per link</option>
+        <option value="title">Satu per judul</option>
+    </select>
+    <button type="button" id="export-error-links" class="btn btn-outline-primary" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Export Error Links (Excel)</button>
 </form>
 <div id="reported-tools-progress" class="x_panel p-3" hidden>
     <p class="small text-muted">Mengikuti pilihan host, mencakup semua halaman tabel. Clear hanya menghapus laporan; tidak memperbaiki atau menghapus link. Export berisi link yang dilaporkan, termasuk wrong video. Pencarian tabel tidak membatasi kedua aksi ini.</p>
@@ -33,7 +39,9 @@
     </div>
     <div class="progress"><div id="reported-tools-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-label="Progres laporan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width:0%"></div></div>
 </div>
-<script defer src="<?= site_url('/admin-assets/js/reported-link-tools.js?v=1') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/vendors/jszip/jszip.min.js?v=3.10.1') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/js/reported-links-excel.js?v=1') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/js/reported-link-tools.js?v=2') ?>"></script>
 <div id="bulk-fix-progress" class="x_panel p-4" hidden>
     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
         <div class="d-flex align-items-center mb-2">
