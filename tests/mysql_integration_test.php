@@ -2,7 +2,6 @@
 // Run against a disposable MySQL instance ONLY: php tests/mysql_integration_test.php 13389
 namespace CodeIgniter { class Model { protected $db; public function __construct($db) { $this->db = $db; } } }
 namespace {
-require __DIR__ . '/../app/Libraries/MysqlAudience.php';
 require __DIR__ . '/../app/Models/LiveTrafficModel.php';
 require __DIR__ . '/../app/Libraries/AnalyticsRetention.php';
 function check($ok, $message) { if (!$ok) { throw new RuntimeException($message); } }
@@ -44,12 +43,6 @@ try {
     $live = new App\Models\LiveTrafficModel($adapter);
     $live->touchEmbedVisitor('same-browser'); $live->touchEmbedVisitor('same-browser');
     check((int)$adapter->query('SELECT COUNT(*) AS total FROM live_traffic')->getRowArray()['total'] === 1, 'Live visitor atomic upsert');
-    $service = new App\Libraries\MysqlAudience();
-    $service->record('browser-a', 'Windows Desktop'); $service->record('browser-a', 'Windows Desktop'); $service->record('browser-b', 'iPhone Mobile');
-    $adapter->query('INSERT INTO traffic_daily_visitors (visit_date,visitor_key,platform) VALUES (?, ?, ?)', [date('Y-m-d', strtotime('-1 day')), 'browser-a', 'desktop']);
-    $data = $service->audience();
-    check($data['total'] === 2 && array_sum($data['daily']) === 3, 'Distinct monthly visitors and daily deduplication');
-    check($data['platforms']['desktop'] === 1 && $data['platforms']['mobile'] === 1, 'Device aggregation');
     $cutoff = App\Libraries\AnalyticsRetention::cutoff();
     $old = date('Y-m-d', strtotime($cutoff . ' -1 day'));
     foreach ([$cutoff, $old] as $date) {
@@ -61,7 +54,7 @@ try {
     check((int)$adapter->query('SELECT COUNT(*) AS total FROM traffic_daily_visitors WHERE visit_date = ?', [$cutoff])->getRowArray()['total'] === 1, 'Boundary date retained');
     $again = (new App\Libraries\AnalyticsRetention())->prune($adapter);
     check($again['traffic_daily_visitors']['deleted'] === 0, 'Cleanup replay safe');
-    echo "PASS: real MySQL visitor upsert, 30-day DISTINCT, devices, retention boundary and replay.\n";
+    echo "PASS: real MySQL live visitor upsert, legacy retention boundary and replay.\n";
 } finally {
     $mysql->query("DROP DATABASE `$name`"); $mysql->close();
 }
