@@ -155,3 +155,5 @@ $routes->get('/' . link_slug() . '/(:any)', 'Link::index/$1');
 if (file_exists(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
     require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
 }
+
+$routes->post('/admin/settings/google-analytics/update', 'Admin/Settings/GoogleAnalytics::update');

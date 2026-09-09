@@ -15,6 +15,7 @@
 
         <?= form_close() ?>
         <?= form_open(admin_url('/settings/homepage/update'), ['id'=>'homepage-settings-form']) ?><?= form_close() ?>
+        <?= $this->include('admin/settings/site/form_x_panels/google_analytics') ?>
 
     </div>
 </div>

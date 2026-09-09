@@ -101,5 +101,6 @@
 } ?>
 
 
+<?= view('partials/google_analytics', ['ga4Context'=>'public']) ?>
 </body>
 </html>

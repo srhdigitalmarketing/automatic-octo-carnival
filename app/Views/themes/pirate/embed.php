@@ -131,5 +131,6 @@
     echo display_pop_ad( $ads, $popupAdUnits ?? [] );
 }  ?>
 
+<?= view('partials/google_analytics', ['ga4Context'=>'embed']) ?>
 </body>
 </html>
