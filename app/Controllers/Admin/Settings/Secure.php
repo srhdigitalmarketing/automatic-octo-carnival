@@ -34,7 +34,7 @@ class Secure extends BaseSettings
                 $before=array_column($store->entries(),'id');
                 ignore_user_abort(true);
             }
-            if ((in_array($action,['remote-send','remote-download'],true) || (in_array($action,['files','database'],true) && $destination!=='local')) && session_status()===PHP_SESSION_ACTIVE) {
+            if ((in_array($action,['remote-send','remote-download','remote-list'],true) || (in_array($action,['files','database'],true) && $destination!=='local')) && session_status()===PHP_SESSION_ACTIVE) {
                 session_write_close(); // Long uploads must not block other admin tabs.
             }
             switch ($action) {
@@ -42,9 +42,12 @@ class Secure extends BaseSettings
                     (new SecureBackupRemote())->save((string)$this->request->getPost('provider'),(array)$this->request->getPost());
                     $message='Pengaturan tujuan backup tersimpan. Kredensial tidak ditampilkan kembali.';
                     break;
+                case 'remote-list':
+                    $listing=(new SecureBackupRemote())->listing($destination,(string)$this->request->getPost('cursor'));
+                    return $this->response->setJSON(['message'=>'Daftar arsip remote diperbarui.','remote'=>$listing]);
                 case 'remote-download':
                     ignore_user_abort(true);
-                    (new SecureBackupRemote())->receive($store,$destination,(string)$this->request->getPost('reference'));
+                    $importedId=(new SecureBackupRemote())->receive($store,$destination,(string)$this->request->getPost('reference'));
                     $message='Arsip remote tersimpan lokal. Klik Restore pada arsip untuk memeriksa tujuan dan mengonfirmasi pemulihan.';
                     break;
                 case 'remote-send':
@@ -80,7 +83,7 @@ class Secure extends BaseSettings
                 (new SecureBackupRemote())->send($store,$created[0]['id'],$destination);
                 $message='Backup berhasil dibuat dan dikirim ke '.$destination.'. Salinan lokal tetap tersedia.';
             }
-            return $this->response->setJSON(['message'=>$message,'entries'=>$store->entries()]);
+            return $this->response->setJSON(['message'=>$message,'entries'=>$store->entries(),'imported_id'=>$importedId??null]);
         } catch (\RuntimeException $exception) {
             try { $entries=isset($store)?$store->entries():[]; } catch (\Throwable $ignored) { $entries=[]; }
             return $this->response->setStatusCode(422)->setJSON(['message'=>$exception->getMessage(),'entries'=>$entries]);

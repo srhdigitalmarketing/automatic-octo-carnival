@@ -94,7 +94,10 @@ Pemakaian di atas kuota dan operasi/transfer tertentu bisa berbayar. Tidak ada a
 ## Restore lokal dan remote
 
 - Lokal: upload ZIP/SQL (maksimal 512 MB, mengikuti batas PHP), kemudian pilih **Restore** pada daftar, periksa tujuan dan ketik `RESTORE`.
-- Remote: simpan konfigurasi tujuan, pilih FTP/FTPS, Drive atau S3, masukkan nama arsip (FTP/S3) atau File ID (Drive), lalu **Unduh untuk Restore**. Gunakan nama file tanpa path di folder/prefix tersimpan; Drive harus berada dalam folder tersimpan. Diperlukan izin baca/GetObject. Tidak menerima URL bebas.
+- Remote: simpan konfigurasi tujuan. Pada **Restore dari remote**, pilih sumber FTP/FTPS, Google Drive atau S3. Daftar ZIP/SQL dimuat otomatis dari folder/prefix tersimpan. Pilih arsip dan klik **Restore arsip terpilih**; sistem mengunduhnya lalu membuka pratinjau dan konfirmasi RESTORE. Tidak perlu mengetik nama file atau File ID. Gunakan **Muat ulang** setelah upload dari perangkat lain dan **Muat berikutnya** bila tersedia.
+- Izin daftar: FTP memerlukan akses NLST dan baca file; Drive memerlukan akses folder melalui OAuth; S3 memerlukan ListBucket untuk folder/prefix serta GetObject. Google Drive dan S3 memakai pagination 100 entri remote per halaman. FTP membaca daftar nama (maksimal respons 1 MB), lalu menampilkan 100 arsip per halaman. Daftar diperoleh lewat AJAX, bukan saat merender halaman server, dan kegagalan remote tidak menghapus arsip lokal.
 - Download maksimal 5 GB, streaming ke disk privat dengan timeout 300 detik; file parsial dibersihkan. Google Drive diperiksa ukuran dan MD5. FTP/S3 memakai transfer selesai dan validasi ZIP; SHA-256 lokal dicatat untuk mendeteksi perubahan sebelum restore, bukan bukti checksum remote.
 - Download tidak menjalankan SQL atau menimpa file website. Setelah download, pilih Restore dan konfirmasi. Restore membuat backup pengaman sebelum penimpaan.
 - Full Backup masih dipulihkan sebagai dua komponen: unduh paket, ekstrak di komputer pribadi, lalu upload `files.zip` dan `database.sql` dan restore masing-masing. Jangan mengekstrak paket ke public.
+
+API daftar remote: [Drive files.list](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list), [S3 ListObjectsV2](https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html), [FTP DIRLISTONLY](https://curl.se/libcurl/c/CURLOPT_DIRLISTONLY.html).

@@ -133,6 +133,51 @@ class SecureBackupRemote
         return $result;
     }
 
+    public function listing(string $provider,string $cursor=''): array
+    {
+        $this->ready($provider);$c=$this->load()[$provider];$items=[];$next='';
+        if(strlen($cursor)>8192 || preg_match('/[\x00-\x1f]/',$cursor))throw new RuntimeException('Halaman remote tidak valid.');
+        if($provider==='ftp') {
+            if($cursor!=='' && !ctype_digit($cursor))throw new RuntimeException('Halaman FTP tidak valid.');
+            $folder=self::safePath($c['directory']);
+            $url='ftp://'.$c['host'].':'.$c['port'].'/'.($folder!==''?implode('/',array_map('rawurlencode',explode('/',$folder))).'/':'');
+            $r=$this->request($url,'GET',[],null,null,[CURLOPT_CUSTOMREQUEST=>null,CURLOPT_DIRLISTONLY=>true,CURLOPT_PROTOCOLS=>CURLPROTO_FTP|CURLPROTO_FTPS,CURLOPT_USERPWD=>$c['username'].':'.$c['password'],CURLOPT_USE_SSL=>$c['protocol']==='ftps'?CURLUSESSL_ALL:CURLUSESSL_NONE]);
+            if($r['status']<200 || $r['status']>=300)throw new RuntimeException('Daftar FTP gagal dibaca. Periksa izin folder.');
+            foreach(preg_split('/\r?\n/',$r['body']) as $name) {
+                if($folder!=='' && strpos($name,$folder.'/')===0)$name=substr($name,strlen($folder)+1);
+                if($this->archiveName($name))$items[]=['name'=>$name,'reference'=>$name,'size'=>null];
+            }
+            usort($items,static fn($a,$b)=>strcmp($a['name'],$b['name']));
+            $offset=(int)$cursor;$next=count($items)>$offset+100?(string)($offset+100):'';$items=array_slice($items,$offset,100);
+        } elseif($provider==='drive') {
+            $q=['q'=>"'".$c['folder_id']."' in parents and trashed = false",'fields'=>'nextPageToken,files(id,name,size)','pageSize'=>100,'orderBy'=>'modifiedTime desc','supportsAllDrives'=>'true','includeItemsFromAllDrives'=>'true'];
+            if($cursor!=='')$q['pageToken']=$cursor;
+            $r=$this->request('https://www.googleapis.com/drive/v3/files?'.http_build_query($q,'','&',PHP_QUERY_RFC3986),'GET',$this->driveAuthorization($c));$data=json_decode($r['body'],true);
+            if($r['status']!==200 || !is_array($data) || !isset($data['files']) || !is_array($data['files']))throw new RuntimeException('Daftar Google Drive gagal dibaca. Periksa izin folder dan OAuth.');
+            foreach($data['files'] as $file)if($this->archiveName((string)($file['name']??'')) && preg_match('/^[a-zA-Z0-9_-]+$/D',(string)($file['id']??'')))$items[]=['name'=>$file['name'],'reference'=>$file['id'],'size'=>$file['size']??null];
+            $next=(string)($data['nextPageToken']??'');
+        } else {
+            if(!function_exists('simplexml_load_string'))throw new RuntimeException('Aktifkan ekstensi SimpleXML untuk daftar S3.');
+            $prefix=self::safePath($c['prefix']);$prefix=$prefix!==''?$prefix.'/':'';
+            $q=['list-type'=>'2','max-keys'=>'100','prefix'=>$prefix,'delimiter'=>'/'];if($cursor!=='')$q['continuation-token']=$cursor;
+            ksort($q);$query=http_build_query($q,'','&',PHP_QUERY_RFC3986);$uri='/'.rawurlencode($c['bucket']);
+            $endpoint=rtrim($c['endpoint'],'/');$parts=parse_url($endpoint);$host=$parts['host'].(isset($parts['port'])?':'.$parts['port']:'');
+            $r=$this->request($endpoint.$uri.'?'.$query,'GET',self::s3Headers($c,$uri,$host,hash('sha256',''),null,'GET',$query));
+            if($r['status']!==200 || stripos($r['body'],'<!DOCTYPE')!==false)throw new RuntimeException('Daftar S3 gagal dibaca. Periksa izin ListBucket.');
+            $old=libxml_use_internal_errors(true);
+            try{$xml=simplexml_load_string($r['body'],'SimpleXMLElement',LIBXML_NONET);}finally{libxml_clear_errors();libxml_use_internal_errors($old);}
+            if($xml===false || $xml->getName()!=='ListBucketResult')throw new RuntimeException('Respons daftar S3 tidak valid.');
+            foreach($xml->Contents as $file){$key=(string)$file->Key;if(strpos($key,$prefix)!==0)continue;$name=substr($key,strlen($prefix));if($this->archiveName($name))$items[]=['name'=>$name,'reference'=>$name,'size'=>(string)$file->Size];}
+            $next=(string)$xml->NextContinuationToken;
+            if((string)$xml->IsTruncated==='true' && $next==='')throw new RuntimeException('Halaman berikutnya dari S3 tidak valid.');
+        }
+        return ['items'=>$items,'cursor'=>$next];
+    }
+    private function archiveName(string $name): bool
+    {
+        return $name!=='' && strlen($name)<=255 && strpos($name,chr(92))===false && !preg_match('~[/:\x00-\x1f\x7f]~',$name) && in_array(strtolower(pathinfo($name,PATHINFO_EXTENSION)),['zip','sql'],true);
+    }
+
     /** Fetches only from a configured destination. Import never executes a restore. */
     public function receive(SecureBackups $store,string $provider,string $reference): string
     {
@@ -221,14 +266,14 @@ class SecureBackupRemote
         if ($result['status']<200 || $result['status']>=300) throw new RuntimeException('FTP menolak upload. Periksa akun, path dan izin tulis. Salinan lokal tetap tersedia.');
         return $remote;
     }
-    public static function s3Headers(array $config,string $uri,string $host,string $hash,?string $time=null,string $method='PUT'): array
+    public static function s3Headers(array $config,string $uri,string $host,string $hash,?string $time=null,string $method='PUT',string $query=''): array
     {
         $time=$time??gmdate('Ymd\THis\Z');$date=substr($time,0,8);
         $headers=['host'=>$host,'x-amz-content-sha256'=>$hash,'x-amz-date'=>$time];
         if (!empty($config['session_token']))$headers['x-amz-security-token']=$config['session_token'];
         ksort($headers);$canonical='';foreach($headers as $key=>$value)$canonical.=$key.':'.trim($value)."\n";
         $signed=implode(';',array_keys($headers));$scope=$date.'/'.$config['region'].'/s3/aws4_request';
-        $request=$method."\n".$uri."\n\n".$canonical."\n".$signed."\n".$hash;
+        $request=$method."\n".$uri."\n".$query."\n".$canonical."\n".$signed."\n".$hash;
         $toSign="AWS4-HMAC-SHA256\n".$time."\n".$scope."\n".hash('sha256',$request);
         $key=hash_hmac('sha256',$date,'AWS4'.$config['secret_key'],true);
         foreach ([$config['region'],'s3','aws4_request'] as $part)$key=hash_hmac('sha256',$part,$key,true);

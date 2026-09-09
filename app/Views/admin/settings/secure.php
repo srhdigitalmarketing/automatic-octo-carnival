@@ -34,7 +34,7 @@ foreach($remoteForms as $provider=>$form): $config=$remote[$provider]??[];
   <label class="mt-2" for="remote-<?= esc($provider.'-'.$field,'attr') ?>"><?= esc($meta[0]) ?></label>
   <input id="remote-<?= esc($provider.'-'.$field,'attr') ?>" name="<?= esc($field,'attr') ?>" type="<?= esc($meta[1],'attr') ?>" class="form-control" value="<?= esc($value,'attr') ?>" placeholder="<?= esc(!empty($config[$field.'_saved'])?'Tersimpan - kosongkan untuk mempertahankan':$meta[2],'attr') ?>" autocomplete="<?= $meta[1]==='password'?'new-password':'off' ?>">
   <?php endforeach ?>
-  <?php if($provider==='s3'): ?><label class="small mt-2"><input type="checkbox" name="clear_session_token" value="1"> Hapus Session Token tersimpan</label><p class="small text-muted mt-2">AWS S3 atau endpoint S3-compatible seperti R2. Gunakan bucket privat dan izin PutObject serta GetObject untuk restore. Untuk R2, region: auto.</p><?php endif ?>
+  <?php if($provider==='s3'): ?><label class="small mt-2"><input type="checkbox" name="clear_session_token" value="1"> Hapus Session Token tersimpan</label><p class="small text-muted mt-2">AWS S3 atau endpoint S3-compatible seperti R2. Gunakan bucket privat dan izin ListBucket, PutObject serta GetObject untuk restore. Untuk R2, region: auto.</p><?php endif ?>
   <?php if($provider==='drive'): ?><p class="small text-muted mt-2">Aktifkan Drive API pada proyek Google Anda. Gunakan OAuth Client ID, Client Secret dan Refresh Token dari akun yang memiliki akses folder tujuan. Refresh Token memerlukan akses offline dan izin Drive.</p><?php endif ?>
   <?php if($provider==='ftp'): ?><p class="small text-muted mt-2">FTPS menggunakan TLS eksplisit, biasanya port 21. FTP biasa mengirim data dan password tanpa enkripsi. Folder backup sebaiknya di luar direktori website publik.</p><?php endif ?>
   <button class="btn btn-primary mt-3" type="submit">Simpan <?= esc($form[0]) ?></button>
@@ -54,11 +54,20 @@ foreach($remoteForms as $provider=>$form): $config=$remote[$provider]??[];
  <form id="secure-upload"><label for="secure-file">File backup</label><input id="secure-file" name="backup_file" type="file" accept=".zip,.sql" required class="form-control"><button class="btn btn-primary mt-3" type="submit"><i class="fa fa-upload mr-1"></i> Upload Backup</button></form>
 </div>
 <div class="x_panel p-4"><h5 class="font-weight-bold">Restore dari remote</h5>
- <p class="text-muted">Pilih FTP, Google Drive atau S3 pada Tujuan Backup dan simpan pengaturannya. Arsip diunduh ke penyimpanan lokal dahulu; konten website baru berubah setelah konfirmasi Restore.</p>
- <label for="secure-remote-reference">Nama arsip FTP/S3 atau File ID Google Drive</label>
- <input id="secure-remote-reference" class="form-control" maxlength="255" placeholder="backup.sql / backup.zip / File ID Google Drive" autocomplete="off">
- <small class="d-block text-muted mt-2">FTP/S3: nama file di folder/prefix yang dikonfigurasi, tanpa URL atau path. Drive: File ID dari URL file dalam folder backup. Referensi arsip yang pernah dikirim tersedia pada Daftar Backup. Maksimal 5 GB; tunduk pada timeout server.</small>
- <button type="button" class="btn btn-primary mt-3" data-secure-action="remote-download">Unduh untuk Restore</button>
+ <p class="text-muted">Pilih tujuan yang sudah dikonfigurasi. Daftar arsip dimuat otomatis dari folder remote. Pilih arsip lalu klik Restore untuk mengunduh dan memeriksa tujuan pemulihan.</p>
+ <label for="secure-restore-provider">Sumber backup</label>
+ <select id="secure-restore-provider" class="form-control mb-3">
+ <?php foreach(['ftp'=>'FTP / FTPS','drive'=>'Google Drive','s3'=>'S3 / R2 / B2'] as $key=>$label): if(empty($remote[$key]))continue; ?>
+ <option value="<?= esc($key,'attr') ?>"><?= esc($label) ?></option>
+ <?php endforeach ?>
+ </select>
+ <label for="secure-remote-reference">Arsip backup</label>
+ <select id="secure-remote-reference" class="form-control"><option value="">Pilih sumber backup terlebih dahulu</option></select>
+ <p id="secure-remote-message" class="small text-muted mt-2" role="status" aria-live="polite">Simpan pengaturan remote jika belum ada sumber yang tersedia.</p>
+ <button type="button" class="btn btn-outline-primary mt-2" data-secure-action="remote-list">Muat ulang</button>
+ <button type="button" id="secure-remote-more" class="btn btn-outline-primary mt-2" data-secure-action="remote-list" data-id="more" hidden>Muat berikutnya</button>
+ <button type="button" id="secure-remote-restore" class="btn btn-primary mt-2" data-secure-action="remote-download" disabled>Restore arsip terpilih</button>
+ <small class="d-block text-muted mt-2">Maksimal 5 GB per arsip. Arsip diunduh ke penyimpanan lokal; pemulihan membutuhkan konfirmasi RESTORE. Full Backup dipulihkan sebagai files.zip dan database.sql secara terpisah.</small>
 </div>
 <div id="secure-confirm" class="x_panel p-4 border border-warning" hidden role="region" aria-labelledby="secure-confirm-title">
  <h5 id="secure-confirm-title" class="font-weight-bold">Konfirmasi Restore</h5>
@@ -74,5 +83,5 @@ foreach($remoteForms as $provider=>$form): $config=$remote[$provider]??[];
 <div class="x_panel p-4"><h5 class="font-weight-bold mb-3">Daftar Backup</h5><div class="table-responsive"><table class="table"><thead><tr><th>File</th><th>Jenis</th><th>Dibuat</th><th>Ukuran</th><th>Aksi</th></tr></thead><tbody id="secure-list"></tbody></table></div></div>
 <script type="application/json" id="secure-initial"><?= json_encode($entries,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
 </div>
-<script defer src="<?= site_url('/admin-assets/js/secure-backups.js?v=20260910-2') ?>"></script>
+<script defer src="<?= site_url('/admin-assets/js/secure-backups.js?v=20260910-3') ?>"></script>
 <?php $this->endSection() ?>
