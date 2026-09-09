@@ -9,6 +9,8 @@ class Analytics {
 
     protected $data;
 
+    private $linkSummary;
+
     public function __construct()
     {
         $this->db = \Config\Database::connect();
@@ -17,6 +19,7 @@ class Analytics {
 
     public function init(): Analytics
     {
+        $this->linkSummary = null;
         $this->initMovies();
         $this->initSeries();
         $this->initEpisodes();
@@ -139,64 +142,38 @@ class Analytics {
 
     protected function initLinks()
     {
-        $builder = $this->db->table('links');
-
-        //total links
-        $total = $builder->countAllResults();
-
-        //streaming links
-        $stream =  $builder->where('type', 'stream')
-                           ->countAllResults();
-
-        //direct download links
-        $direct_dl =  $builder->where('type', 'direct_download')
-                              ->countAllResults();
-
-        //torrent download links
-        $torrent_dl = $total - ( $stream + $direct_dl );
-
-        $data = compact('total', 'stream', 'direct_dl', 'torrent_dl');
-
-        $this->setVal('links', $data);
-
+        $this->setVal('links', $this->linkSummary()['links']);
     }
 
     protected function initLinksRequests()
     {
-        //total links requests
-        $total = $this->__countLinksRequests();
-
-        //stream links requests
-        $stream = $this->__countLinksRequests('stream');
-
-        //direct links requests
-        $direct_dl = $this->__countLinksRequests('direct_download');
-
-        //torrent links requests
-        $torrent_dl = $total - ( $stream + $direct_dl );
-
-        $data = compact('total', 'stream', 'direct_dl', 'torrent_dl');
-        $this->setVal('links_requests', $data);
-
+        $this->setVal('links_requests', $this->linkSummary()['links_requests']);
     }
 
     protected function initReportedLinks()
     {
-        //total reported links
-        $total = $this->__countReportedLinks();
+        $this->setVal('reported_links', $this->linkSummary()['reported_links']);
+    }
 
-        //reported stream links
-        $stream = $this->__countReportedLinks('stream');
-
-        //reported direct download links
-        $direct_dl = $this->__countReportedLinks('direct_download');
-
-        //reported torrent download links
-        $torrent_dl = $total - ( $stream + $direct_dl  );
-
-        $data = compact('total', 'stream', 'direct_dl', 'torrent_dl');
-        $this->setVal('reported_links', $data);
-
+    /** Aggregate counts, requests and reports in one scan, not nine queries. */
+    private function linkSummary(): array
+    {
+        if ($this->linkSummary !== null) { return $this->linkSummary; }
+        $empty = ['total'=>0, 'stream'=>0, 'direct_dl'=>0, 'torrent_dl'=>0];
+        $summary = ['links'=>$empty, 'links_requests'=>$empty, 'reported_links'=>$empty];
+        $rows = $this->db->table('links')
+            ->select('type, COUNT(*) AS link_count, COALESCE(SUM(requests), 0) AS request_count, '
+                . 'SUM(CASE WHEN reports_not_working > 0 OR reports_wrong_link > 0 THEN 1 ELSE 0 END) AS report_count', false)
+            ->groupBy('type')->get()->getResultArray();
+        foreach ($rows as $row) {
+            $bucket = $row['type'] === 'stream' ? 'stream' : ($row['type'] === 'direct_download' ? 'direct_dl' : 'torrent_dl');
+            foreach (['links'=>'link_count', 'links_requests'=>'request_count', 'reported_links'=>'report_count'] as $metric=>$column) {
+                $value = (int) $row[$column];
+                $summary[$metric]['total'] += $value;
+                $summary[$metric][$bucket] += $value;
+            }
+        }
+        return $this->linkSummary = $summary;
     }
 
     protected function initLinksCompletion()
@@ -270,36 +247,6 @@ class Analytics {
         $this->setVal('coverage', compact('value', 'color_class'));
 
     }
-
-    protected function __countLinksRequests(?string $type = '')
-    {
-        $builder = $this->db->table('links');
-
-        if(! empty( $type ))
-            $builder->where('type', $type);
-
-        $requests = $builder->selectSum('requests')
-                            ->get()
-                            ->getFirstRow()
-                            ->requests;
-
-        return is_numeric( $requests ) ? $requests : 0;
-    }
-
-    protected function __countReportedLinks(?string $type = '')
-    {
-        $builder = $this->db->table('links');
-
-        if(! empty( $type ))
-            $builder->where('type', $type);
-
-        return $builder->groupStart()
-                            ->where('reports_not_working >', 0)
-                            ->orWhere('reports_wrong_link >', 0)
-                        ->groupEnd()
-                       ->countAllResults();
-    }
-
 
     protected function initDataMap()
     {

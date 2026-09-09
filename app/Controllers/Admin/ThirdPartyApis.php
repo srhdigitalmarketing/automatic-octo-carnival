@@ -38,6 +38,10 @@ class ThirdPartyApis extends BaseController
 
     public function result()
     {
+        // Authentication has finished; external requests must not lock navigation
+        // in other tabs/AJAX requests sharing the same admin session.
+        if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+
         if($error=$this->model->schemaError())return $this->response->setStatusCode(409)->setJSON(['state'=>'disconnected','label'=>'Skema API belum siap','message'=>$error]);
         $api = $this->getApi((int)$this->request->getGet('id'));
         // Credential changes invalidate cached results without storing secrets in cache keys.

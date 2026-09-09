@@ -117,7 +117,11 @@ try {
     check($success->invoke($resolver,$stale) === false, 'Stale player success cannot override concurrent API deletion');
     check((int)$links->find($fallback)->is_broken === 1, 'Deleted host stays blocked after stale success');
     $links->protect(false)->update($id,['provider_status'=>'available','is_broken'=>0,'last_error'=>null]); $links->protect(true);
+    $db->table('links')->where('id', $id)->update(['last_checked_at'=>'2020-01-01 00:00:00','last_success_at'=>'2020-01-01 00:00:00','reports_not_working'=>2]);
     check((int)$resolver->resolve(1)->id === (int)$id, 'Recovered API host returns to eligible priority ordering');
+    $served = $links->find($id);
+    check($served->last_checked_at === '2020-01-01 00:00:00' && $served->last_success_at === '2020-01-01 00:00:00', 'Serving URL falsely refreshed health timestamps');
+    check((int)$served->reports_not_working === 2, 'Serving URL cleared unresolved reports');
     $links->delete($fallback);
     $migration->down(); $db->resetDataCache();
     check(!in_array('provider_status',$db->getFieldNames('links'),true), 'Migration rollback');

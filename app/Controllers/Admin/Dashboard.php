@@ -41,6 +41,10 @@ class Dashboard extends BaseController
 
     public function revenue_today()
     {
+        // Authentication has finished; external requests must not lock navigation
+        // in other tabs/AJAX requests sharing the same admin session.
+        if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+
         return $this->response->setJSON((new AdRevenueToday())->synchronize());
     }
 

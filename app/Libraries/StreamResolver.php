@@ -125,8 +125,10 @@ class StreamResolver
             return ! (bool) $link->is_broken && empty($link->last_error);
         }
 
-        // API calls run in the scheduled job, not on high-traffic player requests.
-        if (!$force && $link->provider_status === 'available') { return true; }
+        // Viewer requests must never wait for DNS, HTTP or provider APIs. A stale
+        // or unchecked candidate can be tried by the browser, which rotates on
+        // failure; authoritative checks remain in cron and the admin Check action.
+        if (!$force) { return !(bool) $link->is_broken; }
         $providerStatus = $force ? $this->hostHealth->check($link) : null;
         if ($providerStatus !== null) {
             if (in_array($providerStatus['status'], ['available','reachable'], true)) { return true; }
@@ -370,7 +372,10 @@ class StreamResolver
         // Scheduled checks must not affect the round-robin order used for
         // real viewers. Only a selected playback link is considered served.
         if ($markServed) {
-            $data['last_served_at'] = $now;
+            // Selecting a URL is not proof that the video is healthy. Keep check
+            // timestamps and reports intact until a real health check completes.
+            $data = ['last_served_at' => $now];
+            $this->links->where('is_broken', 0);
         }
 
         // A cron check can mark a link deleted after candidates were loaded.
@@ -392,7 +397,7 @@ class StreamResolver
         // A successful provider/API or HTTP check confirms the visitor report
         // is no longer actionable. Keep "wrong video" reports for a person to
         // review because availability alone cannot validate video contents.
-        if ((int) ($link->reports_not_working ?? 0) > 0) {
+        if (!$markServed && (int) ($link->reports_not_working ?? 0) > 0) {
             $this->links->clearNotWorkingReports((int) $link->id);
         }
         return true;
