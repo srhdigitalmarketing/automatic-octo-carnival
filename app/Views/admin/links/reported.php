@@ -13,6 +13,7 @@
 </div>
 
 <form method="get" id="reported-host-filter" class="reported-host-filter flex-wrap">
+    <div class="reported-filter-row">
     <label for="reported-host">Stream host</label>
     <select id="reported-host" name="host" class="form-control">
         <option value="">All hosts</option>
@@ -23,6 +24,8 @@
     <button type="submit" class="btn btn-primary">Filter</button>
     <button type="button" id="bulk-link-fix" class="btn btn-primary" data-url="<?= esc(admin_url('/bulk-link-fix/run'), 'attr') ?>">Bulk Fix Broken Links</button>
     <button type="button" id="bulk-report-clear" class="btn btn-outline-warning" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Bulk Clear Reports</button>
+    </div>
+    <div class="reported-filter-row">
     <label for="reported-export-duplicates">Duplikat export</label>
     <select id="reported-export-duplicates" class="form-control">
         <option value="either">Satu per link / judul</option>
@@ -30,6 +33,7 @@
         <option value="title">Satu per judul</option>
     </select>
     <button type="button" id="export-error-links" class="btn btn-outline-primary" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Export Error Links (Excel)</button>
+    </div>
 </form>
 <div id="reported-tools-progress" class="x_panel p-3" hidden>
     <p class="small text-muted">Mengikuti pilihan host, mencakup semua halaman tabel. Clear hanya menghapus laporan; tidak memperbaiki atau menghapus link. Export berisi link yang dilaporkan, termasuk wrong video. Pencarian tabel tidak membatasi kedua aksi ini.</p>

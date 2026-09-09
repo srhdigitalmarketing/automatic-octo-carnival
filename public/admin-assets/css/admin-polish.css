@@ -3019,3 +3019,41 @@ footer.admin-footer {
   outline: 2px solid #2457d6;
   outline-offset: -2px;
 }
+
+/* Keep report actions together and readable in every interaction state. */
+#reported-links-datatable_wrapper .link-table-toolbar__host {
+  flex: 1 1 100%; order: 3;
+  border-top: 1px solid #e9edf4; padding-top: 12px;
+}
+#reported-host-filter { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+#reported-host-filter .reported-filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+#reported-host-filter label { flex: 0 0 96px; }
+#reported-host-filter .form-control { flex: 0 1 230px; height: 38px; }
+#reported-host-filter .btn { height: auto; min-height: 38px; white-space: normal; }
+#reported-host-filter .btn-primary,
+#reported-host-filter #export-error-links {
+  color: #fff !important; background-color: #4f46e5; border-color: #4f46e5;
+}
+#reported-host-filter .btn-primary:hover,
+#reported-host-filter .btn-primary:focus,
+#reported-host-filter .btn-primary:active,
+#reported-host-filter #export-error-links:hover,
+#reported-host-filter #export-error-links:focus,
+#reported-host-filter #export-error-links:active {
+  color: #fff !important; background-color: #3730a3; border-color: #3730a3;
+}
+#reported-host-filter #bulk-report-clear {
+  color: #78350f !important; background-color: #fef3c7; border-color: #b45309;
+}
+#reported-host-filter #bulk-report-clear:hover,
+#reported-host-filter #bulk-report-clear:focus,
+#reported-host-filter #bulk-report-clear:active {
+  color: #fff !important; background-color: #92400e; border-color: #92400e;
+}
+#reported-host-filter .btn:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
+#reported-host-filter .btn:disabled { opacity: 1; color: #475569 !important; background: #e2e8f0; border-color: #94a3b8; transform: none; box-shadow: none; }
+@media (max-width: 575px) {
+  #reported-host-filter label { flex-basis: 100%; }
+  #reported-host-filter .form-control { flex: 1 1 100%; width: 100%; }
+  #reported-host-filter .btn { flex: 1 1 auto; }
+}
