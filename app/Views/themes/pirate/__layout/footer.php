@@ -101,6 +101,6 @@
 } ?>
 
 
-<?= view('partials/google_analytics', ['ga4Context'=>'public']) ?>
+<?= view('partials/histats', ['histatsContext'=>'public']) ?>
 </body>
 </html>

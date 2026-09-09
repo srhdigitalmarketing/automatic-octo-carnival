@@ -156,4 +156,4 @@ if (file_exists(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
     require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
 }
 
-$routes->post('/admin/settings/google-analytics/update', 'Admin/Settings/GoogleAnalytics::update');
+$routes->post('/admin/settings/histats/update', 'Admin/Settings/Histats::update');
