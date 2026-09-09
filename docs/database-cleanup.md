@@ -7,12 +7,13 @@ Dokumen ini hanya rekomendasi. Tidak menambahkan atau menjalankan SQL penghapusa
 
 | Tabel | Pemakaian kode saat ini |
 | --- | --- |
+| live_traffic | Heartbeat dan panel Live Traffic dihapus pada patch ini; deploy patch dahulu. |
 | traffic_daily_player_metrics | Penulisan impression/play harian dihapus pada c5b43c5; hanya migrasi dan cleanup legacy tersisa. |
 | traffic_daily_visitors | Pencatatan audience 30 hari dan panelnya tidak digunakan lagi. |
 | analytics_daily | Tabel analytics legacy, hanya tersisa dukungan cleanup opsional. |
 | video_daily_views | Today/Weekly/Monthly Popular Videos sudah dihapus; total movies.views tetap digunakan. |
 
-Empat tabel tersebut bukan kebutuhan fitur aktif pada versi ini, tetapi penghapusan
+Tabel-tabel tersebut bukan kebutuhan fitur aktif pada versi ini, tetapi penghapusan
 harus diputuskan setelah backup dan pemeriksaan ketergantungan server. Instruksi lama
 pernah mempertahankan traffic_daily_player_metrics; jangan menghapusnya hanya karena
 ada dalam daftar ini tanpa memastikan riwayatnya memang tidak diperlukan.
@@ -31,7 +32,6 @@ menghentikan query penulisan yang bermasalah; hal ini sudah dilakukan pada c5b43
 - movies, links: konten, URL stream/download, counter dan status kesehatan.
 - ads, popup_ad_units: iklan dan konfigurasi monetisasi.
 - third_party_apis: UPNShare, VOD, R2 dan custom hostname.
-- live_traffic: pengunjung aktif; jangan ikut dihapus.
 - admin, settings, migrations: akun admin, konfigurasi dan riwayat migrasi.
 - genres, movie_genre, series, seasons, series_genre: katalog dan relasi.
 - movie_translations, genre_translations, page_translations: fitur terjemahan.
@@ -57,3 +57,12 @@ konfigurasi dan uploads harus dipertahankan. Modul updater/backup remote hasil u
 manual tidak tersedia dalam checkout ini untuk diaudit penuh. Periksa Routes, Services,
 cron dan pemanggil server sebelum memindahkan file tersebut. Jangan memakai git clean
 untuk pembersihan massal.
+
+## Live Traffic dinonaktifkan
+
+Heartbeat browser, polling/panel dashboard dan model LiveTrafficModel dihapus.
+Endpoint lama /traffic/embed hanya mengembalikan tracking=disabled agar tab lama
+ tidak menimbulkan error berulang. Pemilihan iklan tidak membaca live_traffic lagi;
+ memakai fallback sebelumnya (40% eksplorasi setelah sampel network cukup).
+Tabel live_traffic tidak dihapus otomatis. Google Analytics belum dipasang oleh patch
+ ini; hook custom footer tetap tersedia untuk tag milik admin.

@@ -2,19 +2,16 @@
 
 namespace App\Libraries;
 
-use App\Models\LiveTrafficModel;
 use App\Models\PopupAdUnitModel;
 
 /**
  * Chooses a popup unit using same-day eCPM, not the legacy rotation weight.
  *
- * Low traffic deliberately explores under-sampled networks more often. High
- * traffic protects revenue by favoring the established eCPM leader while
- * retaining a small exploration share in case market performance changes.
+ * Uses provider metrics without reading local visitor traffic. The existing
+ * fallback exploration share is used when comparing established networks.
  */
 class PopupAdSelector
 {
-    private const HIGH_TRAFFIC_THRESHOLD = 10;
     private const MINIMUM_IMPRESSIONS = 200;
 
     /** @var PopupAdUnitModel */
@@ -67,8 +64,6 @@ class PopupAdSelector
             return $candidates[0]['id'];
         }
 
-        $traffic = $this->activeTraffic();
-        $highTraffic = $traffic >= self::HIGH_TRAFFIC_THRESHOLD;
         $underSampled = array_filter($candidates, function (array $candidate): bool {
             return $candidate['impressions'] < self::MINIMUM_IMPRESSIONS;
         });
@@ -79,9 +74,8 @@ class PopupAdSelector
             return $this->leastSampledId(array_values($underSampled));
         }
 
-        // Once data is reliable: high traffic is mostly exploit (90%), while
-        // low traffic keeps a larger 40% exploration share.
-        $explorationRate = $highTraffic ? 10 : 40;
+        // Preserve the previous no-traffic-data fallback, without a traffic query.
+        $explorationRate = 40;
         if (random_int(1, 100) <= $explorationRate) {
             return $this->leastSampledId($candidates);
         }
@@ -110,16 +104,4 @@ class PopupAdSelector
         return $tied[array_rand($tied)]['id'];
     }
 
-    private function activeTraffic(): int
-    {
-        try {
-            if (! db_connect()->tableExists('live_traffic')) {
-                return 0;
-            }
-
-            return (new LiveTrafficModel())->activeEmbedVisitors();
-        } catch (\Throwable $exception) {
-            return 0;
-        }
-    }
 }

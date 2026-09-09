@@ -78,7 +78,6 @@ $routes->get('/admin/ajax/tables/reported-links', 'Admin/Ajax/TableData::reporte
 
 $routes->post('/admin/ads/popup-units/save', 'Admin/Ads::save_popup_units');
 $routes->post('/admin/ads/zode-settings/save', 'Admin/Ads::save_zode_settings');
-$routes->get('/admin/dashboard/live-traffic', 'Admin/Dashboard::live_traffic');
 $routes->get('/admin/dashboard/revenue-today', 'Admin/Dashboard::revenue_today');
 $routes->post('/traffic/embed', 'Traffic::embed');
 $routes->get('/traffic/popup-ad', 'Traffic::popup_ad');

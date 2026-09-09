@@ -2,7 +2,6 @@
 // Run against a disposable MySQL instance ONLY: php tests/mysql_integration_test.php 13389
 namespace CodeIgniter { class Model { protected $db; public function __construct($db) { $this->db = $db; } } }
 namespace {
-require __DIR__ . '/../app/Models/LiveTrafficModel.php';
 require __DIR__ . '/../app/Libraries/AnalyticsRetention.php';
 function check($ok, $message) { if (!$ok) { throw new RuntimeException($message); } }
 function cache() { static $cache; return $cache ?? ($cache = new class {
@@ -38,11 +37,6 @@ $adapter = new class($mysql) {
 try {
     $mysql->query('CREATE TABLE traffic_daily_visitors (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, visit_date DATE NOT NULL, visitor_key VARCHAR(64) NOT NULL, platform VARCHAR(12) NOT NULL, created_at DATETIME, updated_at DATETIME, UNIQUE KEY day_visitor (visit_date,visitor_key), KEY day_platform (visit_date,platform)) ENGINE=InnoDB');
     $mysql->query('CREATE TABLE traffic_daily_player_metrics (visit_date DATE PRIMARY KEY, impressions BIGINT DEFAULT 0, play_clicks BIGINT DEFAULT 0, created_at DATETIME, updated_at DATETIME) ENGINE=InnoDB');
-    $mysql->query('CREATE TABLE live_traffic (id INT AUTO_INCREMENT PRIMARY KEY, page VARCHAR(30), visitor_key VARCHAR(64), last_seen_at DATETIME, UNIQUE KEY page_visitor (page,visitor_key)) ENGINE=InnoDB');
-    cache()->save('live_traffic_pruned_at', 1, 600);
-    $live = new App\Models\LiveTrafficModel($adapter);
-    $live->touchEmbedVisitor('same-browser'); $live->touchEmbedVisitor('same-browser');
-    check((int)$adapter->query('SELECT COUNT(*) AS total FROM live_traffic')->getRowArray()['total'] === 1, 'Live visitor atomic upsert');
     $cutoff = App\Libraries\AnalyticsRetention::cutoff();
     $old = date('Y-m-d', strtotime($cutoff . ' -1 day'));
     foreach ([$cutoff, $old] as $date) {
@@ -54,7 +48,7 @@ try {
     check((int)$adapter->query('SELECT COUNT(*) AS total FROM traffic_daily_visitors WHERE visit_date = ?', [$cutoff])->getRowArray()['total'] === 1, 'Boundary date retained');
     $again = (new App\Libraries\AnalyticsRetention())->prune($adapter);
     check($again['traffic_daily_visitors']['deleted'] === 0, 'Cleanup replay safe');
-    echo "PASS: real MySQL live visitor upsert, legacy retention boundary and replay.\n";
+    echo "PASS: real MySQL legacy retention boundary and replay.\n";
 } finally {
     $mysql->query("DROP DATABASE `$name`"); $mysql->close();
 }
