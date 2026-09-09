@@ -8,6 +8,7 @@
         <div class="clearfix"></div>
     </div>
     <div class="x_content">
+        <p class="text-muted">Kode ini dijalankan pada halaman publik. Hindari memasang tracking yang sama melalui Custom Codes dan HiStats.</p>
 
 
 
@@ -18,7 +19,7 @@
                 'name' => 'custom_header_codes',
                 'class' => 'form-control',
                 'rows' => 15
-            ], header_custom_codes()) ?>
+            ], (string) header_custom_codes()) ?>
         </div>
 
 
@@ -28,10 +29,11 @@
                 'name' => 'custom_footer_codes',
                 'class' => 'form-control',
                 'rows' => 15
-            ], footer_custom_codes()) ?>
+            ], (string) footer_custom_codes()) ?>
         </div>
 
 
 
+        <button type="submit" class="btn btn-primary">Simpan pengaturan Site</button>
     </div>
 </div>

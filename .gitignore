@@ -12,3 +12,6 @@
 /public/.well-known/
 /public/uploads/.shortpixel/
 *.log
+
+# Windows thumbnail metadata is not a website asset.
+Thumbs.db

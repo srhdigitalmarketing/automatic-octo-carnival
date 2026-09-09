@@ -43,12 +43,14 @@ class Site extends BaseSettings
                 $generalData['ad_block_detector'] =  $generalData['ad_block_detector'] == 1;
 
 
-                if(! empty( $generalData['custom_header_codes'] )){
-                    $generalData['custom_header_codes'] = base64_encode( $generalData['custom_header_codes'] );
-                }
-
-                if(! empty( $generalData['custom_footer_codes'] )){
-                    $generalData['custom_footer_codes'] = base64_encode( $generalData['custom_header_codes'] );
+                // Old forms may omit these fields. Preserve stored code when absent;
+                // an explicitly submitted empty string still clears the selected field.
+                foreach (['custom_header_codes', 'custom_footer_codes'] as $codeField) {
+                    if (($generalData[$codeField] ?? null) === null) {
+                        unset($generalData[$codeField]);
+                    } else {
+                        $generalData[$codeField] = base64_encode($generalData[$codeField]);
+                    }
                 }
 
                 $customSlugsData = $this->request->getPost([

@@ -13,6 +13,8 @@
         <?= $this->include('admin/settings/site/form_x_panels/homepage.php') ?>
         <?= $this->include('admin/settings/site/form_x_panels/page_url.php') ?>
 
+        <?= $this->include('admin/settings/site/form_x_panels/custom_codes.php') ?>
+
         <?= form_close() ?>
         <?= form_open(admin_url('/settings/homepage/update'), ['id'=>'homepage-settings-form']) ?><?= form_close() ?>
         <?= $this->include('admin/settings/site/form_x_panels/histats') ?>
