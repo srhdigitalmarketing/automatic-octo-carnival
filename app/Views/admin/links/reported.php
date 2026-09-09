@@ -12,7 +12,7 @@
     <span class="reported-links-summary"><i class="fa fa-exclamation-circle"></i> <span id="reported-review-count"><?= number_format($linksCount) ?></span> need review</span>
 </div>
 
-<form method="get" id="reported-host-filter" class="reported-host-filter">
+<form method="get" id="reported-host-filter" class="reported-host-filter flex-wrap">
     <label for="reported-host">Stream host</label>
     <select id="reported-host" name="host" class="form-control">
         <option value="">All hosts</option>
@@ -22,7 +22,18 @@
     </select>
     <button type="submit" class="btn btn-primary">Filter</button>
     <button type="button" id="bulk-link-fix" class="btn btn-primary" data-url="<?= esc(admin_url('/bulk-link-fix/run'), 'attr') ?>">Bulk Fix Broken Links</button>
+    <button type="button" id="bulk-report-clear" class="btn btn-outline-warning" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Bulk Clear Reports</button>
+    <button type="button" id="export-error-links" class="btn btn-outline-primary" data-url="<?= esc(admin_url('/reported-link-tools/run'), 'attr') ?>">Export Error Links (CSV)</button>
 </form>
+<div id="reported-tools-progress" class="x_panel p-3" hidden>
+    <p class="small text-muted">Mengikuti pilihan host, mencakup semua halaman tabel. Clear hanya menghapus laporan; tidak memperbaiki atau menghapus link. Export berisi link yang dilaporkan, termasuk wrong video. Pencarian tabel tidak membatasi kedua aksi ini.</p>
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <span id="reported-tools-status" role="status" aria-live="polite"></span>
+        <button type="button" id="reported-tools-stop" class="btn btn-outline-secondary btn-sm">Berhenti</button>
+    </div>
+    <div class="progress"><div id="reported-tools-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-label="Progres laporan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width:0%"></div></div>
+</div>
+<script defer src="<?= site_url('/admin-assets/js/reported-link-tools.js?v=1') ?>"></script>
 <div id="bulk-fix-progress" class="x_panel p-4" hidden>
     <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
         <div class="d-flex align-items-center mb-2">

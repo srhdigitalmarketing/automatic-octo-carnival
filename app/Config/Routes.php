@@ -157,3 +157,5 @@ if (file_exists(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
 }
 
 $routes->post('/admin/settings/histats/update', 'Admin/Settings/Histats::update');
+
+$routes->post('/admin/reported-link-tools/run', 'Admin/ReportedLinkTools::run');
