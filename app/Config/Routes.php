@@ -159,3 +159,8 @@ if (file_exists(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
 $routes->post('/admin/settings/histats/update', 'Admin/Settings/Histats::update');
 
 $routes->post('/admin/reported-link-tools/run', 'Admin/ReportedLinkTools::run');
+
+// Backup is the current name; keep legacy Secure routes for existing bookmarks.
+$routes->get('/admin/settings/backup', 'Admin/Settings/Secure::index');
+$routes->post('/admin/settings/backup/run', 'Admin/Settings/Secure::run');
+$routes->get('/admin/settings/backup/download', 'Admin/Settings/Secure::download');

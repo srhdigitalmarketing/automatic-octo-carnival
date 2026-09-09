@@ -54,7 +54,7 @@
                             <li><a href="<?= admin_url('/settings/servers') ?>">Servers</a></li>
                             <li><a href="<?= admin_url('/settings/firewall') ?>">Firewall</a></li>
                             <li><a href="<?= admin_url('/settings/cdn') ?>">CDN</a></li>
-                            <li><a href="<?= admin_url('/settings/secure') ?>">Secure</a></li>
+                            <li><a href="<?= admin_url('/settings/backup') ?>">Backup</a></li>
                             <li><a href="<?= admin_url('/settings/email') ?>">Email</a></li>
                             <li><a href="<?= admin_url('/settings/api') ?>">Dev API</a></li>
                             <li><a href="<?= admin_url('/settings/translations') ?>">Translations</a></li>

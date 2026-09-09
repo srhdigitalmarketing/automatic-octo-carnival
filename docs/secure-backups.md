@@ -1,4 +1,4 @@
-# Settings → Secure
+# Settings → Backup
 
 Create and download ZIP file backups or a full SQL database dump. Upload ZIP/SQL archives, then choose Restore in the backup list. Upload alone does not modify live data. Restore first validates the selected archive and displays its destination; the administrator must type RESTORE to confirm. The server requires a session-bound, single-use confirmation valid for ten minutes and rechecks the archive checksum before applying it.
 
@@ -43,4 +43,58 @@ Select **Full Backup - Files dan Database** in the Backup Files scope selector. 
 
 Database and files are captured sequentially, not as an atomic snapshot. Pause content changes, uploads and scheduled writes while creating the backup. Full Backup requires both PHP ZIP support and the database export prerequisites described above. Allow disk space for the temporary components plus the final package. Intermediate archives live in a private `full-work-*` directory and are cleaned on success or a caught failure; no incomplete package appears in the normal backup list. After an interrupted/killed worker, confirm that no backup operation is active before removing orphaned staging files.
 
-To restore, download and unpack the full package on a private computer. Upload its `files.zip` and `database.sql` components to Secure and restore them separately, verifying the destination configuration/database first. The existing Restore action explicitly rejects the outer package with these instructions so it cannot accidentally copy the SQL dump into the application. Never unpack the outer package in the website's public directory. The existing 512 MB upload limit still applies when uploading archives.
+To restore, download and unpack the full package on a private computer. Upload its `files.zip` and `database.sql` components to Backup and restore them separately, verifying the destination configuration/database first. The existing Restore action explicitly rejects the outer package with these instructions so it cannot accidentally copy the SQL dump into the application. Never unpack the outer package in the website's public directory. The existing 512 MB upload limit still applies when uploading archives.
+
+
+## FTP, Google Drive and S3 destinations
+
+In Backup, expand **Tujuan Backup > Pengaturan FTP, Google Drive dan S3**, fill in the desired provider and save. Select that destination before Backup Files, Full Backup or Backup Database to create a local archive and send it immediately afterward. For existing ZIP/SQL archives, select the destination then click **Kirim**. Upload Backup itself only stores the provided archive locally. There is no recurring schedule or remote restore/download browser in this feature.
+
+Local archives are retained after success or failure. Successful uploads show the destination and timestamp in the backup list. Remote failure refreshes the list so the local archive can be downloaded or retried. Provider errors do not include raw responses, passwords or tokens. An interrupted response can mean that the remote upload completed; check the destination before retrying (Drive can create duplicate filenames).
+
+Credentials are encrypted with AES-256-GCM in `writable/secure-backups/.remote-settings`; the random installation key is `.remote-key` in the same private directory. File/directory permissions restrict access; encryption does not protect against someone who can read both the key and ciphertext. Neither file is included in application/full backups because writable is excluded. Keep a separate secure copy of both if migrating the remote configuration; losing the key makes those settings unreadable. Secret inputs are never populated from saved values; blank inputs preserve existing secrets. Session Token has an explicit clear checkbox.
+
+### FTP / FTPS
+
+Use a hostname, port, username, password and a folder relative to the FTP user's login directory. The folder should be outside any public web root. FTPS is the default and requires explicit TLS, normally on port 21, with certificate verification enabled. Plain FTP is available only by selecting it explicitly and does not encrypt credentials or backup data. Passive transfers require the server's passive data ports to be reachable. The server user needs create/write/rename permission; uploads use a `.part` filename and rename after successful transfer. Failed transfers may leave a `.part` file, which is not a completed backup. SFTP is a separate protocol and is not supported by this option.
+
+### Google Drive
+
+1. Enable Google Drive API in your Google Cloud project and configure the OAuth consent screen.
+2. Create an OAuth client for your own application. Obtain an offline refresh token using that same Client ID and Client Secret, consenting with the Google account that can write to the destination folder. Use the [Google OAuth web-server flow](https://developers.google.com/identity/protocols/oauth2/web-server) (`access_type=offline`); the refresh token must include a Drive scope that grants access to the selected folder. A `drive.file` token only accesses files/folders available to that app, not every pre-existing folder. Do not paste tokens into public tools or source files.
+3. Enter Client ID, Client Secret, Refresh Token, and the folder ID from its Drive URL in Secure. This integration uses the user's OAuth storage quota, not a service-account JSON credential.
+4. The server refreshes the access token, creates a [resumable upload session](https://developers.google.com/workspace/drive/api/guides/manage-uploads), streams the archive, and checks the returned size and MD5 before marking success. The UI does not currently resume interrupted sessions; verify the remote folder before starting a fresh attempt. Shared Drive uploads use `supportsAllDrives=true` and still require appropriate folder permissions. OAuth apps left in testing may require renewed consent/tokens according to Google's policies.
+
+### S3 Storage
+
+Enter the HTTPS service endpoint (no bucket/path/query in the URL), region, bucket, optional prefix, Access Key ID and Secret Access Key. Temporary credentials may also require Session Token. For example, AWS Singapore uses `https://s3.ap-southeast-1.amazonaws.com` and region `ap-southeast-1`; an R2 S3 endpoint uses its account endpoint and region `auto`. The provider must support path-style S3 URLs and AWS Signature Version 4. Use a private bucket and scoped `s3:PutObject` permission for the backup prefix; no public ACL is requested. Bucket policy/encryption requirements must allow this uploader; custom KMS/object-lock headers are not configured here.
+
+Uploads use a [signed S3 PutObject request](https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html) with the archive's SHA-256. The object name includes the local archive ID, so retries for that archive target the same key. Do not configure a public bucket or CDN for backups containing database/configuration secrets.
+
+### Transfer limits and validation
+
+PHP cURL and OpenSSL are required. Files stream from disk rather than being read entirely into PHP memory. Each remote transfer is limited to 5 GiB per archive and 300 seconds per HTTP/FTP request; there is no multipart S3 uploader. PHP-FPM/nginx request limits must accommodate backup creation plus upload. The Backup operation lock also serializes backup/restore/remote settings changes. Large or slow transfers may need an external backup client or aaPanel job.
+
+Tests use mocked provider transports to check encrypted settings, secret retention/redaction, FTPS flags and final rename, S3 signing inputs, Drive OAuth/upload verification, destination validation, local retention, and UI status/error behavior. They do not validate connectivity or credentials against live FTP, Google Drive or S3 accounts.
+
+## Nama menu dan pilihan kuota gratis
+
+Menu sekarang **Settings → Backup**, dengan URL `/admin/settings/backup`. URL lama `/admin/settings/secure` tetap berfungsi. Nama internal file, token, format arsip dan folder `writable/secure-backups` tetap dipertahankan agar backup lama bisa dibaca. Tidak ada migrasi atau perubahan tabel database.
+
+Fitur transfer ini tidak memiliki biaya lisensi tambahan. Kuota dan biaya akun storage berbeda:
+
+- [Google Drive](https://support.google.com/drive/answer/9312312?hl=en): hingga 15 GB tanpa biaya, dibagi dengan Gmail dan Google Photos; periksa kuota akun sendiri.
+- [Cloudflare R2](https://developers.cloudflare.com/r2/pricing/): Standard storage memiliki kuota gratis 10 GB-month/bulan dan kuota operasi terbatas. Gunakan endpoint S3 akun R2, region `auto`, bucket privat.
+- [Backblaze B2](https://www.backblaze.com/cloud-storage/pricing): 10 GB storage pertama gratis. Gunakan S3 endpoint serta region bucket dari console B2, application key yang boleh menulis bucket, dan pilih S3 / R2 / Backblaze B2 dalam pengaturan.
+- FTP/FTPS tidak menyediakan kuota sendiri; memakai disk akun hosting/server tujuan. FTPS menggunakan TLS eksplisit, bukan SFTP.
+
+Pemakaian di atas kuota dan operasi/transfer tertentu bisa berbayar. Tidak ada akun yang otomatis dibuat, paket dibeli, atau data dikirim sebelum admin mengisi pengaturan lalu memilih tujuan. Tidak ada polling atau pekerjaan remote pada halaman player. Upload remote melepas lock sesi PHP agar tab admin lain tidak tertahan; lock backup terpisah tetap mencegah backup dan restore bersamaan.
+
+
+## Restore lokal dan remote
+
+- Lokal: upload ZIP/SQL (maksimal 512 MB, mengikuti batas PHP), kemudian pilih **Restore** pada daftar, periksa tujuan dan ketik `RESTORE`.
+- Remote: simpan konfigurasi tujuan, pilih FTP/FTPS, Drive atau S3, masukkan nama arsip (FTP/S3) atau File ID (Drive), lalu **Unduh untuk Restore**. Gunakan nama file tanpa path di folder/prefix tersimpan; Drive harus berada dalam folder tersimpan. Diperlukan izin baca/GetObject. Tidak menerima URL bebas.
+- Download maksimal 5 GB, streaming ke disk privat dengan timeout 300 detik; file parsial dibersihkan. Google Drive diperiksa ukuran dan MD5. FTP/S3 memakai transfer selesai dan validasi ZIP; SHA-256 lokal dicatat untuk mendeteksi perubahan sebelum restore, bukan bukti checksum remote.
+- Download tidak menjalankan SQL atau menimpa file website. Setelah download, pilih Restore dan konfirmasi. Restore membuat backup pengaman sebelum penimpaan.
+- Full Backup masih dipulihkan sebagai dua komponen: unduh paket, ekstrak di komputer pribadi, lalu upload `files.zip` dan `database.sql` dan restore masing-masing. Jangan mengekstrak paket ke public.

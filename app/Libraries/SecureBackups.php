@@ -67,6 +67,22 @@ class SecureBackups
         $file->move($this->directory,$id.'.'.$extension);
         $this->register($id,$extension,basename(str_replace('\\','/',$file->getClientName())),'uploaded');
     }
+    public function importRemote(string $temporary,string $name): string
+    {
+        if (is_link($temporary) || !is_file($temporary) || realpath(dirname($temporary))!==realpath($this->directory) || strpos(basename($temporary),'.download-')!==0) throw new RuntimeException('File download tidak valid.');
+        $extension=strtolower(pathinfo($name,PATHINFO_EXTENSION));
+        if (strpos($name,chr(92))!==false || !in_array($extension,['zip','sql'],true) || preg_match('~[\\/:\x00-\x1f\x7f]~',$name) || filesize($temporary)<1 || filesize($temporary)>5368709120) throw new RuntimeException('Gunakan arsip ZIP atau SQL, maksimal 5 GB.');
+        if ($extension==='zip') {
+            if (!class_exists(ZipArchive::class)) throw new RuntimeException('Aktifkan ekstensi PHP zip.');
+            $zip=new ZipArchive();
+            if ($zip->open($temporary,ZipArchive::CHECKCONS)!==true) throw new RuntimeException('Download bukan arsip ZIP yang valid.');
+            $zip->close();
+        }
+        $id=bin2hex(random_bytes(16));
+        if (!rename($temporary,$this->directory.$id.'.'.$extension)) throw new RuntimeException('Download gagal disimpan.');
+        $this->register($id,$extension,$name,'remote');
+        return $id;
+    }
     public function files(string $scope): void
     {
         if ($scope==='full') { $this->full(); return; }
