@@ -4,6 +4,9 @@ mkdir($root.'/public/uploads',0700,true);mkdir($root.'/writable/cache',0700,true
 define('ROOTPATH',$root.'/');define('FCPATH',$root.'/public/');define('WRITEPATH',$root.'/writable/');
 require __DIR__.'/../app/Libraries/SecureBackups.php';
 file_put_contents($root.'/public/uploads/banner.jpg','image-fixture');file_put_contents($root.'/.env','FAKE=test');file_put_contents($root.'/.git/config','exclude');file_put_contents($root.'/writable/cache/runtime','exclude');
+mkdir($root.'/writable/site-updates-backup',0700,true);
+file_put_contents($root.'/writable/site-updates-backup/private','exclude');
+if (DIRECTORY_SEPARATOR==='/') chmod($root.'/writable/site-updates-backup',0000);
 try {
  $store=new App\Libraries\SecureBackups();$store->files('uploads');$items=$store->entries();
  if(count($items)!==1)throw new RuntimeException('Missing backup');
@@ -19,6 +22,7 @@ try {
 }finally{
  // Only this test's randomly created temporary root is removed.
  if(strpos($root,sys_get_temp_dir().'/secure-backup-test-')!==0)throw new RuntimeException('Invalid cleanup root');
+ if (DIRECTORY_SEPARATOR==='/') chmod($root.'/writable/site-updates-backup',0700);
  $iterator=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::CHILD_FIRST);
  foreach($iterator as $file){if($file->isDir())rmdir($file->getPathname());else unlink($file->getPathname());}rmdir($root);
 }

@@ -93,7 +93,14 @@ class SecureBackups
         $id=bin2hex(random_bytes(16));$path=$this->directory.$id.'.zip';$zip=new ZipArchive();
         if ($zip->open($path,ZipArchive::CREATE|ZipArchive::EXCL)!==true) throw new RuntimeException('Arsip tidak dapat dibuat.');
         try {
-            $iterator=new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root,\FilesystemIterator::SKIP_DOTS));
+            // Filter directories before recursion, not after opening their children.
+            $source=new \RecursiveDirectoryIterator($root,\FilesystemIterator::SKIP_DOTS);
+            $filter=new \RecursiveCallbackFilterIterator($source,static function($entry)use($root,$scope){
+                if ($entry->isLink()) return false;
+                $relative=str_replace('\\','/',substr($entry->getPathname(),strlen($root)+1));
+                return $scope!=='application' || !preg_match('~^(?:\.git|\.codex|\.agents|node_modules|writable)(?:/|$)~',$relative);
+            });
+            $iterator=new \RecursiveIteratorIterator($filter);
             $count=0;
             foreach ($iterator as $file) {
                 if ($file->isLink() || !$file->isFile()) continue;
