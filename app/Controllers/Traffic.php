@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Libraries\PopupAdSelector;
 use App\Models\LiveTrafficModel;
-use App\Models\DailyPlayerAnalyticsModel;
 
 class Traffic extends BaseController
 {
@@ -29,6 +28,9 @@ class Traffic extends BaseController
             return redirect()->back();
         }
 
+        // No session writes are needed by this background heartbeat.
+        if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+
         $visitorKey = trim((string) $this->request->getPost('visitor_key'));
 
         if (! preg_match('/^[a-zA-Z0-9_-]{16,64}$/', $visitorKey)) {
@@ -44,13 +46,7 @@ class Traffic extends BaseController
 
             $traffic = new LiveTrafficModel();
             $traffic->touchEmbedVisitor($visitorKey);
-            $analytics = new DailyPlayerAnalyticsModel();
-            if ($this->request->getPost('record_impression') === '1') {
-                $analytics->recordImpression();
-            }
-            if ($this->request->getPost('event') === 'play') {
-                $analytics->recordPlayClick();
-            }
+
 
         } catch (\Throwable $exception) {
             log_message('error', 'Live traffic heartbeat could not be saved: {message}', [
