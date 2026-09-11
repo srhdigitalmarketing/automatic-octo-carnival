@@ -29,7 +29,7 @@ class VideoHostHealth
     /** Null means this link is not configured for a supported provider. */
     public function check(Link $link): ?array
     {
-        if (! $this->links->supportsProviderStatus()) { return null; }
+        if (!RegisteredStreamHost::matches((string)$link->link) || ! $this->links->supportsProviderStatus()) { return null; }
         if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
@@ -50,13 +50,7 @@ class VideoHostHealth
                 $config = new \Config\UpnShare(); $config->apiToken = (string)$api->api_token;
                 $this->clients[$key] = new UpnShareClient($config);
             }
-        } else {
-            $config = config('UpnShare');
-            if (!empty($config->apiToken) && self::matchesHost((string)$link->link, $config->linkHosts)) {
-                $key = 'environment';
-                if (!isset($this->clients[$key])) { $this->clients[$key] = new UpnShareClient($config); }
-            } else { return null; }
-        }
+        } else { return null; }
         $id = self::videoId((string)$link->link);
         if ($matches && $matches[0]->provider === 'streamhg') {
             $path = (string)parse_url((string)$link->link, PHP_URL_PATH);

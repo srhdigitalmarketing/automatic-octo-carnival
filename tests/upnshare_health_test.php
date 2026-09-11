@@ -5,6 +5,7 @@ require dirname(__DIR__) . '/app/Config/Paths.php';
 $paths = new Config\Paths();
 require dirname(__DIR__) . '/system/bootstrap.php';
 error_reporting(E_ALL & ~E_DEPRECATED);
+$registered = new ReflectionProperty(App\Libraries\RegisteredStreamHost::class, 'domains'); $registered->setAccessible(true); $registered->setValue(null, ['ustreamplay.online,vid.example']);
 function check($ok, $message) { if (!$ok) { throw new RuntimeException($message); } }
 $config = new Config\UpnShare(); $config->apiToken = 'test-only-token';
 $calls = [];

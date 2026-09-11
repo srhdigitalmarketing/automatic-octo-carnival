@@ -57,7 +57,7 @@ class LinkModel extends Model
             $this->where('type', $type);
         }
 
-        if(! $withBroken){
+        if(! $withBroken && $type !== 'stream'){
             $this->where('is_broken', 0);
             if ($this->supportsProviderStatus()) {
                 $this->groupStart()->where('provider_status', null)
@@ -77,8 +77,14 @@ class LinkModel extends Model
             $this->orderBy('api_id', 'desc')
                  ->orderBy('id', 'asc');
         }
-        return $this->where('movie_id', $movieId)
-                    ->find();
+        $found = $this->where('movie_id', $movieId)->find();
+        if (!$withBroken && $type === 'stream') {
+            $found = array_values(array_filter($found, static function ($link) {
+                if (!\App\Libraries\RegisteredStreamHost::matches((string)$link->link)) return true;
+                return !(bool)$link->is_broken && !in_array($link->provider_status, ['deleted','error','processing'], true);
+            }));
+        }
+        return $found;
     }
 
     /**

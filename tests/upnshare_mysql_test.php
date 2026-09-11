@@ -119,8 +119,16 @@ try {
     $stale = $links->find($fallback);
     $links->protect(false)->update($fallback,['provider_status'=>'deleted','is_broken'=>1]); $links->protect(true);
     $success = new ReflectionMethod($resolver,'recordSuccess'); $success->setAccessible(true);
-    check($success->invoke($resolver,$stale) === false, 'Stale player success cannot override concurrent API deletion');
-    check((int)$links->find($fallback)->is_broken === 1, 'Deleted host stays blocked after stale success');
+    check($success->invoke($resolver,$stale) === true, 'Unregistered host ignores historic provider flags');
+    check((int)$links->find($fallback)->is_broken === 1, 'Historical flags retained without mass database rewrite');
+    check((int)$resolver->resolve(1, (int)$fallback)->id === (int)$fallback, 'Unregistered broken link remains selectable');
+    $beforeUnchecked = $links->find($fallback)->toRawArray();
+    $resolver->recordPlayerFailure((int)$fallback, 'Player timeout');
+    check($links->find($fallback)->toRawArray() === $beforeUnchecked, 'Browser failure does not mark an unregistered host broken');
+    check($resolver->check($links->find($fallback)) === false, 'Cron skips unregistered host');
+    check($links->find($fallback)->toRawArray() === $beforeUnchecked, 'Skipped check does not write health flags');
+    $eligible = array_column(array_map(static fn($item)=>$item->toRawArray(), $links->findByMovieId(1,'stream',false)), 'id');
+    check(in_array($fallback, $eligible), 'Embed server list retains unregistered host despite stale broken flag');
     $links->protect(false)->update($id,['provider_status'=>'available','is_broken'=>0,'last_error'=>null]); $links->protect(true);
     $db->table('links')->where('id', $id)->update(['last_checked_at'=>'2020-01-01 00:00:00','last_success_at'=>'2020-01-01 00:00:00','reports_not_working'=>2]);
     check((int)$resolver->resolve(1)->id === (int)$id, 'Recovered API host returns to eligible priority ordering');

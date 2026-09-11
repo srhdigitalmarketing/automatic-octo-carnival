@@ -43,7 +43,7 @@ $streamServerStatus = static function ($link): array {
 
                     <div class="link-meta-info mb-1">
                         <span class="requests-count">Requests :  <?= $link->requests ?></span>
-                        <span class="status float-right">Status : <?= format_links_status( $link->is_broken ) ?> </span>
+                        <span class="status float-right">Status : <?= \App\Libraries\RegisteredStreamHost::matches((string)$link->link) ? format_links_status($link->is_broken) : 'Tidak diperiksa (tanpa API)' ?> </span>
                     </div>
 
 

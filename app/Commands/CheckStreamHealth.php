@@ -11,7 +11,7 @@ class CheckStreamHealth extends BaseCommand
 {
     protected $group = 'Streams';
     protected $name = 'streams:health-check';
-    protected $description = 'Checks reported stream links first, then a rotating batch, using provider APIs first and HTTP fallback.';
+    protected $description = 'Checks reported stream links first, then a rotating batch, only for registered active API hosts.';
     protected $usage = 'streams:health-check [--limit 100]';
     protected $options = [
         '--limit' => 'Maximum stream links to check in one run (1-500; default: 100).',
@@ -58,12 +58,15 @@ class CheckStreamHealth extends BaseCommand
 
         $resolver = new StreamResolver($links);
         $healthy = 0;
+        $skipped = 0;
         $unavailable = 0;
         $autoClearedReports = 0;
         $providerCounts = [];
 
         foreach ($batch as $link) {
-            if ($resolver->check($link)) {
+            if (!\App\Libraries\RegisteredStreamHost::matches((string)$link->link)) {
+                $skipped++;
+            } elseif ($resolver->check($link)) {
                 $healthy++;
                 $autoClearedReports += (int) ($link->reports_not_working ?? 0);
             } else {
@@ -78,8 +81,8 @@ class CheckStreamHealth extends BaseCommand
 
         if ($providerCounts) { CLI::write('Video host API: ' . json_encode($providerCounts)); }
         CLI::write(
-            'Checked ' . count($batch) . ' stream link(s): ' . $healthy . ' available, ' . $unavailable . ' unavailable, '
-            . $autoClearedReports . ' not-working report(s) auto-cleared.',
+            'Checked ' . (count($batch) - $skipped) . ' stream link(s): ' . $healthy . ' available, ' . $unavailable . ' unavailable, '
+            . $autoClearedReports . ' not-working report(s) auto-cleared; ' . $skipped . ' unregistered host(s) skipped.',
             $unavailable > 0 ? 'yellow' : 'green'
         );
     }
