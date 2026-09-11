@@ -59,6 +59,7 @@ class CheckStreamHealth extends BaseCommand
         $resolver = new StreamResolver($links);
         $healthy = 0;
         $skipped = 0;
+        $reactivated = 0;
         $unavailable = 0;
         $autoClearedReports = 0;
         $providerCounts = [];
@@ -66,6 +67,7 @@ class CheckStreamHealth extends BaseCommand
         foreach ($batch as $link) {
             if (!\App\Libraries\RegisteredStreamHost::matches((string)$link->link)) {
                 $skipped++;
+                if ($links->activateUnregisteredStream($link)) $reactivated++;
             } elseif ($resolver->check($link)) {
                 $healthy++;
                 $autoClearedReports += (int) ($link->reports_not_working ?? 0);
@@ -82,7 +84,7 @@ class CheckStreamHealth extends BaseCommand
         if ($providerCounts) { CLI::write('Video host API: ' . json_encode($providerCounts)); }
         CLI::write(
             'Checked ' . (count($batch) - $skipped) . ' stream link(s): ' . $healthy . ' available, ' . $unavailable . ' unavailable, '
-            . $autoClearedReports . ' not-working report(s) auto-cleared; ' . $skipped . ' unregistered host(s) skipped.',
+            . $autoClearedReports . ' not-working report(s) auto-cleared; ' . $skipped . ' unregistered host(s) skipped; ' . $reactivated . ' link(s) activated.',
             $unavailable > 0 ? 'yellow' : 'green'
         );
     }

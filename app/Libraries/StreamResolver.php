@@ -149,7 +149,8 @@ class StreamResolver
         }
 
         if ($markServed && !RegisteredStreamHost::matches((string)$link->link)) {
-            // Ignore historical automatic flags; do not claim the file was checked.
+            // Restore Active state without claiming an HTTP/API check succeeded.
+            $this->links->activateUnregisteredStream($link);
             try { return (bool)$this->links->protect(false)->update($link->id, ['last_served_at'=>date('Y-m-d H:i:s')]); }
             finally { $this->links->protect(true); }
         }

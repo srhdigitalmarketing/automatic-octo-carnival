@@ -120,8 +120,16 @@ try {
     $links->protect(false)->update($fallback,['provider_status'=>'deleted','is_broken'=>1]); $links->protect(true);
     $success = new ReflectionMethod($resolver,'recordSuccess'); $success->setAccessible(true);
     check($success->invoke($resolver,$stale) === true, 'Unregistered host ignores historic provider flags');
-    check((int)$links->find($fallback)->is_broken === 1, 'Historical flags retained without mass database rewrite');
     check((int)$resolver->resolve(1, (int)$fallback)->id === (int)$fallback, 'Unregistered broken link remains selectable');
+    check((int)$links->find($fallback)->is_broken === 0 && $links->find($fallback)->provider_status === null, 'Unregistered stream returns to Active on selection');
+    $links->protect(false)->update($fallback,['is_broken'=>1,'provider_status'=>'error','failure_count'=>3,'reports_not_working'=>2]); $links->protect(true);
+    $beforeUrl = $links->find($fallback)->link;
+    $activate = (new ReflectionClass(App\Commands\ActivateUnregisteredStreams::class))->newInstanceWithoutConstructor();
+    $activate->run([]);
+    check((int)$links->find($fallback)->is_broken === 0 && $links->find($fallback)->provider_status === null, 'Command restores Active for non-API host');
+    check($links->find($fallback)->link === $beforeUrl && (int)$links->find($fallback)->reports_not_working === 2, 'Activation preserves URLs and visitor reports');
+    check((int)$links->find($id)->is_broken === 1, 'Activation preserves registered API error');
+    check($links->activateUnregisteredStream($links->find($fallback)) === false, 'Activation is idempotent');
     $beforeUnchecked = $links->find($fallback)->toRawArray();
     $resolver->recordPlayerFailure((int)$fallback, 'Player timeout');
     check($links->find($fallback)->toRawArray() === $beforeUnchecked, 'Browser failure does not mark an unregistered host broken');

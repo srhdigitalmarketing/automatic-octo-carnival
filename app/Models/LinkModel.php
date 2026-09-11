@@ -111,6 +111,29 @@ class LinkModel extends Model
         return $this->streamHealthFieldsAvailable;
     }
 
+    /** Reactivate unregistered streams without probing, changing URLs or clearing reports. */
+    public function activateUnregisteredStream($link): bool
+    {
+        if ($link->type !== 'stream' || !\App\Libraries\RegisteredStreamHost::available()
+            || \App\Libraries\RegisteredStreamHost::matches((string)$link->link)) return false;
+        $fields = $this->db->getFieldNames($this->table);
+        $reset = ['is_broken'=>0, 'failure_count'=>0, 'last_error'=>null, 'last_checked_at'=>null,
+            'last_success_at'=>null, 'last_failure_at'=>null, 'provider_status'=>null,
+            'provider_message'=>null, 'provider_checked_at'=>null];
+        $data = array_intersect_key($reset, array_flip($fields));
+        $dirty = false;
+        foreach ($data as $key=>$value) {
+            if ($value === null ? $link->$key !== null : (int)$link->$key !== $value) { $dirty = true; break; }
+        }
+        if (!$dirty) return false;
+        // Do not reset a different URL saved concurrently by the administrator.
+        $ok = $this->db->table($this->table)->where('id', (int)$link->id)
+            ->where('type', 'stream')->where('link', (string)$link->link)->update($data);
+        if (!$ok || $this->db->affectedRows() < 1) return false;
+        foreach ($data as $key=>$value) $link->$key = $value;
+        return true;
+    }
+
     /**
      * Clean empty links by movie id and links ids
      * @param int $movieId
