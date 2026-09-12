@@ -13,6 +13,10 @@ class ProviderConnection
             return array_merge($result, ['state'=>'paused','label'=>'Tidak diperiksa','message'=>'Konfigurasi sedang Paused.']);
         }
         try {
+            if ($api->provider === 'serverdothost') {
+                $page = (new ServerDotHostCatalog($this->transport))->page((string)$api->api_token, '', 1, (string)$api->embed_domains);
+                return array_merge($result, ['state'=>'connected','label'=>'Terhubung','message'=>'Autentikasi ServerDotHost berhasil; '.count($page['items']).' video pada halaman pertama.']);
+            }
             if ($api->provider === 'vod_catalog') {
                 (new VodCatalog())->search((string)$api->api_base_url, 'ab-123');
                 return array_merge($result, ['state'=>'connected','label'=>'Terhubung','message'=>'Endpoint VOD mengembalikan JSON list yang valid.']);

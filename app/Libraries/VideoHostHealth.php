@@ -30,7 +30,7 @@ class VideoHostHealth
     public function check(Link $link): ?array
     {
         if (!RegisteredStreamHost::matches((string)$link->link) || ! $this->links->supportsProviderStatus()) { return null; }
-        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
+        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'custom_http', 'vod_catalog', 'serverdothost'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
             if (self::matchesHost((string)$link->link, (string)$api->embed_domains)) { $matches[] = $api; }
@@ -41,7 +41,7 @@ class VideoHostHealth
         if ($matches && $matches[0]->provider === 'vod_catalog') {
             return $this->persist($link, (new VodFileHealth())->check((string)$matches[0]->api_base_url, (string)$link->link));
         }
-        if ($matches && $matches[0]->provider === 'custom_http') {
+        if ($matches && in_array($matches[0]->provider, ['custom_http','serverdothost'], true)) {
             return $this->persist($link, (new CustomHostClient())->videoStatus((string)$link->link));
         }
         if ($matches) {

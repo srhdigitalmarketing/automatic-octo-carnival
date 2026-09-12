@@ -19,7 +19,7 @@ class ThirdPartyApi extends Model
     // Validation
     protected $validationRules      = [
         'name' => 'required|max_length[128]',
-        'provider' => 'required|in_list[cloudflare_r2,upnshare,custom_http,vod_catalog]',
+        'provider' => 'required|in_list[cloudflare_r2,upnshare,custom_http,vod_catalog,serverdothost]',
         'status' => 'permit_empty|in_list[active,paused]'
     ];
 

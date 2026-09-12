@@ -18,6 +18,7 @@
     </section>
     <section class="host-api-overview__docs">
         <a href="<?= admin_url('/third-party-apis/new?provider=vod_catalog') ?>" class="btn btn-primary">Add VOD API</a>
+        <a href="<?= admin_url('/third-party-apis/new?provider=serverdothost') ?>" class="btn btn-primary">Add ServerDotHost</a>
         <h5>Storage provider</h5>
         <p>Cloudflare R2 via the S3-compatible API.</p>
     </section>
@@ -42,10 +43,10 @@
             <tr>
                 <td>
                     <strong><?= esc($api->name) ?></strong>
-                    <small><?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? 'Video availability checks' : 'Banner uploads are stored in R2') ?></small>
+                    <small><?= $api->provider === 'serverdothost' ? 'Pencarian video Bangkong' : ($api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? 'Video availability checks' : 'Banner uploads are stored in R2')) ?></small>
                 </td>
-                <td><span class="host-api-provider-badge"><?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? ($api->provider === 'custom_http' ? 'Custom hostname' : ($api->provider === 'streamhg' ? 'StreamHG' : 'UPNShare')) : 'Cloudflare R2') ?></span></td>
-                <td><span class="host-api-scope"><i class="fa fa-cloud-upload"></i> <?= $api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? 'Read video status' : 'Banner storage') ?></span></td>
+                <td><span class="host-api-provider-badge"><?= $api->provider === 'serverdothost' ? 'ServerDotHost' : ($api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? ($api->provider === 'custom_http' ? 'Custom hostname' : ($api->provider === 'streamhg' ? 'StreamHG' : 'UPNShare')) : 'Cloudflare R2')) ?></span></td>
+                <td><span class="host-api-scope"><i class="fa fa-cloud-upload"></i> <?= $api->provider === 'serverdothost' ? 'Video, embed &amp; poster' : ($api->provider === 'vod_catalog' ? 'VOD title search' : (in_array($api->provider, ['upnshare','custom_http'], true) ? 'Read video status' : 'Banner storage')) ?></span></td>
                 <td><?= format_date_time($api->created_at) ?></td>
                 <td>
                     <span class="host-api-status-badge <?= $api->status == 'active' ? 'is-active' : 'is-paused' ?>">

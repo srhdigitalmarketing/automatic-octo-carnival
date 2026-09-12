@@ -23,7 +23,7 @@ class RegisteredStreamHost
                 $model = new ThirdPartyApi();
                 $db = \Config\Database::connect();
                 if (!$db->tableExists('third_party_apis') || array_diff(['provider','status','embed_domains'], $db->getFieldNames('third_party_apis'))) return false;
-                $apis = $model->whereIn('provider', ['upnshare','custom_http','vod_catalog'])->where('status','active')->findAll();
+                $apis = $model->whereIn('provider', ['upnshare','custom_http','vod_catalog','serverdothost'])->where('status','active')->findAll();
                 foreach ($apis as $api) self::$domains[] = (string)$api->embed_domains;
                 self::$available = true;
             } catch (\Throwable $error) { return false; }
