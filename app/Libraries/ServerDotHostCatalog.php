@@ -11,7 +11,7 @@ class ServerDotHostCatalog
 
     public function page(string $token, string $term = '', int $page = 1, string $domains = 'bobaplayer.com,serverdothost.com'): array
     {
-        return self::normalizePage($this->request(self::listUrl($term, $page), $token), 12, $domains);
+        return self::normalizePage($this->request(self::listUrl($term, $page), $token), 1000, $domains);
     }
 
     public function detail(string $token, string $id, string $domains = 'bobaplayer.com,serverdothost.com'): array
@@ -64,6 +64,7 @@ class ServerDotHostCatalog
             || ($body['data'] !== [] && array_keys($body['data']) !== range(0, count($body['data']) - 1))) {
             throw new \RuntimeException('Format daftar video ServerDotHost tidak valid.');
         }
+        if (count($body['data']) > 1000) throw new \RuntimeException('Halaman ServerDotHost terlalu besar.');
         $meta = $body['meta'] ?? null;
         if (!is_array($meta)) throw new \RuntimeException('Metadata halaman ServerDotHost tidak valid.');
         $current = filter_var($meta['current_page'] ?? null, FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);

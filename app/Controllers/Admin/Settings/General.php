@@ -12,7 +12,8 @@ class General extends BaseSettings
 
         $apis=new \App\Models\ThirdPartyApi();$apiSchemaError=$apis->schemaError();
         $vodApis=$apiSchemaError===''?$apis->where('provider','vod_catalog')->where('status','active')->findAll():[];
-        return view('admin/settings/general/index', compact('title','apiSchemaError','vodApis'));
+        $serverDotHostApis=$apiSchemaError===''?$apis->where('provider','serverdothost')->where('status','active')->findAll():[];
+        return view('admin/settings/general/index', compact('title','apiSchemaError','vodApis','serverDotHostApis'));
     }
 
 

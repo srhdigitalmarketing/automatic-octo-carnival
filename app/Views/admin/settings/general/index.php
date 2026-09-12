@@ -17,6 +17,7 @@
         <?php else: ?>
         <?= $this->include('admin/settings/general/form_x_panels/latest_grab') ?>
         <?= $this->include('admin/settings/general/form_x_panels/auto_grab') ?>
+        <?= $this->include('admin/settings/general/form_x_panels/serverdothost_grab') ?>
         <?php endif ?>
         <?= $this->include('/admin/settings/general/form_x_panels/others') ?>
 
@@ -29,4 +30,5 @@
 <script src="<?= site_url('/admin-assets/js/banner-migration.js?v=20260908-1') ?>"></script>
 <script src="<?= site_url('/admin-assets/js/auto-grab.js?v=20260908-1') ?>"></script>
 <script src="<?= site_url('/admin-assets/js/latest-grab.js?v=20260908-2') ?>"></script>
+<script src="<?= site_url('/admin-assets/js/serverdothost-grab.js?v=20260913-1') ?>"></script>
 <?php $this->endSection() ?>
