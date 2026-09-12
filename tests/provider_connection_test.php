@@ -37,7 +37,7 @@ $result=(new App\Libraries\ProviderConnection(static function()use(&$contacted){
 check($result['state']==='disconnected'&&!$contacted,'Removed provider must not make a request');
 $resolver=(new ReflectionClass(App\Libraries\StreamResolver::class))->newInstanceWithoutConstructor();
 $link=new App\Entities\Link(['link'=>'https://example.com/video','api_id'=>42]);
-check($resolver->frameLoadTimeout($link)===15000,'Iframe timeout queried API database');
+check($resolver->frameLoadTimeout($link)===30000,'Iframe timeout queried API database');
 check($resolver->deliveryUrl($link,'127.0.0.1')==='https://example.com/video','Original link changed or API database queried');
 $api=(object)['provider'=>'cloudflare_r2','status'=>'active','r2_account_id'=>str_repeat('a',32),'r2_access_key_id'=>'key','r2_secret_access_key'=>'secret','r2_bucket'=>'test-bucket','r2_public_url'=>'https://media.example'];
 check((new App\Libraries\ProviderConnection())->check($api)['state']==='connected','R2 head success');

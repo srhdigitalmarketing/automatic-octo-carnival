@@ -30,7 +30,10 @@ const Player = {
     activeLinkId: null,
     failedHosts: [],
     frameLoadTimeout: null,
-    frameLoadTimeoutMs: 15000,
+    frameLoadTimeoutMs: 30000,
+    reportFrameFailure: true,
+    isResolving: false,
+    framePending: false,
     frameGeneration: 0,
     node: null,
     servers: {
@@ -85,132 +88,113 @@ const Player = {
 
         self.isInit = true;
     },
-    play: function (isVerified = false, server = null) {
-        let self = this;
-
-        //player loading
+    play: async function (isVerified = false, server = null) {
+        const self = this;
+        if (self.isResolving) return;
+        // A manual retry starts a new local attempt; automatic rotation retains exclusions.
+        if (!isVerified && server === null) {
+            self.failedHosts = [];
+            self.servers.activeId = null;
+        }
+        self.isResolving = true;
+        self.framePending = false;
+        self.frameGeneration++;
+        window.clearTimeout(self.frameLoadTimeout);
         self.loading();
-
-
-        //attempt to get link
-        if(server !== null){
-            self.servers.update( $(server) );
+        if (server !== null) self.servers.update($(server));
+        if (GCaptcha.isEnabled() && !isVerified) {
+            self.isResolving = false;
+            try { GCaptcha.reload(); }
+            catch (error) { self.errorOccurred('Verifikasi belum siap. Periksa koneksi lalu coba lagi.'); }
+            return;
         }
-
-        //check captcha
-        if(GCaptcha.isEnabled()){
-            if(! isVerified){
-                GCaptcha.reload();
-                return;
+        try {
+            const data = await self.getLink();
+            self.linkToken = data.token;
+            self.activeLinkId = data.id;
+            self.reportFrameFailure = data.report_player_failure !== false;
+            const timeout = Number(data.frame_load_timeout_ms);
+            self.frameLoadTimeoutMs = Number.isFinite(timeout) ? Math.max(15000, Math.min(60000, timeout)) : 30000;
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection && (['slow-2g','2g','3g'].includes(connection.effectiveType) || connection.rtt >= 400)) {
+                self.frameLoadTimeoutMs = Math.max(self.frameLoadTimeoutMs, 60000);
             }
-        }
-
-        //attempt to get link
-        let link = self.getLink();
-
-        //player loaded link in first time
-        if(! self.isPlayed){
+            self.servers.selectResolved(data.id, data.host);
             self.isPlayed = true;
+            self.loadFrame(data.link);
+        } catch (error) {
+            // A failure to reach our endpoint says nothing about the remote video file.
+            self.errorOccurred(error.message || 'Player tidak dapat dimuat. Coba lagi.');
+        } finally {
+            self.isResolving = false;
         }
-
-        //check link
-        if(link !== null){
-
-            /*
-                set link to frame
-                ( we does not close loader in here, it will
-                will close automatically after content loaded )
-             */
-            self.loadFrame( link );
-
-        }else{
-
-            //stop loader animation
-            self.loaded();
-        }
-
-
     },
-    getLink: function (){
-        let self = this;
-
-        let link = null;
-
-        $.ajax({
-
-            url : BASE_URL + 'ajax/get_stream_link',
-            type: "GET",
-            headers: { 'X-Requested-With': 'XMLHttpRequest'},
-            data: {
-                'id' : self.servers.get(),
-                'movie' : self.id,
-                'is_init' : self.isPlayed,
-                'captcha' : GCaptcha.getToken(),
-                'exclude' : self.failedHosts
-            },
-            dataType: "JSON",
-            async: false,
-
-            success: function(data)
-            {
-
-                if(data.success) {
-
-                    link = data.data.link;
-                    self.linkToken = data.data.token;
-                    self.activeLinkId = data.data.id;
-                    self.frameLoadTimeoutMs = data.data.frame_load_timeout_ms === 5000 ? 5000 : 15000;
-                    self.servers.selectResolved(data.data.id, data.data.host);
-
-                }else{
-                    if('error' in data){
-                        self.errorOccurred(data.error);
-                    }
+    apiUrl: function (action) {
+        // Keep app AJAX on the page origin, even with an old base URL or CDN-hosted script.
+        let base = '/';
+        try { base = new URL(typeof BASE_URL === 'string' ? BASE_URL : '/', window.location.href).pathname; }
+        catch (error) { /* The root endpoint remains a same-origin fallback. */ }
+        return '/' + base.replace(/^\/+|\/+$/g, '') + (base.replace(/^\/+|\/+$/g, '') ? '/' : '') + 'ajax/' + action;
+    },
+    getLink: function () {
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            $.ajax({
+                url: self.apiUrl('get_stream_link'),
+                type: 'GET',
+                headers: {'X-Requested-With':'XMLHttpRequest'},
+                data: {id:self.servers.get(), movie:self.id, is_init:self.isPlayed,
+                    captcha:GCaptcha.getToken(), exclude:self.failedHosts},
+                dataType: 'JSON',
+                timeout: 30000,
+                success: function (result) {
+                    if (result && result.success && result.data && result.data.link) resolve(result.data);
+                    else reject(new Error(result && result.error ? result.error : 'Stream belum tersedia. Coba lagi.'));
+                },
+                error: function (xhr, status) {
+                    reject(new Error(status === 'timeout' ? 'Koneksi terlalu lama. Coba muat player lagi.'
+                        : 'Koneksi player gagal. Periksa jaringan lalu coba lagi.'));
                 }
-
-            },
-            error: function (jqXHR, textStatus, errorThrown)
-            {
-                setTimeout(function (){
-                    self.errorOccurred(errorThrown);
-                }, 1000);
-
-            }
+            });
         });
-
-        return link;
     },
     loading: function (){
         let self = this;
         self.node.find('.cover, .play-btn, .frame, .error').hide();
         self.node.find('.loader').css('display', 'flex');
     },
-    loaded: function ( ) {
-        let self = this;
-        window.clearTimeout(self.frameLoadTimeout);
-
-        setTimeout(function (){
-            //close loader
-            self.node.find('.loader').fadeOut(1500);
-            self.node.find('.frame').fadeIn(100);
-        }, 1500);
-
+    loaded: function () {
+        this.framePending = false;
+        window.clearTimeout(this.frameLoadTimeout);
+        this.node.find('.loader').stop(true, true).hide();
+        this.node.find('.frame').stop(true, true).show();
     },
-    loadFrame: function ( link ) {
-        let self = this;
+    loadFrame: function (link) {
+        const self = this;
         window.clearTimeout(self.frameLoadTimeout);
         const generation = ++self.frameGeneration;
         const linkId = self.activeLinkId;
-        self.node.find('iframe').prop('src', link);
+        const previous = self.node.find('iframe');
+        const frame = previous.clone(false).removeAttr('src');
+        // A new node prevents a delayed load from an old host cancelling this host's timeout.
+        previous.replaceWith(frame);
+        self.framePending = true;
+        frame.on('load', function () {
+            if (generation === self.frameGeneration && self.framePending && linkId === self.activeLinkId) self.loaded();
+        });
+        frame.on('error', function () {
+            if (generation === self.frameGeneration && self.framePending && linkId === self.activeLinkId) self.handleFrameFailure();
+        });
+        frame.prop('src', link);
         self.frameLoadTimeout = window.setTimeout(function () {
-            if (generation === self.frameGeneration && linkId === self.activeLinkId) {
-                self.handleFrameFailure();
-            }
+            if (generation === self.frameGeneration && self.framePending && linkId === self.activeLinkId) self.handleFrameFailure();
         }, self.frameLoadTimeoutMs);
     },
     handleFrameFailure: function () {
         let self = this;
         let failedId = self.activeLinkId;
+        self.framePending = false;
+        window.clearTimeout(self.frameLoadTimeout);
 
         if (failedId === null || self.failedHosts.indexOf(failedId) !== -1) {
             self.errorOccurred('Unable to load a streaming host. Please try again later.');
@@ -218,8 +202,9 @@ const Player = {
         }
 
         self.failedHosts.push(failedId);
-        $.ajax({
-            url: BASE_URL + 'ajax/report_stream_failure',
+        if (self.reportFrameFailure) $.ajax({
+            url: self.apiUrl('report_stream_failure'),
+            timeout: 10000,
             type: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: { id: failedId, token: self.linkToken },
@@ -238,7 +223,6 @@ const Player = {
 
     },
     setAuthorCredit: function (){
-        console.clear();
         console.log(
             "%c! " + this.name,
             "color:#1b59a3;font-family:system-ui;font-size:1rem;font-weight:bold"
@@ -250,6 +234,9 @@ const Player = {
         let self = this;
         window.clearTimeout(self.frameLoadTimeout);
 
+        self.framePending = false;
+        self.frameGeneration++;
+        self.node.find('.loader, .frame').stop(true, true).hide();
         self.node.find('.error .msg').text( error );
         self.node.find('.error').css('display', 'flex');
     },
@@ -274,19 +261,5 @@ $(document).ready(function() {
         Player.play( true );
 
     };
-
-    $('#embed-player iframe').on('error', function () {
-        if (Player.activeLinkId !== null) Player.handleFrameFailure();
-    });
-
-    // ========================== waiting till once iframe is done loading ==========================
-    $('#embed-player iframe').on('load', function(){
-
-        if($(this).attr('src') !== undefined){
-            window.clearTimeout(Player.frameLoadTimeout);
-            Player.loaded();
-        }
-
-    });
 
 })

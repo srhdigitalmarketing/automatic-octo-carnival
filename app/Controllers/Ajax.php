@@ -18,6 +18,7 @@ class Ajax extends BaseAjax
 
     public function get_stream_link()
     {
+        $this->response->setHeader('Cache-Control', 'no-store');
 
         //validate captcha
         if(get_config('is_stream_gcaptcha_enabled') ){
@@ -68,6 +69,7 @@ class Ajax extends BaseAjax
                     'id' => encode_id($link->id),
                     'host' => $link->getHost(true),
                     'frame_load_timeout_ms' => $resolver->frameLoadTimeout($link),
+                    'report_player_failure' => \App\Libraries\RegisteredStreamHost::matches((string)$link->link),
                 ]);
 
                 /*
@@ -112,6 +114,7 @@ class Ajax extends BaseAjax
     /** Called by the player timeout before it requests another host. */
     public function report_stream_failure()
     {
+        $this->response->setHeader('Cache-Control', 'no-store');
         $linkId = decode_id($this->request->getGet('id'));
         $tokenData = UniqToken::decode($this->request->getGet('token'));
 

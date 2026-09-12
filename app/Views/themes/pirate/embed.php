@@ -13,8 +13,8 @@
         <link rel="icon" href="<?= site_favicon() ?>" type="image/x-icon">
     <?php endif; ?>
 
-    <link href="<?= player_cdn_asset('/css/template.min.css?v=1.2') ?>" onerror="this.onerror=null;this.href='<?= esc(theme_assets('/css/template.min.css?v=1.2'), 'attr') ?>';" rel="stylesheet" />
-    <link rel="stylesheet" href="<?= player_cdn_asset('/css/custom.css?v=20260906-2') ?>" onerror="this.onerror=null;this.href='<?= esc(theme_assets('/css/custom.css?v=20260906-2'), 'attr') ?>';">
+    <link href="<?= player_cdn_asset('/css/template.min.css?v=1.2') ?>" onerror="this.onerror=null;this.href='<?= esc(player_same_origin_url(theme_assets('/css/template.min.css?v=1.2')), 'attr') ?>';" rel="stylesheet" />
+    <link rel="stylesheet" href="<?= player_cdn_asset('/css/custom.css?v=20260906-2') ?>" onerror="this.onerror=null;this.href='<?= esc(player_same_origin_url(theme_assets('/css/custom.css?v=20260906-2')), 'attr') ?>';">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
     
@@ -66,7 +66,7 @@
             <i class="fa <?= esc($playerIconClass) ?>" aria-hidden="true"></i>
             </div>
             <div class="frame">
-                <iframe id="ve-iframe"   width="100%" scrolling="no" allowfullscreen="true" frameborder="0"></iframe>
+                <iframe id="ve-iframe"   width="100%" scrolling="no" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="true" frameborder="0"></iframe>
             </div>
             <div class="loader">
             <div class="lds-ripple"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
@@ -77,6 +77,7 @@
             <div class="error">
                 <span class="lbl font-size-14"> <?= lang('Embed.unknown_error_occurred') ?> </span>
                 <span class="msg"></span>
+                <button type="button" class="btn btn-primary mt-10" onclick="Player.play()">Coba lagi</button>
             </div>
             <div class="g-recaptcha" data-sitekey="<?= esc( get_config('gcaptcha_site_key') ) ?>"
                  data-badge="inline" data-size="invisible" data-callback="set_captcha_response"></div>
@@ -88,7 +89,7 @@
 
     <div class="movie-not-found">
         <div class="img-wrap text-center">
-            <img src="<?= player_cdn_asset('/images/icons/cat.png') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('/images/icons/cat.png'), 'attr') ?>';" class="w-100" alt="">
+            <img src="<?= player_cdn_asset('/images/icons/cat.png') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('/images/icons/cat.png')), 'attr') ?>';" class="w-100" alt="">
             <h3 class="font-size-24 text-muted">
                 <?php if( $serverNotFound ){
                     echo lang('Embed.server_not_found');
@@ -107,21 +108,21 @@
 
     <?php endif; ?>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+<script src="<?= esc(player_same_origin_url(theme_assets('js/vendor/bootstrap-5.1.3.bundle.min.js')), 'attr') ?>"></script>
 
-<script> const BASE_URL = '<?= site_url() ?>'; </script>
+<script> const BASE_URL = window.location.origin + <?= json_encode(player_same_origin_url(site_url()), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; </script>
 
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="<?= esc(player_same_origin_url(theme_assets('js/vendor/jquery-3.6.0.min.js')), 'attr') ?>"></script>
 
 <?php if( get_config('is_stream_gcaptcha_enabled') ): ?>
     <script  src="https://www.google.com/recaptcha/api.js" async defer></script>
 <?php endif; ?>
 
-<script src="<?= player_cdn_asset('js/template.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/template.min.js?v=1.2'), 'attr') ?>';"></script>
-<script src="<?= player_cdn_asset('js/custom.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/custom.min.js?v=1.2'), 'attr') ?>';"></script>
-<script src="<?= player_cdn_asset('js/player.js?v=20260909-1') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/player.js?v=20260909-1'), 'attr') ?>';"></script>
-<script src="<?= player_cdn_asset('js/player-guard.js?v=20260908-1') ?>" onerror="this.onerror=null;this.src='<?= esc(theme_assets('js/player-guard.js?v=20260908-1'), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/template.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/template.min.js?v=1.2')), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/custom.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/custom.min.js?v=1.2')), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/player.js?v=20260913-2') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/player.js?v=20260913-2')), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/player-guard.js?v=20260908-1') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/player-guard.js?v=20260908-1')), 'attr') ?>';"></script>
 
 <!--footer custom codes-->
 <?= footer_custom_codes () ?>

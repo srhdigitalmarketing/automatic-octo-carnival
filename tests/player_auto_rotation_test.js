@@ -16,7 +16,7 @@ const fs=require('node:fs');
    $.ajax=()=>{requests++;};
    Player.play=verified=>{if(verified)attempts++;};
    const original=window.setTimeout;
-   window.setTimeout=(callback,delay)=>{if(delay===15000){timeout=callback;return 123;}return original(callback,delay);};
+   window.setTimeout=(callback,delay)=>{if(delay===30000){timeout=callback;return 123;}return original(callback,delay);};
    Player.loadFrame('about:blank');
    timeout(); timeout();
    window.setTimeout=original;

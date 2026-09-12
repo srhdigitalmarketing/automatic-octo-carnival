@@ -10,7 +10,7 @@ class ActivateUnregisteredStreams extends BaseCommand
 {
     protected $group = 'Streams';
     protected $name = 'streams:activate-unregistered';
-    protected $description = 'Set streams without an active API host to Active, without checking their URLs.';
+    protected $description = 'Activate streams excluded from health checks, including ServerDotHost, without probing URLs.';
 
     public function run(array $params)
     {
@@ -29,6 +29,6 @@ class ActivateUnregisteredStreams extends BaseCommand
                 if ($model->activateUnregisteredStream($link)) $count++;
             }
         } while (count($batch) === 250);
-        CLI::write($count.' link tanpa API diaktifkan. URL, konten dan laporan pengguna tetap disimpan.', 'green');
+        CLI::write($count.' link yang dikecualikan dari pengecekan diaktifkan. URL, konten dan laporan pengguna tetap disimpan.', 'green');
     }
 }

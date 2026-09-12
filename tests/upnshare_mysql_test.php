@@ -143,6 +143,43 @@ try {
     $served = $links->find($id);
     check($served->last_checked_at === '2020-01-01 00:00:00' && $served->last_success_at === '2020-01-01 00:00:00', 'Serving URL falsely refreshed health timestamps');
     check((int)$served->reports_not_working === 2, 'Serving URL cleared unresolved reports');
+    // ServerDotHost stays usable even when older HTTP checks marked its embed as deleted.
+    $apis->update($apiId,['status'=>'active']);
+    $sdhApi=$apis->insert(['name'=>'ServerDotHost','provider'=>'serverdothost','api_token'=>'bkp_'.str_repeat('a',64),
+        'embed_domains'=>'sdh.example, embed.sdh.example','status'=>'active']);
+    $db->table('movies')->insert(['id'=>2]);
+    $sdhId=$links->insert(['movie_id'=>2,'api_id'=>$sdhApi,'type'=>'stream','link'=>'https://embed.sdh.example/embed/test','host_priority'=>33]);
+    $links->protect(false)->update($sdhId,['is_broken'=>1,'provider_status'=>'deleted','failure_count'=>4,'last_error'=>'HTTP 404','reports_not_working'=>7]);$links->protect(true);
+    foreach (['domains'=>null,'available'=>false,'excludedDomains'=>[]] as $propertyName=>$value) {
+        $property=new ReflectionProperty(App\Libraries\RegisteredStreamHost::class,$propertyName);$property->setAccessible(true);$property->setValue(null,$value);
+    }
+    check(!App\Libraries\RegisteredStreamHost::matches('https://embed.sdh.example/embed/test'),'ServerDotHost aliases excluded from health');
+    $sdhBefore=$links->find($sdhId)->toRawArray();
+    check((new App\Libraries\VideoHostHealth($links))->check($links->find($sdhId))===null,'No HTTP or API file check for ServerDotHost');
+    $sdhResolver=new App\Libraries\StreamResolver($links);
+    check($sdhResolver->check($links->find($sdhId))===false,'Explicit/cron resolver skips ServerDotHost');
+    $sdhResolver->recordPlayerFailure($sdhId);
+    check($links->find($sdhId)->toRawArray()===$sdhBefore,'Old browser timeout cannot mark ServerDotHost broken');
+    $sdhHtml=view('admin/movies/form_x_panels/stream_links',['streamLinks'=>[$links->find($sdhId)]]);
+    check(strpos($sdhHtml,'stream-check-now')===false && strpos($sdhHtml,'Server status')===false,'ServerDotHost has no file check controls');
+    check(strpos($sdhHtml,'Broken')===false,'ServerDotHost form displays active despite historic flags');
+    check((int)$sdhResolver->resolve(2)->id===(int)$sdhId,'Historically broken ServerDotHost remains playable');
+    $after=$links->find($sdhId);
+    check((int)$after->is_broken===0 && $after->provider_status===null && (int)$after->failure_count===0,'Playback restores active without probing');
+    check($after->link===$sdhBefore['link'] && (int)$after->host_priority===33 && (int)$after->reports_not_working===7 && (int)$after->api_id===(int)$sdhApi,'Restoration preserves URL, priority, reports and account');
+    $links->protect(false)->update($sdhId,['is_broken'=>1,'provider_status'=>'error']);$links->protect(true);
+    $otherBefore=$links->find($id)->toRawArray();
+    $activate->run([]);
+    check((int)$links->find($sdhId)->is_broken===0,'Batch activation also restores ServerDotHost');
+    check($links->find($id)->toRawArray()===$otherBefore,'Other registered hosts retain their health state');
+    $adminHealth=new App\Controllers\Admin\StreamHealth();$request=Config\Services::request(null,false);
+    $request->setMethod('post');$request->setGlobal('get',['id'=>$sdhId]);
+    foreach(['request'=>$request,'response'=>Config\Services::response(null,false)] as $propertyName=>$value) {
+        $property=new ReflectionProperty($adminHealth,$propertyName);$property->setAccessible(true);$property->setValue($adminHealth,$value);
+    }
+    check($adminHealth->check()->getStatusCode()===422,'Admin direct check cannot probe excluded host');
+    $links->delete($sdhId);
+    echo "PASS: ServerDotHost no-probe policy, old-browser reports, UI, playback restoration, bulk activation and legacy content preservation.\n";
     $links->delete($fallback);
     $migration->down(); $db->resetDataCache();
     check(!in_array('provider_status',$db->getFieldNames('links'),true), 'Migration rollback');

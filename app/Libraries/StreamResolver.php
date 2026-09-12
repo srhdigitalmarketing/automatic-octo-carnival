@@ -90,7 +90,7 @@ class StreamResolver
     /** Iframe timeout must not query optional API configuration on player requests. */
     public function frameLoadTimeout(Link $link): int
     {
-        return 15000;
+        return 30000;
     }
 
     /** Removed providers cannot rewrite or request a new delivery URL. */

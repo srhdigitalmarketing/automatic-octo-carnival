@@ -538,11 +538,21 @@ if (!function_exists('player_cdn_hostname')) {
     }
 }
 
+if (!function_exists('player_same_origin_url')) {
+    /** Preserve subdirectory/index.php paths and asset versions, using the current page's origin. */
+    function player_same_origin_url(string $url): string
+    {
+        $parts = parse_url($url);
+        $path = '/' . ltrim((string)($parts['path'] ?? ''), '/');
+        return $path . (isset($parts['query']) ? '?' . $parts['query'] : '');
+    }
+}
+
 if (!function_exists('player_cdn_asset')) {
     /** Static player assets only; application endpoints remain on the origin. */
     function player_cdn_asset(string $path): string
     {
-        if (!player_cdn_enabled()) { return theme_assets($path); }
+        if (!player_cdn_enabled()) { return player_same_origin_url(theme_assets($path)); }
         return 'https://' . player_cdn_hostname() . '/themes/' . rawurlencode(default_theme_name()) . '/' . ltrim($path, '/');
     }
 }
