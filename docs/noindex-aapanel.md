@@ -1,49 +1,46 @@
-# Noindex untuk seluruh website, file, dan gambar
+# Index / No Index di Settings Site
 
-## Perubahan aplikasi
+## Mengubah pengaturan
 
-Semua respons PHP diberi X-Robots-Tag sebelum bootstrap dan melalui filter global. Template HTML juga diberi meta robots. Sitemap mengembalikan HTTP 410. Pada Apache, public/.htaccess menambahkan header untuk file statis bila mod_headers aktif.
+1. Buka **Settings > Site** pada website yang akan diatur.
+2. Pada panel **Index / No Index**, pilih:
+   - **No Index - jangan indeks seluruh halaman**: semua halaman aplikasi mengirim `X-Robots-Tag: noindex, nofollow, noimageindex, nosnippet`. Meta robots pada halaman publik mengikuti pilihan ini, termasuk beranda, film/serial, player/embed, daftar konten, halaman informasi dan download.
+   - **Index - izinkan indeks halaman publik**: halaman publik HTML yang berhasil dimuat (GET/HEAD, HTTP 200) mengirim `index, follow` melalui header dan meta. Admin, login, respons API/AJAX, redirect dan error tetap No Index.
+3. Klik **Simpan pengaturan indeks**.
 
-robots.txt sengaja mengizinkan crawling supaya crawler dapat melihat noindex. Jangan menambahkan Disallow: / ketika memakai pendekatan ini. Aturan tersebut mencegah pembacaan header dan URL masih dapat muncul jika ditautkan situs lain.
+Default tetap **No Index**, sesuai perilaku aplikasi sebelumnya. Pengaturan berlaku per website/database; mengubah satu website tidak mengubah website lain. Pengaturan memakai key `site_noindex` pada tabel `settings` yang sudah ada, tanpa migrasi SQL. Isi video, URL link, akun API, kredensial, kode tracking dan pengaturan lain tidak diubah. Pembacaan memakai konfigurasi yang disimpan selama satu request, tanpa panggilan jaringan tambahan atau penulisan database saat halaman dibuka.
 
-## aaPanel dengan Nginx — wajib untuk file statis
+Sitemap lama tetap HTTP 410; fitur ini tidak membangun ulang generator sitemap. Halaman publik dapat diindeks tanpa sitemap jika ditemukan crawler melalui tautan.
 
-Website > situs Anda > Configuration. Tambahkan di dalam blok server:
+## aaPanel, Apache dan CDN
+
+Filter PHP menentukan header semua halaman yang dirender aplikasi. Header fallback sebelum bootstrap tetap No Index untuk kegagalan awal; filter menggantinya pada respons publik yang mengizinkan Index. Apache `public/.htaccess` sekarang meneruskan keputusan PHP untuk `index.php`, termasuk URL rewrite. File yang dilayani langsung oleh Apache, termasuk HTML statis, gambar dan dokumen, tetap mendapat No Index.
+
+**Jika pernah memasang aturan No Index permanen pada Nginx atau Cloudflare, selaraskan sekali saat deploy.** Header tambahan di luar aplikasi dapat terus melarang indeks walaupun panel memilih Index:
+
+- Di aaPanel Nginx, hapus aturan `add_header X-Robots-Tag ...` permanen dari scope yang memengaruhi halaman PHP, dan jangan menyembunyikan header `X-Robots-Tag` dari upstream. Biarkan header halaman berasal dari aplikasi. Jangan mengganti seluruh konfigurasi website.
+- Pada blok `location` yang hanya melayani file statis/gambar, aturan No Index tetap dapat dipertahankan. [Snippet statis](nginx-noindex.conf) hanya untuk scope file statis, bukan seluruh `server` atau handler PHP. Setelah perubahan konfigurasi Nginx, jalankan tes konfigurasi lalu reload melalui aaPanel.
+- Jika ada Cloudflare Response Header Transform Rule yang memaksakan No Index ke seluruh website, sesuaikan scope-nya agar tidak menimpa halaman PHP. Aturan untuk hostname gambar/R2 dapat dipertahankan terpisah.
+- Setelah deploy atau mengganti mode, purge cache HTML lama di CDN/reverse proxy bila halaman HTML dicache. Periksa juga kode meta robots manual di Custom Header Codes apabila mode Index masih menghasilkan No Index.
+
+Sakelar aplikasi tidak mengubah file konfigurasi Nginx, aturan Cloudflare, file statis yang dilayani langsung oleh Nginx, ataupun URL di domain penyedia video/R2 lain. Untuk menolak indeks file/gambar langsung pada Nginx, gunakan header berikut pada lokasi statis yang relevan:
 
 ```nginx
 add_header X-Robots-Tag "noindex, nofollow, noimageindex, nosnippet" always;
 ```
 
-Periksa setiap blok location yang sudah mempunyai add_header, termasuk location gambar, CSS, JS, atau cache. Pada konfigurasi Nginx dengan inheritance standar, add_header pada child location menggantikan inheritance parent; ulangi X-Robots-Tag di blok tersebut juga. Jangan menimpa seluruh konfigurasi server dengan snippet ini. Tes konfigurasi Nginx lalu reload melalui aaPanel.
+## Verifikasi setelah deploy
 
-Jika memakai Apache, aktifkan mod_headers dan pastikan AllowOverride mengizinkan public/.htaccess.
-
-## Cloudflare dan gambar R2 — wajib pada setiap hostname gambar
-
-Header website tidak berlaku untuk URL gambar pada hostname lain. Pada Cloudflare untuk setiap custom domain website/gambar yang Anda kendalikan, buat HTTP Response Header Transform Rule dengan tindakan Set static:
-
-- Nama: X-Robots-Tag
-- Nilai: noindex, nofollow, noimageindex, nosnippet
-- Kondisi: hostname sama dengan domain yang hendak dikeluarkan dari indeks (seluruh path).
-
-Pastikan aturan berlaku pada respons cache juga. Purge cache HTML/file/gambar yang telah tersimpan setelah deployment. Header metadata x-amz-meta-* bukan pengganti X-Robots-Tag. URL publik r2.dev tidak otomatis mendapatkan aturan zona custom domain; gunakan domain R2 yang dapat dikendalikan, dan nonaktifkan akses r2.dev yang tidak diperlukan setelah memastikan seluruh URL aplikasi menggunakan custom domain. Jangan memutus URL gambar yang masih dipakai. URL eksternal di luar kendali Anda tidak dapat diberi aturan oleh aplikasi ini.
-
-## Deploy dan verifikasi
+Ganti domain dan URL player di bawah dengan halaman yang memang tersedia:
 
 ```bash
-git pull origin main
-/www/server/php/82/bin/php spark cache:clear
 curl -I https://DOMAIN_ANDA/
+curl -I https://DOMAIN_ANDA/play/ID_VIDEO
 curl -I https://DOMAIN_ANDA/admin_login
-curl -I https://DOMAIN_ANDA/FILE_STATIS.jpg
-curl -I https://DOMAIN_R2_ANDA/GAMBAR.jpg
-curl -I https://DOMAIN_ANDA/sitemap.xml
 ```
 
-Ganti placeholder dengan URL nyata, termasuk satu file statis yang memang ada. Semua respons harus memiliki X-Robots-Tag noindex; sitemap harus 410. Periksa juga URL alternatif, subdomain, HTTP/HTTPS dan CDN. Pull kode saja belum mengubah konfigurasi Nginx/Cloudflare.
+Saat No Index, seluruh respons aplikasi harus berisi No Index. Saat Index, halaman publik HTTP 200 harus berisi satu `X-Robots-Tag: index, follow`; admin tetap No Index. Periksa meta robots di source halaman juga. Ulangi pada domain dan URL alternatif yang digunakan.
 
-Noindex berlaku bagi mesin pencari yang mematuhinya, bukan kontrol akses atau jaminan untuk bot yang mengabaikan aturan. Hasil yang sudah terindeks tidak langsung hilang; crawler perlu memproses ulang. Untuk percepatan gunakan Search Console Removals dan sarana webmaster mesin pencari lain. Tidak ada penghapusan indeks eksternal atau perubahan server yang dilakukan oleh commit ini.
+`robots.txt` tetap mengizinkan crawling supaya mesin pencari dapat membaca No Index. Jangan memakai `Disallow: /` sebagai pengganti No Index. URL yang sudah terindeks baru diperbarui setelah crawler memproses halaman kembali; pengaturan ini tidak menghapus hasil Google seketika dan tidak menjamin semua bot mematuhinya. Lihat [panduan resmi Google](https://developers.google.com/search/docs/crawling-indexing/block-indexing).
 
-Referensi:
-- https://developers.google.com/search/docs/crawling-indexing/block-indexing
-- https://developers.google.com/search/docs/crawling-indexing/prevent-images-on-your-page
+Referensi header Apache: [mod_headers](https://httpd.apache.org/docs/2.4/mod/mod_headers.html).

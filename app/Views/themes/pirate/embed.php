@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="robots" content="noindex, nofollow, noimageindex, nosnippet">
+<meta name="robots" content="<?= \App\Libraries\SiteIndexing::robots() ?>">
     <meta charset="UTF-8">
     <?php if (player_cdn_enabled()): ?><link rel="preconnect" href="https://<?= esc(player_cdn_hostname(), 'attr') ?>" crossorigin><?php endif ?>
     <meta name="viewport"

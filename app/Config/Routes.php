@@ -46,6 +46,7 @@ $routes->get('/admin/settings/cdn', 'Admin/Settings/Cdn::index');
 $routes->post('/admin/settings/cdn/update', 'Admin/Settings/Cdn::update');
 $routes->get('/admin/settings/homepage', 'Admin/Settings/Homepage::index');
 $routes->post('/admin/settings/homepage/update', 'Admin/Settings/Homepage::update');
+$routes->post('/admin/settings/indexing/update', 'Admin/Settings/Indexing::update');
 $routes->get('/lang', 'Language::index');
 $routes->get('/sitemap\.xml', 'Sitemap::index');
 

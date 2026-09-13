@@ -1,6 +1,9 @@
-# Applies to static files/images and PHP responses when Apache mod_headers is enabled.
+# PHP pages choose Index/No Index in Settings > Site. Do not override index.php.
+# Preserve noindex for files served directly, including static HTML and images.
 <IfModule mod_headers.c>
-    Header always set X-Robots-Tag "noindex, nofollow, noimageindex, nosnippet"
+    <FilesMatch "^(?!index[.]php$)">
+        Header always set X-Robots-Tag "noindex, nofollow, noimageindex, nosnippet"
+    </FilesMatch>
 </IfModule>
 
 # Disable directory browsing

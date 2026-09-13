@@ -1,6 +1,7 @@
 <?php
 
-// Also cover redirects and bootstrap errors before framework filters run.
+// Safe fallback for bootstrap errors and early redirects.
+// The NoIndex filter replaces this header for public pages when Index is enabled.
 header('X-Robots-Tag: noindex, nofollow, noimageindex, nosnippet');
 
 if(file_exists('./install.php')){
