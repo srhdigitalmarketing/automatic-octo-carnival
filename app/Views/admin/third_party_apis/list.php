@@ -25,7 +25,7 @@
 </div>
 
 <div class="x_panel host-api-list-panel">
-    <div class="x_content">
+    <div class="x_content table-responsive">
         <table class="table host-api-table">
             <thead>
             <tr>
@@ -34,7 +34,8 @@
                 <th>Data scopes</th>
                 <th>Created At</th>
                 <th>Status</th>
-                <th>Result <small class="d-block">Cache maksimal 60 detik</small></th>
+                <th>Cek file host</th>
+                <th>Koneksi API <small class="d-block">Cache maksimal 60 detik</small></th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -53,6 +54,7 @@
                         <i class="fa fa-circle"></i> <?= esc($api->status) ?>
                     </span>
                 </td>
+                <td><?= view('admin/third_party_apis/x_panels/file_check_control', ['api'=>$api]) ?></td>
                 <td class="provider-connection" data-url="<?= esc(admin_url('/third-party-apis/result?id=' . (int)$api->id), 'attr') ?>" aria-live="polite">
                     <span class="provider-result">Memeriksa…</span>
                     <small class="provider-result-detail d-block"></small>
@@ -79,4 +81,5 @@
 
 <?php $this->section('scripts') ?>
 <script src="<?= site_url('/admin-assets/js/provider-connection.js?v=20260908-1') ?>"></script>
+<script src="<?= site_url('/admin-assets/js/host-file-checks.js?v=20260913-1') ?>"></script>
 <?php $this->endSection() ?>

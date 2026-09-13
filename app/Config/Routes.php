@@ -70,6 +70,7 @@ $routes->get('/admin/third-party-apis/delete', 'Admin/ThirdPartyApis::delete');
 
 $routes->post('/admin/third-party-apis/create', 'Admin/ThirdPartyApis::create');
 $routes->post('/admin/third-party-apis/update', 'Admin/ThirdPartyApis::update');
+$routes->post('/admin/third-party-apis/file-check', 'Admin/ThirdPartyApis::fileCheck');
 $routes->post('/admin/settings/servers/delete', 'Admin/Settings/Servers::delete');
 $routes->get('/admin/ajax/host-video-search', 'Admin/Ajax/HostVideoSearch::index');
 $routes->get('/admin/ajax/stream-poster', 'Admin/Ajax/StreamPoster::index');

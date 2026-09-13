@@ -9,6 +9,7 @@ class VideoHostHealth
     private $links;
     private $apis;
     private $clients = [];
+    private $checkingApi;
     public function __construct(LinkModel $links) { $this->links = $links; }
 
     public static function videoId(string $url): string
@@ -30,10 +31,14 @@ class VideoHostHealth
     public function check(Link $link): ?array
     {
         if (!RegisteredStreamHost::matches((string)$link->link) || ! $this->links->supportsProviderStatus()) { return null; }
-        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'custom_http', 'vod_catalog'])->where('status', 'active')->findAll(); }
+        if ($this->apis === null) { $this->apis = (new ThirdPartyApi())->whereIn('provider', ['upnshare', 'custom_http', 'vod_catalog', 'serverdothost'])->where('status', 'active')->findAll(); }
         $matches = [];
         foreach ($this->apis as $api) {
             if (self::matchesHost((string)$link->link, (string)$api->embed_domains)) { $matches[] = $api; }
+        }
+        $this->checkingApi = count($matches) === 1 ? $matches[0] : null;
+        foreach ($matches as $api) {
+            if (!HostFileChecks::enabled($api, true)) return null;
         }
         if (count($matches) > 1) {
             return $this->persist($link, ['status'=>'unknown','message'=>'Multiple active APIs match this hostname; keep this hostname on only one active provider configuration']);
@@ -41,8 +46,10 @@ class VideoHostHealth
         if ($matches && $matches[0]->provider === 'vod_catalog') {
             return $this->persist($link, (new VodFileHealth())->check((string)$matches[0]->api_base_url, (string)$link->link));
         }
-        if ($matches && $matches[0]->provider === 'custom_http') {
-            return $this->persist($link, (new CustomHostClient())->videoStatus((string)$link->link));
+        if ($matches && in_array($matches[0]->provider, ['custom_http','serverdothost'], true)) {
+            $key = 'api-' . $matches[0]->id;
+            if (!isset($this->clients[$key])) $this->clients[$key] = new CustomHostClient();
+            return $this->persist($link, $this->clients[$key]->videoStatus((string)$link->link));
         }
         if ($matches) {
             $api = $matches[0]; $key = 'api-' . $api->id;
@@ -61,6 +68,10 @@ class VideoHostHealth
 
     private function persist(Link $link, array $result): array
     {
+        // A switch made while the remote request was pending must win over that result.
+        if ($this->checkingApi && !HostFileChecks::enabled($this->checkingApi, true)) {
+            return ['status'=>'unknown','message'=>'Cek file host dinonaktifkan; hasil pemeriksaan diabaikan.'];
+        }
         $now = date('Y-m-d H:i:s');
         $status = $result['status'];
         // Failed checks cannot resurrect a previously confirmed deleted/error file.

@@ -37,6 +37,29 @@ class ThirdPartyApis extends BaseController
 
 
 
+    public function fileCheck()
+    {
+        $this->response->setHeader('Cache-Control', 'no-store');
+        if (strtolower($this->request->getMethod()) !== 'post') {
+            return $this->response->setStatusCode(405)->setJSON(['error'=>'Gunakan tombol pengaturan cek file.']);
+        }
+        try {
+            $id = filter_var($this->request->getPost('api_id'), FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+            $value = $this->request->getPost('enabled');
+            if (!$id || !in_array($value, ['0','1'], true)) throw new \InvalidArgumentException('Pilihan cek file tidak valid.');
+            $api = $this->getApi($id);
+            \App\Libraries\HostFileChecks::save($api, $value === '1');
+            $message = 'Cek file host '.($value === '1' ? 'diaktifkan.' : 'dinonaktifkan.');
+            if ($this->request->isAJAX()) return $this->response->setJSON(['enabled'=>$value === '1','message'=>$message]);
+            return redirect()->to(admin_url('/third-party-apis'))->with('success', $message);
+        } catch (\Throwable $error) {
+            $message = $error instanceof \InvalidArgumentException ? $error->getMessage()
+                : 'Pengaturan gagal disimpan. Periksa host dan izin tabel settings, lalu coba lagi.';
+            if ($this->request->isAJAX()) return $this->response->setStatusCode(400)->setJSON(['error'=>$message]);
+            return redirect()->to(admin_url('/third-party-apis'))->with('errors', [$message]);
+        }
+    }
+
     public function result()
     {
         // Authentication has finished; external requests must not lock navigation

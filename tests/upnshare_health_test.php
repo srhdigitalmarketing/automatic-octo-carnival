@@ -5,6 +5,12 @@ require dirname(__DIR__) . '/app/Config/Paths.php';
 $paths = new Config\Paths();
 require dirname(__DIR__) . '/system/bootstrap.php';
 error_reporting(E_ALL & ~E_DEPRECATED);
+// No saved per-host overrides in this unit fixture; never connect to a real DB.
+$noOverrides = new class([]) extends CodeIgniter\Test\Mock\MockConnection {
+    public function tableExists(string $tableName): bool { return false; }
+};
+$connections = new ReflectionProperty(Config\Database::class, 'instances');
+$connections->setAccessible(true);$connections->setValue(null, ['default'=>$noOverrides,'tests'=>$noOverrides]);
 $registered = new ReflectionProperty(App\Libraries\RegisteredStreamHost::class, 'domains'); $registered->setAccessible(true); $registered->setValue(null, ['ustreamplay.online,vid.example']);
 function check($ok, $message) { if (!$ok) { throw new RuntimeException($message); } }
 $config = new Config\UpnShare(); $config->apiToken = 'test-only-token';
@@ -101,8 +107,8 @@ $clientsProperty->setValue($hostHealth, [
  'api-2'=>new App\Libraries\StreamHgClient('test-only-key', static function($id) use (&$seen) { $seen[]=$id; return ['http'=>200,'body'=>['status'=>200,'result'=>[['file_code'=>$id,'status'=>200,'canplay'=>1]]]]; }),
 ]);
 check($hostHealth->check(new App\Entities\Link(['id'=>1,'api_id'=>2,'link'=>'https://ustreamplay.online/e/upn123','upnshare_video_id'=>'stale']))['status'] === 'available', 'UPN selected by hostname despite stale account/id');
-check($hostHealth->check(new App\Entities\Link(['id'=>2,'api_id'=>1,'link'=>'https://vid.example/embed-vid123.html','upnshare_video_id'=>'stale']))['status'] === 'available', 'StreamHg selected by hostname despite stale account/id');
-check($seen === ['upn','vid123'], 'Each host dispatched to the correct API with URL file ID');
+check($hostHealth->check(new App\Entities\Link(['id'=>2,'api_id'=>1,'link'=>'https://vid.example/embed-vid123.html','upnshare_video_id'=>'stale'])) === null, 'Retired provider cannot run a file check through a stale API fixture');
+check($seen === ['upn'], 'Supported host dispatched by hostname; retired provider skipped');
 check($hostHealth->check(new App\Entities\Link(['id'=>3,'api_id'=>1,'link'=>'https://unconfigured.example/e/vid123'])) === null, 'Unconfigured host cannot use stale account');
 check(App\Libraries\VideoHostHealth::videoId('https://ustreamplay.online/#9aboc') === '9aboc', 'User-reported fragment ID extracted correctly');
 $unknownHealth = new class(new MemoryLinks()) extends App\Libraries\VideoHostHealth {
@@ -133,5 +139,5 @@ foreach ([['http'=>522,'body'=>null], ['http'=>200,'body'=>['status'=>522]], ['h
     check((int)$failed522->is_broken === 0, 'Recovery after 522 restores host');
 }
 echo "PASS: HTTP/API/file 522 skip playback and recover without marking Deleted.\n";
-echo "PASS: StreamHg responses and automatic mixed-host routing, including stale account/video IDs.\n";
+echo "PASS: Legacy client responses and supported-host routing, including stale account/video IDs.\n";
 echo "PASS: UPNShare API responses, account verification, host/ID matching, persistence recovery, badges and admin validation.\n";

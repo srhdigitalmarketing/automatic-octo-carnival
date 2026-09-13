@@ -15,7 +15,7 @@ class StreamHealth extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['message'=>'Stream link tidak ditemukan.']);
         }
         if (!\App\Libraries\RegisteredStreamHost::matches((string)$link->link)) {
-            return $this->response->setStatusCode(422)->setJSON(['message'=>'Pengecekan file dinonaktifkan untuk ServerDotHost dan host tanpa API pemeriksaan aktif.']);
+            return $this->response->setStatusCode(422)->setJSON(['message'=>'Cek file host nonaktif atau hostname belum terdaftar pada API aktif. Atur melalui API & R2 Storage.']);
         }
         if (!$links->supportsProviderStatus()) {
             return $this->response->setStatusCode(409)->setJSON(['message'=>'Jalankan php spark migrate terlebih dahulu.']);

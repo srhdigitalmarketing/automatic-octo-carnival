@@ -3057,3 +3057,10 @@ footer.admin-footer {
   #reported-host-filter .form-control { flex: 1 1 100%; width: 100%; }
   #reported-host-filter .btn { flex: 1 1 auto; }
 }
+
+/* Per-host file checking controls. */
+.host-file-check-control { min-width: 170px; max-width: 300px; }
+.host-file-check-control .form-check-label { color: #344054; cursor: pointer; }
+.host-file-check-control .form-check-input { cursor: pointer; }
+.host-api-table td .host-file-check-message { white-space: normal; overflow: visible; color: #667085; line-height: 1.5; }
+.host-api-table td .host-file-check-message.text-danger { color: #b42318 !important; }

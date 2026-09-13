@@ -3,12 +3,19 @@ namespace App\Libraries;
 
 use App\Models\ThirdPartyApi;
 
-/** Request-local health-check eligibility. ServerDotHost is catalog-only, never probed. */
+/** Request-local health-check eligibility. File checking is configurable per API account. */
 class RegisteredStreamHost
 {
     private static $domains;
     private static $available = false;
     private static $excludedDomains = [];
+
+    public static function reset(): void
+    {
+        self::$domains = null;
+        self::$excludedDomains = [];
+        self::$available = false;
+    }
 
     public static function available(): bool
     {
@@ -26,13 +33,13 @@ class RegisteredStreamHost
                 if (!$db->tableExists('third_party_apis') || array_diff(['provider','status','embed_domains'], $db->getFieldNames('third_party_apis'))) return false;
                 $apis = $model->whereIn('provider', ['upnshare','custom_http','vod_catalog','serverdothost'])->where('status','active')->findAll();
                 foreach ($apis as $api) {
-                    if ($api->provider === 'serverdothost') {
+                    if (!HostFileChecks::enabled($api)) {
                         self::$excludedDomains[] = (string)$api->embed_domains;
                     } else {
                         self::$domains[] = (string)$api->embed_domains;
                     }
                 }
-                self::$available = true;
+                self::$available = HostFileChecks::available();
             } catch (\Throwable $error) { return false; }
         }
         $scheme = strtolower((string)parse_url($url, PHP_URL_SCHEME));

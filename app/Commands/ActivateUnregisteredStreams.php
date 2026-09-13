@@ -10,7 +10,7 @@ class ActivateUnregisteredStreams extends BaseCommand
 {
     protected $group = 'Streams';
     protected $name = 'streams:activate-unregistered';
-    protected $description = 'Activate streams excluded from health checks, including ServerDotHost, without probing URLs.';
+    protected $description = 'Activate streams excluded from health checks, including hosts with file checking disabled, without probing URLs.';
 
     public function run(array $params)
     {

@@ -1,6 +1,6 @@
 # ServerDotHost: status link dan player mobile
 
-ServerDotHost adalah sumber katalog/stream, bukan provider pengecekan file. Host pada `embed_domains` ServerDotHost aktif dikecualikan dari pengecekan HTTP admin dan cron serta laporan otomatis timeout player. Form tidak menampilkan Server status/Cek file untuk host tersebut. Konfigurasi API dan Auto Grab tetap tersedia.
+Cek file ServerDotHost nonaktif secara default. Sakelar **Cek file host** pada API & R2 Storage dapat mengaktifkan atau menonaktifkannya per akun (lihat [panduan](host-file-checks.md)). Selama sakelar nonaktif, host pada `embed_domains` ServerDotHost aktif dikecualikan dari pengecekan HTTP admin dan cron serta laporan otomatis timeout player. Form tidak menampilkan Server status/Cek file untuk host tersebut. Konfigurasi API dan Auto Grab tetap tersedia.
 
 Link yang sebelumnya ditandai Broken otomatis kembali Active saat dipilih player atau diproses cron health. URL, judul, isi video, prioritas, akun API dan laporan pengunjung tetap dipertahankan. Untuk memulihkan semuanya sekaligus setelah update, jalankan dari direktori aplikasi:
 
@@ -12,7 +12,7 @@ Perintah ini juga mencakup host tanpa API pemeriksaan. Tidak menghubungi URL str
 
 Pemuatan player menggunakan AJAX asinkron ke origin halaman yang sama, termasuk instalasi subdirektori/index.php. Tidak lagi mengikuti hostname/port dari base URL lama untuk AJAX. Respons stream/token tidak boleh disimpan cache (`Cache-Control: no-store`). Aset jQuery 3.6.0 dan Bootstrap 5.1.3 yang sama dengan versi CDN sebelumnya disediakan lokal; checksum SRI diverifikasi saat menyalin. Fallback aset player juga memakai origin halaman. CDN tetap dapat digunakan untuk aset statis lain.
 
-Timeout iframe normal 30 detik, diperpanjang menjadi minimal 60 detik jika browser melaporkan koneksi 2G/3G atau RTT tinggi. Double tap tidak membuat permintaan paralel. Kegagalan AJAX tidak mengirim laporan broken. Rotasi host saat iframe gagal hanya menyimpan pengecualian di browser untuk ServerDotHost. Tombol Coba lagi mengulang pemuatan setelah jaringan pulih.
+Timeout iframe normal 30 detik, diperpanjang menjadi minimal 60 detik jika browser melaporkan koneksi 2G/3G atau RTT tinggi. Double tap tidak membuat permintaan paralel. Kegagalan AJAX tidak mengirim laporan broken. Rotasi host saat iframe gagal hanya menyimpan pengecualian di browser untuk host dengan cek file nonaktif. Tombol Coba lagi mengulang pemuatan setelah jaringan pulih.
 
 ## Jika hanya jaringan seluler tertentu yang masih gagal
 

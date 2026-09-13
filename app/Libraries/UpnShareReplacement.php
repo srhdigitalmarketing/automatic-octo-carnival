@@ -8,11 +8,12 @@ class UpnShareReplacement
     public function replace($link, array $result): array
     {
         if (($result['status'] ?? '') !== 'deleted' && !preg_match('/\b404\b/', (string) ($result['message'] ?? ''))) return $result;
+        if (!RegisteredStreamHost::matches((string)$link->link)) return $result;
         $matches = [];
         foreach ((new ThirdPartyApi())->where('provider','upnshare')->where('status','active')->findAll() as $api) {
             if (VideoHostHealth::matchesHost((string) $link->link, (string) $api->embed_domains)) $matches[] = $api;
         }
-        if (count($matches) !== 1) return $result;
+        if (count($matches) !== 1 || !HostFileChecks::enabled($matches[0], true)) return $result;
         $movie = (new MovieModel())->find((int) $link->movie_id);
         if (!$movie) return $result;
         $config = new \Config\UpnShare(); $config->apiToken = (string) $matches[0]->api_token;
@@ -21,6 +22,7 @@ class UpnShareReplacement
             $result['message'] .= ' Pengganti belum ditemukan: diperlukan satu judul yang sama persis dan video berstatus tersedia.';
             return $result;
         }
+        if (!HostFileChecks::enabled($matches[0], true)) return ['status'=>'unknown','message'=>'Cek file host dinonaktifkan; link tidak diubah.'];
         $url = 'https://' . parse_url((string) $link->link, PHP_URL_HOST) . '/#' . rawurlencode($id);
         $db = db_connect();
         if ($db->table('links')->where('movie_id', $link->movie_id)->where('link',$url)->countAllResults()) {

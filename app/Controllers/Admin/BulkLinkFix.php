@@ -12,6 +12,7 @@ class BulkLinkFix extends BaseController
         if (strtolower($this->request->getMethod()) !== 'post' || !$this->request->isAJAX()) return $this->response->setStatusCode(405)->setJSON(['message'=>'Invalid request']);
         $host = strtolower(trim((string)$this->request->getPost('host')));
         if (!filter_var($host,FILTER_VALIDATE_DOMAIN,FILTER_FLAG_HOSTNAME) || strpos($host,'.') === false) return $this->response->setStatusCode(422)->setJSON(['message'=>'Pilih satu hostname terlebih dahulu.']);
+        if (!\App\Libraries\RegisteredStreamHost::matches('https://'.$host.'/')) return $this->response->setStatusCode(422)->setJSON(['message'=>'Cek file host nonaktif. Aktifkan melalui API & R2 Storage untuk menjalankan Bulk Fix.']);
         $apis = array_filter((new ThirdPartyApi())->where('provider','upnshare')->where('status','active')->findAll(), static fn($api)=>VideoHostHealth::matchesHost('https://'.$host.'/',(string)$api->embed_domains));
         if (count($apis)!==1) return $this->response->setStatusCode(422)->setJSON(['message'=>'Hostname harus cocok dengan tepat satu API UPNShare aktif.']);
         $links = new LinkModel();
