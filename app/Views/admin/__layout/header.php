@@ -32,7 +32,7 @@
     <!-- Custom Theme Style -->
     <link href="<?= site_url('/admin-assets/css/custom.min.css?v=1.2') ?>" rel="stylesheet">
     <link href="<?= site_url('/admin-assets/css/bootstrap5-compat.css?v=20260906-01') ?>" rel="stylesheet">
-    <link href="<?= site_url('/admin-assets/css/admin-polish.css?v=20260913-1') ?>" rel="stylesheet">
+    <link href="<?= site_url('/admin-assets/css/admin-polish.css?v=20260919-1') ?>" rel="stylesheet">
 </head>
 
 <body class="nav-md">

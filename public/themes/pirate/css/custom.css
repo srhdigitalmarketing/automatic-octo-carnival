@@ -179,38 +179,52 @@ body.dark-mode {
 #embed-player .main-content {
     position: relative;
     height: 100vh;
-
+    height: 100svh;
+    height: 100dvh;
+    overflow: hidden;
+    background: #101418;
+    isolation: isolate;
 }
 
-
-#embed-player .cover{
-    background-attachment: fixed !important;
-    background-size: cover !important;
-    background-position: center !important;
-    filter: blur(3px);
+#embed-player .cover {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
+    background: #101418;
+    pointer-events: none;
+}
+
+#embed-player .player-poster {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
 }
 
 #embed-player .play-btn {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(1.4);
+    transform: translate(-50%, -50%);
     background: var(--player-button-color);
+    color: var(--player-icon-color);
     border-radius: 50%;
     width: var(--player-button-size);
     height: var(--player-button-size);
+    max-width: 35vmin;
+    max-height: 35vmin;
+    padding: 0;
     border: 0;
-    box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
-    transition: all 0.1s linear 0s;
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+    transition: transform .15s ease;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
 #embed-player .play-btn .fa {
@@ -219,8 +233,19 @@ body.dark-mode {
     margin-left: .08em;
 }
 
+/* The default Play icon also works when the external icon font is unavailable. */
+#embed-player .play-btn .fa-play::before {
+    content: "";
+    display: block;
+    width: 0;
+    height: 0;
+    border-top: .42em solid transparent;
+    border-bottom: .42em solid transparent;
+    border-left: .65em solid currentColor;
+}
+
 #embed-player .play-btn[data-player-style="outline"] {
-    background: transparent;
+    background: rgba(0, 0, 0, .35);
     border: 4px solid var(--player-button-color);
 }
 
@@ -228,52 +253,85 @@ body.dark-mode {
     color: var(--player-button-color);
 }
 
+#embed-player .play-btn:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 5px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    #embed-player .play-btn:hover { transform: translate(-50%, -50%) scale(1.08); }
+}
+
 #embed-player .loader {
     box-sizing: border-box;
-    display: flex;
-    height: 100%;
-    align-items: center;
-    flex-direction: column;
-    justify-content: center;
-    color:var(--dm-base-text-color);
-    z-index: 1;
-}
-
-#embed-player .play-btn:hover {
-    transform: translate(-50%, -50%) scale(1.5);
-    box-shadow: 0 3px 3px rgb(16 24 30);
-}
-
-
-#embed-player .frame{
     position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 20, 24, .9);
+    z-index: 2;
+}
+
+#embed-player .player-spinner {
+    box-sizing: border-box;
+    display: block;
+    width: 52px;
+    height: 52px;
+    border: 4px solid rgba(255, 255, 255, .18);
+    border-top-color: var(--player-loading-color, #d28a15);
+    border-radius: 50%;
+    animation: player-spin .8s linear infinite;
+}
+
+#embed-player .player-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes player-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    #embed-player .player-spinner { animation: none; }
+    #embed-player .play-btn { transition: none; }
+}
+
+#embed-player .frame {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: #101418;
 }
 
 #embed-player iframe {
+    display: block;
+    width: 100%;
     height: 100%;
+    border: 0;
 }
 
-
-#embed-player .error{
+#embed-player .error {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
+    inset: 0;
+    box-sizing: border-box;
+    padding: 20px;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    text-align: center;
+    overflow: auto;
     background-color: var(--dm-navbar-bg-color);
     color: var(--dm-base-text-color);
-    display: flex;
     align-items: center;
     flex-direction: column;
     justify-content: center;
-    z-index: 1;
+    z-index: 3;
 }
 
-#embed-player .frame, #embed-player .error, #embed-player .loader{
+#embed-player .frame, #embed-player .error, #embed-player .loader {
     display: none;
 }
 

@@ -35,6 +35,7 @@ const Player = {
     isResolving: false,
     framePending: false,
     frameGeneration: 0,
+    pageSuspended: false,
     node: null,
     servers: {
 
@@ -86,7 +87,40 @@ const Player = {
         //set player id
         self.setPlayerId();
 
+        self.initPoster();
+        // iOS may suspend a page while switching apps, locking the screen or using bfcache.
+        // Resume with a fresh deadline; background time is not evidence of a broken host.
+        document.addEventListener('visibilitychange', function () {
+            self.pageSuspended = document.hidden;
+            self.scheduleFrameTimeout();
+        });
+        window.addEventListener('pagehide', function () {
+            self.pageSuspended = true;
+            window.clearTimeout(self.frameLoadTimeout);
+        });
+        window.addEventListener('pageshow', function () {
+            self.pageSuspended = document.hidden;
+            self.scheduleFrameTimeout();
+        });
         self.isInit = true;
+    },
+    initPoster: function () {
+        const poster = this.node.find('.player-poster').get(0);
+        if (!poster) return;
+        let fallbackUsed = false;
+        const recover = function () {
+            const fallback = poster.getAttribute('data-fallback-src');
+            if (!fallbackUsed && fallback && poster.getAttribute('src') !== fallback) {
+                fallbackUsed = true;
+                poster.src = fallback;
+            } else {
+                // Retain the neutral cover when both images are unavailable, without retry loops.
+                poster.style.display = 'none';
+            }
+        };
+        poster.addEventListener('error', recover);
+        // The first image can fail before the script has finished downloading.
+        if (poster.complete && poster.naturalWidth === 0) recover();
     },
     play: async function (isVerified = false, server = null) {
         const self = this;
@@ -160,13 +194,16 @@ const Player = {
     },
     loading: function (){
         let self = this;
-        self.node.find('.cover, .play-btn, .frame, .error').hide();
+        self.node.attr('aria-busy', 'true');
+        self.node.find('.play-btn, .frame, .error').hide();
+        self.node.find('.cover').show();
         self.node.find('.loader').css('display', 'flex');
     },
     loaded: function () {
         this.framePending = false;
         window.clearTimeout(this.frameLoadTimeout);
-        this.node.find('.loader').stop(true, true).hide();
+        this.node.attr('aria-busy', 'false');
+        this.node.find('.loader, .cover').stop(true, true).hide();
         this.node.find('.frame').stop(true, true).show();
     },
     loadFrame: function (link) {
@@ -177,7 +214,6 @@ const Player = {
         const previous = self.node.find('iframe');
         const frame = previous.clone(false).removeAttr('src');
         // A new node prevents a delayed load from an old host cancelling this host's timeout.
-        previous.replaceWith(frame);
         self.framePending = true;
         frame.on('load', function () {
             if (generation === self.frameGeneration && self.framePending && linkId === self.activeLinkId) self.loaded();
@@ -186,12 +222,28 @@ const Player = {
             if (generation === self.frameGeneration && self.framePending && linkId === self.activeLinkId) self.handleFrameFailure();
         });
         frame.prop('src', link);
+        // Keep the iframe laid out while it loads; only the loading overlay covers it.
+        self.node.find('.frame').show();
+        previous.replaceWith(frame);
+        self.scheduleFrameTimeout();
+    },
+    scheduleFrameTimeout: function () {
+        const self = this;
+        window.clearTimeout(self.frameLoadTimeout);
+        if (!self.framePending || document.hidden || self.pageSuspended) return;
+        const generation = self.frameGeneration;
+        const linkId = self.activeLinkId;
         self.frameLoadTimeout = window.setTimeout(function () {
-            if (generation === self.frameGeneration && self.framePending && linkId === self.activeLinkId) self.handleFrameFailure();
+            if (!document.hidden && !self.pageSuspended && generation === self.frameGeneration
+                && self.framePending && linkId === self.activeLinkId) self.handleFrameFailure();
         }, self.frameLoadTimeoutMs);
     },
     handleFrameFailure: function () {
         let self = this;
+        if (document.hidden || self.pageSuspended) {
+            window.clearTimeout(self.frameLoadTimeout);
+            return;
+        }
         let failedId = self.activeLinkId;
         self.framePending = false;
         window.clearTimeout(self.frameLoadTimeout);
@@ -236,6 +288,7 @@ const Player = {
 
         self.framePending = false;
         self.frameGeneration++;
+        self.node.attr('aria-busy', 'false');
         self.node.find('.loader, .frame').stop(true, true).hide();
         self.node.find('.error .msg').text( error );
         self.node.find('.error').css('display', 'flex');

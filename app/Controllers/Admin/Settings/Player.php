@@ -25,19 +25,23 @@ class Player extends BaseSettings
             'player_button_size' => 'required|integer|greater_than_equal_to[48]|less_than_equal_to[140]',
         ];
 
-        if (! $this->validate($rules)) {
+        // Keep older forms compatible without resetting the saved loading color.
+        if ($this->request->getPost('player_loading_color') !== null) {
+            $rules['player_loading_color'] = 'required|regex_match[/^#[A-Fa-f0-9]{6}$/]';
+        }
+
+        $data = $this->request->getPost(array_keys($rules));
+        foreach ($data as $value) {
+            if ($value !== null && !is_string($value)) {
+                return redirect()->back()->with('errors', ['Player appearance values must be text.']);
+            }
+        }
+        $this->validator = \Config\Services::validation();
+        if (! $this->validator->setRules($rules)->run($data)) {
             return redirect()->back()
                 ->with('errors', $this->validator->getErrors())
                 ->withInput();
         }
-
-        $data = $this->request->getPost([
-            'player_button_color',
-            'player_icon_color',
-            'player_button_style',
-            'player_button_icon',
-            'player_button_size',
-        ]);
 
         foreach ($data as $name => $value) {
             $existing = $this->model->getConfig($name);

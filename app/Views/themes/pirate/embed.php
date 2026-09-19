@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <?php if (player_cdn_enabled()): ?><link rel="preconnect" href="https://<?= esc(player_cdn_hostname(), 'attr') ?>" crossorigin><?php endif ?>
     <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <?php if( has_site_favicon() ): ?>
@@ -14,7 +14,7 @@
     <?php endif; ?>
 
     <link href="<?= player_cdn_asset('/css/template.min.css?v=1.2') ?>" onerror="this.onerror=null;this.href='<?= esc(player_same_origin_url(theme_assets('/css/template.min.css?v=1.2')), 'attr') ?>';" rel="stylesheet" />
-    <link rel="stylesheet" href="<?= player_cdn_asset('/css/custom.css?v=20260906-2') ?>" onerror="this.onerror=null;this.href='<?= esc(player_same_origin_url(theme_assets('/css/custom.css?v=20260906-2')), 'attr') ?>';">
+    <link rel="stylesheet" href="<?= player_cdn_asset('/css/custom.css?v=20260919-1') ?>" onerror="this.onerror=null;this.href='<?= esc(player_same_origin_url(theme_assets('/css/custom.css?v=20260919-1')), 'attr') ?>';">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
     
@@ -25,6 +25,8 @@
     <?php
     $playerButtonColor = get_config('player_button_color');
     $playerButtonColor = is_string($playerButtonColor) && preg_match('/^#[0-9a-f]{6}$/i', $playerButtonColor) ? $playerButtonColor : '#d28a15';
+    $playerLoadingColor = get_config('player_loading_color');
+    $playerLoadingColor = is_string($playerLoadingColor) && preg_match('/^#[0-9a-f]{6}$/i', $playerLoadingColor) ? $playerLoadingColor : $playerButtonColor;
     $playerIconColor = get_config('player_icon_color');
     $playerIconColor = is_string($playerIconColor) && preg_match('/^#[0-9a-f]{6}$/i', $playerIconColor) ? $playerIconColor : '#ffffff';
     $playerButtonStyle = get_config('player_button_style');
@@ -41,6 +43,7 @@
         }
         #embed-player {
             --player-button-color: <?= esc($playerButtonColor) ?>;
+            --player-loading-color: <?= esc($playerLoadingColor) ?>;
             --player-icon-color: <?= esc($playerIconColor) ?>;
             --player-button-size: <?= $playerButtonSize ?>px;
             --player-icon-size: <?= (int) round($playerButtonSize * .38) ?>px;
@@ -59,20 +62,18 @@
     <div id="servers" class="d-none" data-initial-id="<?= esc((string) $initialLinkId) ?>"></div>
   
         <div class="main-content">
-            <div class="cover" style="background: linear-gradient( rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3) ), url(<?= banner_uri(
-                $movie->banner
-            ) ?>);"></div>
-            <div class="play-btn" data-player-style="<?= esc($playerButtonStyle) ?>" onclick="Player.play()" role="button" tabindex="0" aria-label="Play video">
-            <i class="fa <?= esc($playerIconClass) ?>" aria-hidden="true"></i>
+            <div class="cover">
+                <img class="player-poster" src="<?= esc(banner_uri($movie->banner), 'attr') ?>" data-fallback-src="<?= esc(default_banner_uri(), 'attr') ?>" alt="" decoding="async" fetchpriority="high">
             </div>
+            <button type="button" class="play-btn" data-player-style="<?= esc($playerButtonStyle) ?>" onclick="Player.play()" aria-label="Play video">
+                <i class="fa <?= esc($playerIconClass) ?>" aria-hidden="true"></i>
+            </button>
             <div class="frame">
-                <iframe id="ve-iframe"   width="100%" scrolling="no" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="true" frameborder="0"></iframe>
+                <iframe id="ve-iframe" title="Video player" width="100%" scrolling="no" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="true" frameborder="0"></iframe>
             </div>
-            <div class="loader">
-            <div class="lds-ripple"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-            <div class="ve-text">
-            <?= lang('Embed.please_wait') ?>
-            </div>
+            <div class="loader" role="status" aria-live="polite">
+                <span class="player-spinner" aria-hidden="true"></span>
+                <span class="player-sr-only"><?= lang('Embed.please_wait') ?></span>
             </div>
             <div class="error">
                 <span class="lbl font-size-14"> <?= lang('Embed.unknown_error_occurred') ?> </span>
@@ -121,7 +122,7 @@
 
 <script src="<?= player_cdn_asset('js/template.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/template.min.js?v=1.2')), 'attr') ?>';"></script>
 <script src="<?= player_cdn_asset('js/custom.min.js?v=1.2') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/custom.min.js?v=1.2')), 'attr') ?>';"></script>
-<script src="<?= player_cdn_asset('js/player.js?v=20260913-2') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/player.js?v=20260913-2')), 'attr') ?>';"></script>
+<script src="<?= player_cdn_asset('js/player.js?v=20260919-1') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/player.js?v=20260919-1')), 'attr') ?>';"></script>
 <script src="<?= player_cdn_asset('js/player-guard.js?v=20260908-1') ?>" onerror="this.onerror=null;this.src='<?= esc(player_same_origin_url(theme_assets('js/player-guard.js?v=20260908-1')), 'attr') ?>';"></script>
 
 <!--footer custom codes-->

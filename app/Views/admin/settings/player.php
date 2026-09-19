@@ -1,5 +1,6 @@
 <?php
 $buttonColor = old('player_button_color', get_config('player_button_color') ?: '#d28a15');
+$loadingColor = old('player_loading_color', get_config('player_loading_color') ?: $buttonColor);
 $iconColor = old('player_icon_color', get_config('player_icon_color') ?: '#ffffff');
 $buttonStyle = old('player_button_style', get_config('player_button_style') ?: 'solid');
 $buttonIcon = old('player_button_icon', get_config('player_button_icon') ?: 'play');
@@ -23,7 +24,7 @@ $previewIcon = $iconClasses[$buttonIcon] ?? $iconClasses['play'];
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <p class="player-settings-panel__intro">Customize only the play overlay shown before the video starts. The player controls, server panel, reporting panel, and embed-link panel are disabled.</p>
+                <p class="player-settings-panel__intro">Customize the play button and loading animation. Thumbnails fit the player without cropping.</p>
 
                 <div class="player-settings-layout">
                     <div class="player-settings-fields">
@@ -53,6 +54,13 @@ $previewIcon = $iconClasses[$buttonIcon] ?? $iconClasses['play'];
                                 <code class="player-color-value" data-for="player-icon-color"><?= esc($iconColor) ?></code>
                             </div>
                         </div>
+                        <div class="form-group row player-settings-color-row">
+                            <label class="control-label col-md-4" for="player-loading-color">Loading color</label>
+                            <div class="col-md-8 player-settings-color-input">
+                                <?= form_input(['type' => 'color', 'id' => 'player-loading-color', 'name' => 'player_loading_color', 'class' => 'player-preview-control', 'value' => $loadingColor]) ?>
+                                <code class="player-color-value" data-for="player-loading-color"><?= esc($loadingColor) ?></code>
+                            </div>
+                        </div>
                         <div class="form-group row">
                             <label class="control-label col-md-4" for="player-button-size">Button size</label>
                             <div class="col-md-8 player-size-control">
@@ -68,6 +76,10 @@ $previewIcon = $iconClasses[$buttonIcon] ?? $iconClasses['play'];
                             <button type="button" class="player-preview__button" data-style="<?= esc($buttonStyle) ?>" aria-label="Play preview">
                                 <i class="fa <?= esc($previewIcon) ?>" aria-hidden="true"></i>
                             </button>
+                        </div>
+                        <div class="player-preview__loading">
+                            <span class="player-preview__spinner" aria-hidden="true"></span>
+                            <span>Loading preview</span>
                         </div>
                         <small>Changes here are visible before saving.</small>
                     </aside>
@@ -97,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function syncPreview() {
         var buttonColor = document.getElementById('player-button-color').value;
         var iconColor = document.getElementById('player-icon-color').value;
+        document.querySelector('.player-preview__spinner').style.setProperty('--preview-loading-color', document.getElementById('player-loading-color').value);
         var style = document.getElementById('player-button-style').value;
         var icon = document.getElementById('player-button-icon').value;
         var size = document.getElementById('player-button-size').value;
